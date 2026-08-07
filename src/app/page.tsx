@@ -29,6 +29,8 @@ export default function HomePage() {
       let query = supabase
         .from('competitions')
         .select('*', { count: 'exact' })
+        // 优先显示报名中 → 即将开始 → 进行中，已结束排最后
+        .order('status', { ascending: true })
         .order('date_start', { ascending: true })
 
       if (filters.keyword) {
