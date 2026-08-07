@@ -861,6 +861,25 @@ const REAL_COMPETITIONS = [
     status: '报名中',
   },
 
+  // ===== 戏剧/剧本类 =====
+  {
+    title: '香港話劇團「風箏計劃」2026-27 — 劇本徵稿',
+    title_en: 'HKRep "Project Kite" 2026-27 — Playwriting Open Call',
+    type: '音乐表演',
+    description: '香港話劇團主辦的原創劇本徵集計劃，主題「逆·轉」。45歲或以下劇本創作愛好者均可參加。原創劇本、演出時長≥75分鐘。入選者可獲HK$40,000創作酬金，優秀作品有機會正式製作。8月9日截止！',
+    date_start: '2026-01-01T00:00:00+08:00',
+    date_end: '2026-08-09T23:59:00+08:00',
+    registration_deadline: '2026-08-09T23:59:00+08:00',
+    location: '线上',
+    venue: '電郵提交至 projectkite@hkrep.com',
+    fee_type: '免费',
+    prize: '入選第三階段獲HK$40,000創作酬金 + 正式製作機會',
+    organizer: '香港話劇團 (HKRep)',
+    source_url: 'https://www.hkrep.com/sc/Season-Programme/Project-Kite/2627.html',
+    source: '香港話劇團官网',
+    status: '报名中',
+  },
+
   // ===== 写作类（补充）=====
   {
     title: 'Creative Writing Festival 2026 — 全港創意寫作節',
