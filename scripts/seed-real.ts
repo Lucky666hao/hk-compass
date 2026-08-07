@@ -807,6 +807,43 @@ const REAL_COMPETITIONS = [
     status: '报名中',
   },
 
+  // ===== 设计类 =====
+  {
+    title: '第三屆香港青年創新設計獎 2026',
+    title_en: '3rd Hong Kong Youth Innovation Design Award 2026',
+    type: '创意摄影设计',
+    description: '香港當代藝術文化研究院主辦，主題「場域」。設視覺設計類（含UI設計/界面設計/海報/短片）及AIGC類。18-40歲均可參加。7月15日至11月20日徵稿。',
+    date_start: '2026-07-15T00:00:00+08:00',
+    date_end: '2026-11-20T23:59:00+08:00',
+    registration_deadline: '2026-11-20T23:59:00+08:00',
+    location: '线上',
+    venue: '線上提交',
+    fee_type: '免费',
+    prize: '主题類金獎 ¥1,250 + 證書',
+    organizer: '香港當代藝術文化研究院',
+    registration_link: 'https://www.cacr.hk',
+    source_url: 'https://www.yczhansai.com/h-nd-295.html',
+    source: '艺创展赛官网',
+    status: '报名中',
+  },
+  {
+    title: '第八屆香港當代設計獎 — 「共生記」2026',
+    title_en: '8th Hong Kong Contemporary Design Award 2026',
+    type: '创意摄影设计',
+    description: '香港美術設計協會及香港美術設計研究院主辦。涵蓋平面視覺、UI/UX、新媒體設計、AIGC應用等類別。主題類免費參賽。已於6月2日截止。',
+    date_start: '2026-04-02T00:00:00+08:00',
+    date_end: '2026-06-02T23:59:00+08:00',
+    registration_deadline: '2026-06-02T23:59:00+08:00',
+    location: '线上',
+    venue: '線上提交',
+    fee_type: '免费',
+    prize: '各類別金銀銅獎',
+    organizer: '香港美術設計協會 × 香港美術設計研究院',
+    source_url: 'https://www.cnyisai.com/new/hkcda8.html',
+    source: 'cnyisai官网',
+    status: '已结束',
+  },
+
   // ===== 编程/黑客松类 =====
   {
     title: 'Hong Kong Joint Collegiate Programming Contest 2026',
