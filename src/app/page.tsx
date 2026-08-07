@@ -1,0 +1,161 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import type { Competition, CompetitionFilters } from '@/lib/types'
+import { SearchBar } from '@/components/search-bar'
+import { FilterBar } from '@/components/filter-bar'
+import { CompetitionCard } from '@/components/competition-card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Compass, SearchX } from 'lucide-react'
+
+const ITEMS_PER_PAGE = 20
+
+export default function HomePage() {
+  const [filters, setFilters] = useState<CompetitionFilters>({
+    keyword: '',
+    type: '全部',
+    location: '全部',
+    fee_type: '全部',
+    date_range: '全部',
+    status: '全部',
+  })
+  const [page, setPage] = useState(0)
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['competitions', filters, page],
+    queryFn: async () => {
+      let query = supabase
+        .from('competitions')
+        .select('*', { count: 'exact' })
+        .order('date_start', { ascending: true })
+
+      if (filters.keyword) {
+        query = query.or(
+          `title.ilike.%${filters.keyword}%,title_en.ilike.%${filters.keyword}%,description.ilike.%${filters.keyword}%`
+        )
+      }
+
+      if (filters.type && filters.type !== '全部') {
+        query = query.eq('type', filters.type)
+      }
+
+      if (filters.location && filters.location !== '全部') {
+        query = query.eq('location', filters.location)
+      }
+
+      if (filters.fee_type && filters.fee_type !== '全部') {
+        query = query.eq('fee_type', filters.fee_type)
+      }
+
+      const now = new Date().toISOString()
+      if (filters.date_range === '本周') {
+        const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        query = query.gte('date_start', now).lte('date_start', nextWeek)
+      } else if (filters.date_range === '本月') {
+        const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        query = query.gte('date_start', now).lte('date_start', nextMonth)
+      } else if (filters.date_range === '下月') {
+        const monthStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        const monthEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+        query = query.gte('date_start', monthStart).lte('date_start', monthEnd)
+      }
+
+      if (filters.status && filters.status !== '全部') {
+        query = query.eq('status', filters.status)
+      } else {
+        query = query.neq('status', '已结束')
+      }
+
+      query = query.range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
+
+      const { data, error, count } = await query
+      if (error) throw error
+      return { competitions: data as Competition[], total: count ?? 0 }
+    },
+  })
+
+  const handleSearch = useCallback((keyword: string) => {
+    setFilters((prev) => ({ ...prev, keyword }))
+    setPage(0)
+  }, [])
+
+  const handleFilterChange = useCallback((key: keyof CompetitionFilters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(0)
+  }, [])
+
+  const competitions = data?.competitions ?? []
+  const total = data?.total ?? 0
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <Compass className="mr-3 inline-block h-8 w-8 text-primary" />
+          发现香港所有比赛
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          闲暇时看看有什么比赛可以参加，获奖最好，没获奖也没关系
+        </p>
+      </div>
+
+      <div className="mb-6 space-y-4">
+        <SearchBar onSearch={handleSearch} defaultValue={filters.keyword} />
+        <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+      </div>
+
+      {!isLoading && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <span>共 {total} 个比赛</span>
+          {isFetching && <span className="animate-pulse">· 更新中...</span>}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
+          ))}
+        </div>
+      ) : competitions.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-muted-foreground">
+          <SearchX className="mb-4 h-12 w-12" />
+          <p className="text-lg">未找到匹配的比赛</p>
+          <p className="text-sm">尝试调整筛选条件或搜索关键词</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {competitions.map((comp) => (
+              <CompetitionCard key={comp.id} competition={comp} />
+            ))}
+          </div>
+
+          {total > ITEMS_PER_PAGE && (
+            <div className="mt-8 flex justify-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
+              >
+                上一页
+              </button>
+              <span className="flex items-center px-4 text-sm text-muted-foreground">
+                第 {page + 1} 页 / 共 {Math.ceil(total / ITEMS_PER_PAGE)} 页
+              </span>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={(page + 1) * ITEMS_PER_PAGE >= total}
+                className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
+              >
+                下一页
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
