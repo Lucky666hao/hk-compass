@@ -68,6 +68,8 @@ export default function HomePage() {
         query = query.eq('status', filters.status)
       } else {
         query = query.neq('status', '已结束')
+        // 同时过滤掉报名截止日期已过且没有截止日期的（按比赛日期判断）
+        query = query.or(`registration_deadline.is.null,registration_deadline.gte.${now}`)
       }
 
       query = query.range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
