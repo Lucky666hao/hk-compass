@@ -19,6 +19,7 @@ export default function HomePage() {
     location: '全部',
     fee_type: '全部',
     date_range: '全部',
+    age_group: '全部',
     status: '全部',
   })
   const [page, setPage] = useState(0)
@@ -62,6 +63,10 @@ export default function HomePage() {
         const monthStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         const monthEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
         query = query.gte('date_start', monthStart).lte('date_start', monthEnd)
+      }
+
+      if (filters.age_group && filters.age_group !== '全部') {
+        query = query.eq('age_group', filters.age_group)
       }
 
       if (filters.status && filters.status !== '全部') {

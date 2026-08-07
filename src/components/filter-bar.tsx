@@ -1,7 +1,7 @@
 'use client'
 
 import type { CompetitionFilters } from '@/lib/types'
-import { TYPE_LABELS, LOCATION_LABELS, FEE_LABELS, STATUS_LABELS } from '@/lib/types'
+import { TYPE_LABELS, LOCATION_LABELS, FEE_LABELS, STATUS_LABELS, AGE_LABELS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ChevronDown } from 'lucide-react'
@@ -67,10 +67,20 @@ export function FilterBar({ filters, onFilterChange }: Props) {
         ]}
         onChange={(v) => onFilterChange('status', v)}
       />
+      <FilterPopover
+        label="年龄"
+        value={filters.age_group ?? '全部'}
+        options={[
+          { value: '全部', label: '全部年龄' },
+          ...Object.entries(AGE_LABELS).map(([k, v]) => ({ value: k, label: v })),
+        ]}
+        onChange={(v) => onFilterChange('age_group', v)}
+      />
       {(filters.type !== '全部' ||
         filters.location !== '全部' ||
         filters.fee_type !== '全部' ||
         filters.date_range !== '全部' ||
+        filters.age_group !== '全部' ||
         filters.status !== '全部') && (
         <Button
           variant="ghost"
@@ -80,6 +90,7 @@ export function FilterBar({ filters, onFilterChange }: Props) {
             onFilterChange('location', '全部')
             onFilterChange('fee_type', '全部')
             onFilterChange('date_range', '全部')
+            onFilterChange('age_group', '全部')
             onFilterChange('status', '全部')
           }}
         >

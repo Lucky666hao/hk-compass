@@ -32,7 +32,7 @@ export function CompetitionCard({ competition }: Props) {
   const isUrgent =
     competition.registration_deadline &&
     new Date(competition.registration_deadline).getTime() - Date.now() <
-      3 * 24 * 60 * 60 * 1000
+      7 * 24 * 60 * 60 * 1000
 
   const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault()

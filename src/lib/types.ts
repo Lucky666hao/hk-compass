@@ -19,6 +19,8 @@ export type CompetitionStatus = '报名中' | '即将开始' | '进行中' | '�
 
 export type RemindBefore = '1小时前' | '1天前' | '3天前' | '1周前'
 
+export type AgeGroup = '儿童' | '青少年' | '成人/公开' | '不限'
+
 export interface Competition {
   id: string
   title: string
@@ -35,6 +37,7 @@ export interface Competition {
   prize: string | null
   organizer: string | null
   registration_link: string | null
+  age_group: AgeGroup | null
   source_url: string | null
   poster_url: string | null
   source: string | null
@@ -68,6 +71,7 @@ export interface CompetitionFilters {
   keyword?: string
   type?: CompetitionType | '全部'
   location?: CompetitionLocation | '全部'
+  age_group?: AgeGroup | '全部'
   fee_type?: FeeType | '全部'
   date_range?: '本周' | '本月' | '下月' | '全部'
   status?: CompetitionStatus | '全部'
@@ -102,6 +106,13 @@ export const STATUS_LABELS: Record<CompetitionStatus, string> = {
   '即将开始': '即将开始',
   '进行中': '进行中',
   '已结束': '已结束',
+}
+
+export const AGE_LABELS: Record<AgeGroup, string> = {
+  '儿童': '👶 儿童',
+  '青少年': '🧑 青少年',
+  '成人/公开': '👤 成人/公开',
+  '不限': '🌐 不限年龄',
 }
 
 export const REMIND_LABELS: Record<RemindBefore, string> = {
