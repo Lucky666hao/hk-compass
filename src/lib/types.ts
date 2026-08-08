@@ -32,9 +32,12 @@ export interface Competition {
   registration_deadline: string | null
   location: CompetitionLocation
   venue: string | null
+  venue_en: string | null
   fee_type: FeeType
   fee_amount: string | null
   prize: string | null
+  prize_en: string | null
+  description_en: string | null
   organizer: string | null
   registration_link: string | null
   age_group: AgeGroup | null

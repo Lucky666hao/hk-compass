@@ -257,8 +257,10 @@ export default function CompetitionDetailPage() {
           )}
         </div>
 
-        <h1 className="text-2xl font-bold sm:text-3xl">{competition.title}</h1>
-        {competition.title_en && (
+        <h1 className="text-2xl font-bold sm:text-3xl">
+          {locale === 'en' && competition.title_en ? competition.title_en : competition.title}
+        </h1>
+        {locale !== 'en' && competition.title_en && (
           <p className="mt-1 text-muted-foreground">{competition.title_en}</p>
         )}
       </div>
@@ -306,7 +308,7 @@ export default function CompetitionDetailPage() {
 
                 <InfoRow icon={<MapPin className="h-4 w-4" />} label={t(locale, 'detail.location')}>
                   {locationStr}
-                  {competition.venue && <span className="text-muted-foreground"> · {competition.venue}</span>}
+                  {competition.venue && <span className="text-muted-foreground"> · {locale === 'en' && competition.venue_en ? competition.venue_en : competition.venue}</span>}
                 </InfoRow>
 
                 <InfoRow icon={<DollarSign className="h-4 w-4" />} label={t(locale, 'detail.fee')}>
@@ -331,7 +333,7 @@ export default function CompetitionDetailPage() {
                 {competition.prize && (
                   <InfoRow icon={<Trophy className="h-4 w-4" />} label={t(locale, 'detail.prize_label')}>
                     <span className="text-amber-600 dark:text-amber-400 font-medium">
-                      {competition.prize}
+                      {locale === 'en' && competition.prize_en ? competition.prize_en : competition.prize}
                     </span>
                   </InfoRow>
                 )}
@@ -371,7 +373,7 @@ export default function CompetitionDetailPage() {
           </Card>
 
           {/* 比赛描述 */}
-          {competition.description && (
+          {(competition.description || (locale === 'en' && competition.description_en)) && (
             <Card>
               <CardContent className="p-6">
                 <h2 className="font-semibold mb-3 flex items-center gap-2">
@@ -379,7 +381,11 @@ export default function CompetitionDetailPage() {
                   {t(locale, 'detail.description')}
                 </h2>
                 <div className="text-sm text-muted-foreground leading-relaxed space-y-3 whitespace-pre-wrap">
-                  {formatDescription(competition.description)}
+                  {formatDescription(
+                    locale === 'en' && competition.description_en
+                      ? competition.description_en
+                      : competition.description || ''
+                  )}
                 </div>
               </CardContent>
             </Card>
