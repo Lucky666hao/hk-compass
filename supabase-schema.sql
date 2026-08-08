@@ -169,3 +169,31 @@ CREATE POLICY "用户可创建提醒"
 CREATE POLICY "用户可删除提醒"
   ON reminders FOR DELETE
   USING (auth.uid() = user_id);
+
+-- ============================================
+-- 辅助函数
+-- ============================================
+
+-- 浏览计数 +1
+CREATE OR REPLACE FUNCTION increment_view(competition_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE competitions
+  SET view_count = COALESCE(view_count, 0) + 1
+  WHERE id = competition_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 自动更新 updated_at 时间戳
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON competitions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
