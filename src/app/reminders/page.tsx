@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Competition, Reminder } from '@/lib/types'
-import { REMIND_LABELS } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,14 +11,20 @@ import { Bell, ArrowLeft, BellOff, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { zhHK } from 'date-fns/locale'
+import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 export default function RemindersPage() {
   const router = useRouter()
+  const { locale } = useLocale()
   const [userId, setUserId] = useState<string | null | undefined>(undefined) // undefined = 加载中
   const [sessionLoading, setSessionLoading] = useState(true)
+
+  const dateLocale = locale === 'en' ? enUS : zhHK
+  const dateFormat = locale === 'en' ? 'MMM d' : 'M月d日'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -51,7 +56,12 @@ export default function RemindersPage() {
 
   const handleRemove = async (reminderId: string) => {
     const { error } = await supabase.from('reminders').delete().eq('id', reminderId)
-    if (error) { toast.error('删除失败') } else { toast.success('已取消提醒'); refetch() }
+    if (error) {
+      toast.error(t(locale, 'toast.reminder_delete_failed'))
+    } else {
+      toast.success(t(locale, 'toast.reminder_removed'))
+      refetch()
+    }
   }
 
   // 加载中
@@ -75,13 +85,13 @@ export default function RemindersPage() {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
             <Bell className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">不错过任何报名截止</h2>
+          <h2 className="text-xl font-semibold mb-2">{t(locale, 'reminders.login_prompt')}</h2>
           <p className="text-muted-foreground max-w-sm mb-6">
-            登录后即可为比赛设置截止提醒。免费注册，无需手机验证。
+            {t(locale, 'reminders.login_desc')}
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => router.push('/auth/login?redirect=/reminders')}>登录 / 注册</Button>
-            <Button variant="outline" onClick={() => router.push('/')}>先看看比赛</Button>
+            <Button onClick={() => router.push('/auth/login?redirect=/reminders')}>{t(locale, 'saved.login_btn')}</Button>
+            <Button variant="outline" onClick={() => router.push('/')}>{t(locale, 'saved.browse')}</Button>
           </div>
         </div>
       </div>
@@ -96,12 +106,12 @@ export default function RemindersPage() {
         onClick={() => router.back()}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> 返回
+        <ArrowLeft className="h-4 w-4" /> {t(locale, 'back')}
       </button>
 
       <div className="mb-6 flex items-center gap-2">
         <Bell className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">我的提醒</h1>
+        <h1 className="text-2xl font-bold">{t(locale, 'reminders.title')}</h1>
       </div>
 
       {isLoading ? (
@@ -113,10 +123,10 @@ export default function RemindersPage() {
       ) : reminders.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <Bell className="mb-4 h-12 w-12" />
-          <p className="text-lg">暂无提醒</p>
-          <p className="text-sm">在比赛详情页点击"提醒我"即可设置提醒</p>
+          <p className="text-lg">{t(locale, 'account.empty_reminders')}</p>
+          <p className="text-sm">{t(locale, 'reminders.empty_hint')}</p>
           <Button variant="outline" className="mt-4" onClick={() => router.push('/')}>
-            去发现比赛
+            {t(locale, 'account.discover')}
           </Button>
         </div>
       ) : (
@@ -128,16 +138,18 @@ export default function RemindersPage() {
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <Link href={`/competition/${comp.id}`} className="hover:text-primary transition-colors">
-                      <h3 className="font-medium line-clamp-1">{comp.title}</h3>
+                      <h3 className="font-medium line-clamp-1">
+                        {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
+                      </h3>
                     </Link>
                     <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                       <span>
                         {comp.date_start
-                          ? format(new Date(comp.date_start), 'M月d日', { locale: zhHK })
+                          ? format(new Date(comp.date_start), dateFormat, { locale: dateLocale })
                           : ''}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        {REMIND_LABELS[r.remind_before as keyof typeof REMIND_LABELS] || r.remind_before}
+                        {t(locale, `remind.${r.remind_before}`)}
                       </Badge>
                       {comp.registration_link && (
                         <a
@@ -145,7 +157,7 @@ export default function RemindersPage() {
                           target="_blank"
                           className="flex items-center gap-1 text-primary hover:underline"
                         >
-                          去报名 <ExternalLink className="h-3 w-3" />
+                          {t(locale, 'account.go_register')} <ExternalLink className="h-3 w-3" />
                         </a>
                       )}
                     </div>

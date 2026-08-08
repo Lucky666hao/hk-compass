@@ -9,9 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Heart, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 export default function SavedPage() {
   const router = useRouter()
+  const { locale } = useLocale()
   const [userId, setUserId] = useState<string | null | undefined>(undefined) // undefined = 加载中
   const [loading, setLoading] = useState(true)
 
@@ -71,13 +74,13 @@ export default function SavedPage() {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
             <Heart className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">收藏你感兴趣的比赛</h2>
+          <h2 className="text-xl font-semibold mb-2">{t(locale, 'saved.login_prompt')}</h2>
           <p className="text-muted-foreground max-w-sm mb-6">
-            登录后即可收藏比赛、设置提醒、发表评论。免费注册，无需手机验证。
+            {t(locale, 'saved.login_desc')}
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => router.push('/auth/login?redirect=/saved')}>登录 / 注册</Button>
-            <Button variant="outline" onClick={() => router.push('/')}>先看看比赛</Button>
+            <Button onClick={() => router.push('/auth/login?redirect=/saved')}>{t(locale, 'saved.login_btn')}</Button>
+            <Button variant="outline" onClick={() => router.push('/')}>{t(locale, 'saved.browse')}</Button>
           </div>
         </div>
       </div>
@@ -90,12 +93,12 @@ export default function SavedPage() {
         onClick={() => router.back()}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> 返回
+        <ArrowLeft className="h-4 w-4" /> {t(locale, 'back')}
       </button>
 
       <div className="mb-6 flex items-center gap-2">
         <Heart className="h-6 w-6 text-red-500 fill-red-500" />
-        <h1 className="text-2xl font-bold">已收藏的比赛</h1>
+        <h1 className="text-2xl font-bold">{t(locale, 'saved.title')}</h1>
       </div>
 
       {isLoading ? (
@@ -107,9 +110,9 @@ export default function SavedPage() {
       ) : !competitions?.length ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <Heart className="mb-4 h-12 w-12" />
-          <p className="text-lg">还没有收藏任何比赛</p>
+          <p className="text-lg">{t(locale, 'account.empty_saved')}</p>
           <Button variant="outline" className="mt-4" onClick={() => router.push('/')}>
-            去发现比赛
+            {t(locale, 'account.discover')}
           </Button>
         </div>
       ) : (

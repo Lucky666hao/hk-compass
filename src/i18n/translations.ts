@@ -162,6 +162,9 @@ const en: TranslationDict = {
   'account.empty_reminders': 'No reminders set',
   'account.empty_reminders_hint': 'Set reminders on competition pages',
   'account.discover': 'Discover Competitions',
+  'account.no_login_title': 'Your Account',
+  'account.no_login_desc': 'Log in to manage saved competitions, reminders and comments. Free registration, no phone verification needed.',
+  'account.go_register': 'Register',
 
   // Saved (standalone)
   'saved.title': 'Saved Competitions',
@@ -174,6 +177,17 @@ const en: TranslationDict = {
   'reminders.title': 'My Reminders',
   'reminders.login_prompt': 'Never miss a deadline',
   'reminders.login_desc': 'Log in to set deadline reminders. Free registration, no phone verification needed.',
+  'reminders.empty_hint': 'Click "Remind Me" on the competition detail page to set a reminder',
+  'reminders.remove': 'Remove Reminder',
+
+  // Remind labels
+  'remind.1小时前': '1 hour before',
+  'remind.1天前': '1 day before',
+  'remind.3天前': '3 days before',
+  'remind.1周前': '1 week before',
+
+  // Generic
+  'back': 'Back',
 
   // Footer
   'footer.text': 'HK Compass · Discover Hong Kong Competitions',
@@ -185,6 +199,7 @@ const en: TranslationDict = {
   'toast.reminder_duplicate': 'Reminder already set',
   'toast.reminder_removed': 'Reminder removed',
   'toast.reminder_failed': 'Failed to set reminder',
+  'toast.reminder_delete_failed': 'Failed to remove reminder',
   'toast.login_success': 'Logged in successfully',
   'toast.register_success': 'Registered! Please check your confirmation email',
   'toast.signout_success': 'Signed out',
@@ -365,6 +380,9 @@ const zhCN: TranslationDict = {
   'account.empty_reminders': '暂无提醒',
   'account.empty_reminders_hint': '在比赛详情页设置提醒，不会错过报名截止',
   'account.discover': '去发现比赛',
+  'account.no_login_title': '你的个人中心',
+  'account.no_login_desc': '登录后管理收藏、提醒和评论。免费注册，无需手机验证。',
+  'account.go_register': '去报名',
 
   'saved.title': '已收藏的比赛',
   'saved.login_prompt': '收藏你感兴趣的比赛',
@@ -375,6 +393,15 @@ const zhCN: TranslationDict = {
   'reminders.title': '我的提醒',
   'reminders.login_prompt': '不错过任何报名截止',
   'reminders.login_desc': '登录后即可为比赛设置截止提醒。免费注册，无需手机验证。',
+  'reminders.empty_hint': '在比赛详情页点击"提醒我"即可设置提醒',
+  'reminders.remove': '取消提醒',
+
+  'remind.1小时前': '1小时前提醒',
+  'remind.1天前': '1天前提醒',
+  'remind.3天前': '3天前提醒',
+  'remind.1周前': '1周前提醒',
+
+  'back': '返回',
 
   'footer.text': 'HK Compass · 发现香港所有比赛',
 
@@ -384,6 +411,7 @@ const zhCN: TranslationDict = {
   'toast.reminder_duplicate': '已设置过提醒',
   'toast.reminder_removed': '已取消提醒',
   'toast.reminder_failed': '设置提醒失败',
+  'toast.reminder_delete_failed': '删除失败',
   'toast.login_success': '登录成功',
   'toast.register_success': '注册成功！请查收确认邮件',
   'toast.signout_success': '已退出登录',
@@ -554,6 +582,9 @@ const zhHK: TranslationDict = {
   'account.empty_reminders': '暫無提醒',
   'account.empty_reminders_hint': '在比賽詳情頁設定提醒，不會錯過報名截止',
   'account.discover': '去發現比賽',
+  'account.no_login_title': '你的個人中心',
+  'account.no_login_desc': '登錄後管理收藏、提醒和評論。免費註冊，無需手機驗證。',
+  'account.go_register': '去報名',
 
   'saved.title': '已收藏的比賽',
   'saved.login_prompt': '收藏你感興趣的比賽',
@@ -564,6 +595,15 @@ const zhHK: TranslationDict = {
   'reminders.title': '我的提醒',
   'reminders.login_prompt': '不錯過任何報名截止',
   'reminders.login_desc': '登入後即可為比賽設定截止提醒。免費註冊，無需手機驗證。',
+  'reminders.empty_hint': '在比賽詳情頁點擊"提醒我"即可設定提醒',
+  'reminders.remove': '取消提醒',
+
+  'remind.1小时前': '1小時前提醒',
+  'remind.1天前': '1天前提醒',
+  'remind.3天前': '3天前提醒',
+  'remind.1周前': '1週前提醒',
+
+  'back': '返回',
 
   'footer.text': 'HK Compass · 發現香港所有比賽',
 
@@ -573,6 +613,7 @@ const zhHK: TranslationDict = {
   'toast.reminder_duplicate': '已設定過提醒',
   'toast.reminder_removed': '已取消提醒',
   'toast.reminder_failed': '設定提醒失敗',
+  'toast.reminder_delete_failed': '刪除失敗',
   'toast.login_success': '登入成功',
   'toast.register_success': '註冊成功！請查收確認郵件',
   'toast.signout_success': '已登出',

@@ -26,18 +26,23 @@ import {
   User,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { zhHK } from 'date-fns/locale'
+import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { REMIND_LABELS } from '@/lib/types'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 type Tab = 'saved' | 'reminders'
 
 export default function AccountPage() {
   const router = useRouter()
+  const { locale } = useLocale()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('saved')
+
+  const dateLocale = locale === 'en' ? enUS : zhHK
+  const dateFormat = locale === 'en' ? 'MMM d, yyyy' : 'yyyy年M月d日'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,7 +58,7 @@ export default function AccountPage() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    toast.success('已退出登录')
+    toast.success(t(locale, 'toast.signout_success'))
     router.push('/')
   }
 
@@ -72,13 +77,13 @@ export default function AccountPage() {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
             <User className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold mb-2">你的个人中心</h2>
+          <h2 className="text-xl font-semibold mb-2">{t(locale, 'account.no_login_title')}</h2>
           <p className="text-muted-foreground max-w-sm mb-6">
-            登录后管理收藏、提醒和评论。免费注册，无需手机验证。
+            {t(locale, 'account.no_login_desc')}
           </p>
           <div className="flex gap-3">
-            <Button onClick={() => router.push('/auth/login?redirect=/account')}>登录 / 注册</Button>
-            <Button variant="outline" onClick={() => router.push('/')}>先看看比赛</Button>
+            <Button onClick={() => router.push('/auth/login?redirect=/account')}>{t(locale, 'saved.login_btn')}</Button>
+            <Button variant="outline" onClick={() => router.push('/')}>{t(locale, 'saved.browse')}</Button>
           </div>
         </div>
       </div>
@@ -94,7 +99,7 @@ export default function AccountPage() {
         onClick={() => router.push('/')}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> 返回首页
+        <ArrowLeft className="h-4 w-4" /> {t(locale, 'account.back')}
       </button>
 
       {/* === 个人信息卡片 === */}
@@ -116,11 +121,11 @@ export default function AccountPage() {
               </div>
               <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                注册于 {format(new Date(user.created_at), 'yyyy年M月d日', { locale: zhHK })}
+                {t(locale, 'account.joined', { date: format(new Date(user.created_at), dateFormat, { locale: dateLocale }) })}
               </div>
             </div>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" /> 退出
+              <LogOut className="h-4 w-4" /> {t(locale, 'account.signout')}
             </Button>
           </div>
         </CardContent>
@@ -137,7 +142,7 @@ export default function AccountPage() {
           }`}
         >
           <Heart className="h-4 w-4" />
-          已收藏
+          {t(locale, 'account.saved_tab')}
         </button>
         <button
           onClick={() => setActiveTab('reminders')}
@@ -148,7 +153,7 @@ export default function AccountPage() {
           }`}
         >
           <Bell className="h-4 w-4" />
-          我的提醒
+          {t(locale, 'account.reminders_tab')}
         </button>
       </div>
 
@@ -165,6 +170,7 @@ export default function AccountPage() {
 // ===== 收藏列表 =====
 function SavedList({ userId }: { userId: string }) {
   const router = useRouter()
+  const { locale } = useLocale()
   const [competitions, setCompetitions] = useState<Competition[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -206,11 +212,11 @@ function SavedList({ userId }: { userId: string }) {
     return (
       <div className="flex flex-col items-center py-16 text-muted-foreground">
         <Heart className="mb-4 h-12 w-12" />
-        <p className="text-lg font-medium">还没有收藏任何比赛</p>
-        <p className="text-sm mt-1">浏览比赛时点击 ❤️ 即可收藏</p>
+        <p className="text-lg font-medium">{t(locale, 'account.empty_saved')}</p>
+        <p className="text-sm mt-1">{t(locale, 'account.empty_saved_hint')}</p>
         <Button variant="outline" className="mt-5" onClick={() => router.push('/')}>
           <Compass className="mr-2 h-4 w-4" />
-          去发现比赛
+          {t(locale, 'account.discover')}
         </Button>
       </div>
     )
@@ -228,8 +234,12 @@ function SavedList({ userId }: { userId: string }) {
 // ===== 提醒列表 =====
 function RemindersList({ userId }: { userId: string }) {
   const router = useRouter()
+  const { locale } = useLocale()
   const [reminders, setReminders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  const dateLocale = locale === 'en' ? enUS : zhHK
+  const dateFormat = locale === 'en' ? 'MMM d' : 'M月d日'
 
   const load = async () => {
     setLoading(true)
@@ -248,7 +258,7 @@ function RemindersList({ userId }: { userId: string }) {
 
   const handleRemove = async (reminderId: string) => {
     await supabase.from('reminders').delete().eq('id', reminderId)
-    toast.success('已取消提醒')
+    toast.success(t(locale, 'toast.reminder_removed'))
     load()
   }
 
@@ -266,11 +276,11 @@ function RemindersList({ userId }: { userId: string }) {
     return (
       <div className="flex flex-col items-center py-16 text-muted-foreground">
         <Bell className="mb-4 h-12 w-12" />
-        <p className="text-lg font-medium">暂无提醒</p>
-        <p className="text-sm mt-1">在比赛详情页设置提醒，不会错过报名截止</p>
+        <p className="text-lg font-medium">{t(locale, 'account.empty_reminders')}</p>
+        <p className="text-sm mt-1">{t(locale, 'account.empty_reminders_hint')}</p>
         <Button variant="outline" className="mt-5" onClick={() => router.push('/')}>
           <Compass className="mr-2 h-4 w-4" />
-          去发现比赛
+          {t(locale, 'account.discover')}
         </Button>
       </div>
     )
@@ -289,17 +299,17 @@ function RemindersList({ userId }: { userId: string }) {
                   href={`/competition/${comp.id}`}
                   className="font-medium hover:text-primary transition-colors line-clamp-1"
                 >
-                  {comp.title}
+                  {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
                 </Link>
                 <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
                   {comp.date_start && (
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      {format(new Date(comp.date_start), 'M月d日', { locale: zhHK })}
+                      {format(new Date(comp.date_start), dateFormat, { locale: dateLocale })}
                     </span>
                   )}
                   <Badge variant="outline" className="text-xs">
-                    {REMIND_LABELS[r.remind_before as keyof typeof REMIND_LABELS] || r.remind_before}
+                    {t(locale, `remind.${r.remind_before}`)}
                   </Badge>
                   {comp.registration_link && (
                     <a
@@ -307,7 +317,7 @@ function RemindersList({ userId }: { userId: string }) {
                       target="_blank"
                       className="flex items-center gap-1 text-primary hover:underline ml-auto"
                     >
-                      去报名 <ExternalLink className="h-3 w-3" />
+                      {t(locale, 'account.go_register')} <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                 </div>
@@ -317,7 +327,7 @@ function RemindersList({ userId }: { userId: string }) {
                 size="icon"
                 onClick={() => handleRemove(r.id)}
                 className="shrink-0"
-                title="取消提醒"
+                title={t(locale, 'reminders.remove')}
               >
                 <BellOff className="h-4 w-4" />
               </Button>
