@@ -4,7 +4,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
-import { TYPE_LABELS, LOCATION_LABELS, FEE_LABELS, STATUS_LABELS, AGE_LABELS } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,15 +29,24 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
-import { zhHK } from 'date-fns/locale'
+import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 export default function CompetitionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { locale } = useLocale()
   const [saved, setSaved] = useState(false)
   const [reminded, setReminded] = useState(false)
+
+  const dateLocale = locale === 'en' ? enUS : zhHK
+  const dateFormat = locale === 'en' ? 'MMM d, yyyy (EEE)' : 'yyyy年M月d日 (EEE)'
+  const dateFormatShort = locale === 'en' ? 'MMM d, yyyy' : 'yyyy年M月d日'
+  const dateFormatDay = locale === 'en' ? 'MMM d' : 'M月d日'
+  const dateFormatTime = locale === 'en' ? 'MMM d HH:mm' : 'M月d日 HH:mm'
 
   // 主数据
   const { data: competition, isLoading } = useQuery({
@@ -104,10 +112,10 @@ export default function CompetitionDetailPage() {
 
     if (saved) {
       await supabase.from('saved_competitions').delete().eq('user_id', user.id).eq('competition_id', id)
-      setSaved(false); toast.success('已取消收藏')
+      setSaved(false); toast.success(t(locale, 'toast.unsaved'))
     } else {
       await supabase.from('saved_competitions').insert({ user_id: user.id, competition_id: id })
-      setSaved(true); toast.success('已收藏')
+      setSaved(true); toast.success(t(locale, 'toast.saved'))
     }
   }
 
@@ -119,9 +127,9 @@ export default function CompetitionDetailPage() {
       user_id: user.id, competition_id: id, remind_before: '1天前',
     })
     if (error) {
-      if (error.code === '23505') { toast.error('已设置过提醒') } else { toast.error('设置提醒失败') }
+      if (error.code === '23505') { toast.error(t(locale, 'toast.reminder_duplicate')) } else { toast.error(t(locale, 'toast.reminder_failed')) }
     } else {
-      setReminded(true); toast.success('已设置提醒，截止前一天通知你')
+      setReminded(true); toast.success(t(locale, 'toast.reminder_set'))
     }
   }
 
@@ -129,16 +137,15 @@ export default function CompetitionDetailPage() {
     const url = window.location.href
     try {
       await navigator.clipboard.writeText(url)
-      toast.success('链接已复制到剪贴板')
+      toast.success(t(locale, 'detail.share_done'))
     } catch {
-      // fallback
       const input = document.createElement('input')
       input.value = url
       document.body.appendChild(input)
       input.select()
       document.execCommand('copy')
       document.body.removeChild(input)
-      toast.success('链接已复制')
+      toast.success(t(locale, 'detail.share_done'))
     }
   }
 
@@ -158,25 +165,29 @@ export default function CompetitionDetailPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-xl font-semibold">比赛不存在或已下架</p>
+        <p className="text-xl font-semibold">{t(locale, 'detail.not_found')}</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/')}>
-          返回首页
+          {t(locale, 'detail.back_home')}
         </Button>
       </div>
     )
   }
 
-  // 7天阈值（与卡片一致）
+  // 7天阈值
   const isUrgent =
     competition.status === '报名中' &&
     competition.registration_deadline &&
     new Date(competition.registration_deadline).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 &&
     new Date(competition.registration_deadline).getTime() > Date.now()
 
-  // 距截止还有多久
   const deadlineDistance = competition.registration_deadline
-    ? formatDistanceToNow(new Date(competition.registration_deadline), { locale: zhHK, addSuffix: true })
+    ? formatDistanceToNow(new Date(competition.registration_deadline), { locale: dateLocale, addSuffix: true })
     : null
+
+  const createdAtDistance = formatDistanceToNow(new Date(competition.created_at), {
+    locale: dateLocale,
+    addSuffix: true,
+  })
 
   // 描述中的 URL 自动链接
   const formatDescription = (text: string) => {
@@ -194,6 +205,12 @@ export default function CompetitionDetailPage() {
     })
   }
 
+  const typeStr = competition.type ? t(locale, `type.${competition.type}`) : ''
+  const statusStr = competition.status ? t(locale, `status.${competition.status}`) : ''
+  const locationStr = competition.location ? t(locale, `location.${competition.location}`) : ''
+  const feeStr = competition.fee_type ? t(locale, `fee.${competition.fee_type}`) : ''
+  const ageStr = competition.age_group ? t(locale, `age.${competition.age_group}`) : ''
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       {/* 返回 */}
@@ -201,7 +218,7 @@ export default function CompetitionDetailPage() {
         onClick={() => router.back()}
         className="mb-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" /> 返回
+        <ArrowLeft className="h-4 w-4" /> {t(locale, 'detail.back')}
       </button>
 
       {/* === 紧急提示条 === */}
@@ -209,9 +226,9 @@ export default function CompetitionDetailPage() {
         <div className="mb-6 rounded-lg border-2 border-destructive/50 bg-destructive/5 p-4 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-destructive">报名即将截止</p>
+            <p className="font-semibold text-destructive">{t(locale, 'detail.urgent_banner')}</p>
             <p className="text-sm text-muted-foreground">
-              {deadlineDistance}截止报名，请尽快提交申请
+              {t(locale, 'detail.urgent_hint', { time: deadlineDistance || '' })}
             </p>
           </div>
         </div>
@@ -221,22 +238,22 @@ export default function CompetitionDetailPage() {
       <div className="mb-6">
         <div className="flex items-center flex-wrap gap-2 mb-3">
           <Badge variant="outline" className="text-sm">
-            {TYPE_LABELS[competition.type] || competition.type}
+            {typeStr}
           </Badge>
           <Badge
             variant={competition.status === '报名中' ? 'default' : 'secondary'}
             className="text-sm"
           >
-            {STATUS_LABELS[competition.status]}
+            {statusStr}
           </Badge>
           {competition.age_group && (
             <Badge variant="outline" className="text-sm gap-1">
               <Users className="h-3 w-3" />
-              {competition.age_group}
+              {ageStr}
             </Badge>
           )}
           {isUrgent && (
-            <Badge variant="destructive" className="animate-pulse text-sm">即将截止</Badge>
+            <Badge variant="destructive" className="animate-pulse text-sm">{t(locale, 'card.urgent')}</Badge>
           )}
         </div>
 
@@ -264,55 +281,55 @@ export default function CompetitionDetailPage() {
           <Card>
             <CardContent className="p-6">
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoRow icon={<Calendar className="h-4 w-4" />} label="比赛日期">
+                <InfoRow icon={<Calendar className="h-4 w-4" />} label={t(locale, 'detail.date')}>
                   <span className="font-medium">
-                    {format(new Date(competition.date_start), 'yyyy年M月d日 (EEE)', { locale: zhHK })}
+                    {format(new Date(competition.date_start), dateFormat, { locale: dateLocale })}
                     {competition.date_end &&
-                      ` — ${format(new Date(competition.date_end), 'M月d日', { locale: zhHK })}`}
+                      ` — ${format(new Date(competition.date_end), dateFormatDay, { locale: dateLocale })}`}
                   </span>
                 </InfoRow>
 
                 {competition.registration_deadline ? (
-                  <InfoRow icon={<Clock className="h-4 w-4" />} label="报名截止">
+                  <InfoRow icon={<Clock className="h-4 w-4" />} label={t(locale, 'detail.deadline_label')}>
                     <span className={`font-medium ${isUrgent ? 'text-destructive' : ''}`}>
-                      {format(new Date(competition.registration_deadline), 'M月d日 HH:mm', { locale: zhHK })}
+                      {format(new Date(competition.registration_deadline), dateFormatTime, { locale: dateLocale })}
                     </span>
                     <span className="text-xs text-muted-foreground ml-1">
                       ({deadlineDistance})
                     </span>
                   </InfoRow>
                 ) : (
-                  <InfoRow icon={<Clock className="h-4 w-4" />} label="报名截止">
-                    <span className="text-muted-foreground">待公布</span>
+                  <InfoRow icon={<Clock className="h-4 w-4" />} label={t(locale, 'detail.deadline_label')}>
+                    <span className="text-muted-foreground">{t(locale, 'detail.deadline_tba')}</span>
                   </InfoRow>
                 )}
 
-                <InfoRow icon={<MapPin className="h-4 w-4" />} label="比赛地点">
-                  {LOCATION_LABELS[competition.location]}
+                <InfoRow icon={<MapPin className="h-4 w-4" />} label={t(locale, 'detail.location')}>
+                  {locationStr}
                   {competition.venue && <span className="text-muted-foreground"> · {competition.venue}</span>}
                 </InfoRow>
 
-                <InfoRow icon={<DollarSign className="h-4 w-4" />} label="参赛费用">
-                  {FEE_LABELS[competition.fee_type]}
+                <InfoRow icon={<DollarSign className="h-4 w-4" />} label={t(locale, 'detail.fee')}>
+                  {feeStr}
                   {competition.fee_amount && (
                     <span className="text-muted-foreground"> · {competition.fee_amount}</span>
                   )}
                 </InfoRow>
 
                 {competition.organizer && (
-                  <InfoRow icon={<User className="h-4 w-4" />} label="主办方">
+                  <InfoRow icon={<User className="h-4 w-4" />} label={t(locale, 'detail.organizer')}>
                     {competition.organizer}
                   </InfoRow>
                 )}
 
                 {competition.age_group && (
-                  <InfoRow icon={<Users className="h-4 w-4" />} label="参赛年龄">
-                    {AGE_LABELS[competition.age_group] || competition.age_group}
+                  <InfoRow icon={<Users className="h-4 w-4" />} label={t(locale, 'detail.age')}>
+                    {ageStr}
                   </InfoRow>
                 )}
 
                 {competition.prize && (
-                  <InfoRow icon={<Trophy className="h-4 w-4" />} label="奖金/奖品">
+                  <InfoRow icon={<Trophy className="h-4 w-4" />} label={t(locale, 'detail.prize_label')}>
                     <span className="text-amber-600 dark:text-amber-400 font-medium">
                       {competition.prize}
                     </span>
@@ -326,26 +343,26 @@ export default function CompetitionDetailPage() {
                   {competition.status === '报名中' ? (
                     <>
                       <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
-                        <CheckCircle2 className="h-4 w-4" /> 正在接受报名
+                        <CheckCircle2 className="h-4 w-4" /> {t(locale, 'detail.status.open')}
                       </span>
                       {competition.registration_deadline && (
                         <>
                           <span className="text-muted-foreground">→</span>
                           <span className="text-muted-foreground">
-                            {format(new Date(competition.registration_deadline), 'M月d日', { locale: zhHK })} 截止报名
+                            {format(new Date(competition.registration_deadline), dateFormatDay, { locale: dateLocale })} {t(locale, 'detail.status.deadline')}
                           </span>
                         </>
                       )}
                       <span className="text-muted-foreground">→</span>
                       <span className="text-muted-foreground">
-                        {format(new Date(competition.date_start), 'M月d日', { locale: zhHK })} 比赛开始
+                        {format(new Date(competition.date_start), dateFormatDay, { locale: dateLocale })} {t(locale, 'detail.status.start')}
                       </span>
                     </>
                   ) : competition.status === '已结束' ? (
-                    <span className="text-muted-foreground">比赛已结束</span>
+                    <span className="text-muted-foreground">{t(locale, 'detail.status.ended')}</span>
                   ) : (
                     <span className="text-muted-foreground">
-                      {STATUS_LABELS[competition.status]}
+                      {statusStr}
                     </span>
                   )}
                 </div>
@@ -359,7 +376,7 @@ export default function CompetitionDetailPage() {
               <CardContent className="p-6">
                 <h2 className="font-semibold mb-3 flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  比赛详情
+                  {t(locale, 'detail.description')}
                 </h2>
                 <div className="text-sm text-muted-foreground leading-relaxed space-y-3 whitespace-pre-wrap">
                   {formatDescription(competition.description)}
@@ -374,9 +391,9 @@ export default function CompetitionDetailPage() {
           {/* 数据来源 */}
           {(competition.source || competition.source_url) && (
             <div className="rounded-lg border bg-muted/30 p-4 space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">📌 数据来源</p>
+              <p className="text-xs font-medium text-muted-foreground">📌 {t(locale, 'detail.source')}</p>
               {competition.source && (
-                <p className="text-sm">来源：{competition.source}</p>
+                <p className="text-sm">{t(locale, 'detail.source_from', { source: competition.source })}</p>
               )}
               {competition.source_url && (
                 <a
@@ -385,11 +402,11 @@ export default function CompetitionDetailPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-primary hover:underline break-all"
                 >
-                  查看原始页面 <ExternalLink className="h-3 w-3 shrink-0" />
+                  {t(locale, 'detail.view_original')} <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               )}
               <p className="text-xs text-muted-foreground">
-                数据更新于 {format(new Date(competition.updated_at), 'yyyy年M月d日', { locale: zhHK })}
+                {t(locale, 'detail.updated', { date: format(new Date(competition.updated_at), dateFormatShort, { locale: dateLocale }) })}
               </p>
             </div>
           )}
@@ -397,7 +414,7 @@ export default function CompetitionDetailPage() {
           {/* === 相关比赛推荐 === */}
           {related && related.length > 0 && (
             <section className="space-y-4">
-              <h2 className="font-semibold text-lg">同类型比赛推荐</h2>
+              <h2 className="font-semibold text-lg">{t(locale, 'detail.related')}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {related.map((comp) => (
                   <CompetitionCard key={comp.id} competition={comp} />
@@ -418,7 +435,7 @@ export default function CompetitionDetailPage() {
                   size="lg"
                   onClick={() => window.open(competition.registration_link!, '_blank')}
                 >
-                  前往报名 <ExternalLink className="h-4 w-4" />
+                  {t(locale, 'detail.register_btn')} <ExternalLink className="h-4 w-4" />
                 </Button>
               ) : competition.source_url ? (
                 <Button
@@ -426,7 +443,7 @@ export default function CompetitionDetailPage() {
                   variant="secondary"
                   onClick={() => window.open(competition.source_url!, '_blank')}
                 >
-                  查看来源 <ExternalLink className="h-4 w-4" />
+                  {t(locale, 'detail.view_source_btn')} <ExternalLink className="h-4 w-4" />
                 </Button>
               ) : null}
 
@@ -436,7 +453,7 @@ export default function CompetitionDetailPage() {
                 onClick={handleSave}
               >
                 <Heart className={`h-4 w-4 ${saved ? 'fill-red-500 text-red-500' : ''}`} />
-                {saved ? '已收藏' : '收藏比赛'}
+                {saved ? t(locale, 'detail.saved') : t(locale, 'detail.save')}
               </Button>
 
               <Button
@@ -446,7 +463,7 @@ export default function CompetitionDetailPage() {
                 disabled={reminded}
               >
                 <Bell className="h-4 w-4" />
-                {reminded ? '已设置提醒' : '报名截止前提醒我'}
+                {reminded ? t(locale, 'detail.reminded') : t(locale, 'detail.remind')}
               </Button>
 
               <Button
@@ -456,7 +473,7 @@ export default function CompetitionDetailPage() {
                 onClick={handleShare}
               >
                 <Share2 className="h-3.5 w-3.5" />
-                复制链接分享
+                {t(locale, 'detail.share')}
               </Button>
             </CardContent>
           </Card>
@@ -466,22 +483,18 @@ export default function CompetitionDetailPage() {
             <CardContent className="p-4 text-sm text-muted-foreground space-y-2">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                <span>{competition.view_count ?? 0} 次浏览</span>
+                <span>{t(locale, 'detail.views', { count: competition.view_count ?? 0 })}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span>
-                  发布于{' '}
-                  {formatDistanceToNow(new Date(competition.created_at), {
-                    locale: zhHK,
-                    addSuffix: true,
-                  })}
+                  {t(locale, 'detail.published', { time: createdAtDistance })}
                 </span>
               </div>
               {competition.fee_type === '有奖金' && (
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
                   <Trophy className="h-4 w-4" />
-                  <span className="font-medium">有奖金</span>
+                  <span className="font-medium">{t(locale, 'card.prize')}</span>
                 </div>
               )}
             </CardContent>

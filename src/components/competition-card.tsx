@@ -26,6 +26,9 @@ export function CompetitionCard({ competition }: Props) {
   const [reminding, setReminding] = useState(false)
 
   const dateLocale = locale === 'en' ? enUS : zhHK
+  const dateFormatFull = locale === 'en' ? 'MMM d (EEE) HH:mm' : 'M月d日 (EEE) HH:mm'
+  const dateFormatLong = locale === 'en' ? 'MMM d, yyyy' : 'yyyy年M月d日'
+  const dateFormatShort = locale === 'en' ? 'MMM d' : 'M月d日'
 
   // 组件挂载时检查是否已收藏
   useEffect(() => {
@@ -44,7 +47,7 @@ export function CompetitionCard({ competition }: Props) {
   }, [competition.id])
 
   const deadlineText = competition.registration_deadline
-    ? format(new Date(competition.registration_deadline), 'M月d日 (EEE) HH:mm', {
+    ? format(new Date(competition.registration_deadline), dateFormatFull, {
         locale: dateLocale,
       })
     : null
@@ -157,11 +160,11 @@ export function CompetitionCard({ competition }: Props) {
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>
-                {format(new Date(competition.date_start), 'yyyy年M月d日', {
+                {format(new Date(competition.date_start), dateFormatLong, {
                   locale: dateLocale,
                 })}
                 {competition.date_end &&
-                  ` — ${format(new Date(competition.date_end), 'M月d日', { locale: dateLocale })}`}
+                  ` — ${format(new Date(competition.date_end), dateFormatShort, { locale: dateLocale })}`}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
