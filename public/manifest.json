@@ -1,0 +1,25 @@
+{
+  "name": "HK Compass — 发现香港所有比赛",
+  "short_name": "HK Compass",
+  "description": "一站式发现香港公开比赛：运动、电竞、创意、AI创作、创业路演",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["productivity", "social", "utilities"],
+  "lang": "zh-Hant-HK",
+  "dir": "ltr"
+}
