@@ -8,14 +8,16 @@ import { SearchBar } from '@/components/search-bar'
 import { FilterBar } from '@/components/filter-bar'
 import { CompetitionCard } from '@/components/competition-card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Compass, SearchX } from 'lucide-react'
+import { Compass, SearchX, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
+import { useSidebar } from '@/components/sidebar'
 
 const ITEMS_PER_PAGE = 20
 
 export default function HomePage() {
   const { locale } = useLocale()
+  const { collapsed, toggle: toggleSidebar } = useSidebar()
   const [filters, setFilters] = useState<CompetitionFilters>({
     keyword: '',
     type: '全部',
@@ -35,7 +37,8 @@ export default function HomePage() {
       let query = supabase
         .from('competitions')
         .select('*', { count: 'exact' })
-        // 优先显示报名中 → 即将开始 → 进行中，已结束排最后
+        // 有奖金优先 → 报名中/即将开始/进行中 → 已结束排最后 → 日期最近的在前
+        .order('fee_type', { ascending: false })
         .order('status', { ascending: true })
         .order('date_start', { ascending: true })
 
@@ -119,6 +122,19 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      {/* 侧栏展开/收起按钮 — 放在发现比赛上方 */}
+      <button
+        onClick={toggleSidebar}
+        className="hidden lg:inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2 px-2 py-1 rounded hover:bg-muted"
+        title={collapsed ? '展开导航栏' : '收起导航栏'}
+      >
+        {collapsed ? <PanelLeftOpen className="h-3.5 w-3.5" /> : <PanelLeftClose className="h-3.5 w-3.5" />}
+        {collapsed
+          ? (locale === 'en' ? 'Expand sidebar' : locale === 'zh-HK' ? '展開側欄' : '展开侧栏')
+          : (locale === 'en' ? 'Collapse sidebar' : locale === 'zh-HK' ? '收起側欄' : '收起侧栏')
+        }
+      </button>
+
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           <Compass className="mr-3 inline-block h-8 w-8 text-primary" />
@@ -131,27 +147,17 @@ export default function HomePage() {
 
       <div className="mb-6 space-y-4">
         <SearchBar onSearch={handleSearch} defaultValue={filters.keyword} />
-        <div className="flex items-center gap-3">
-          {/* 🎓 学生专属一键开关 */}
-          <button
-            onClick={() => setStudentOnly((prev) => !prev)}
-            className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-              studentOnly
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700'
-                : 'border-2 border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300'
-            }`}
-          >
-            {studentOnly ? t(locale, 'home.student_toggle.on') : t(locale, 'home.student_toggle.off')}
-          </button>
-          {studentOnly && (
-            <span className="text-xs text-muted-foreground">
-              {locale === 'en' ? 'Showing inter-school & university competitions' : locale === 'zh-HK' ? '只顯示學界及大學比賽' : '只显示学界及大学比赛'}
-            </span>
-          )}
-          <div className="flex-1">
-            <FilterBar filters={filters} onFilterChange={handleFilterChange} />
-          </div>
-        </div>
+        <FilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          studentOnly={studentOnly}
+          onStudentToggle={() => setStudentOnly((prev) => !prev)}
+        />
+        {studentOnly && (
+          <p className="text-xs text-violet-600 dark:text-violet-400">
+            {locale === 'en' ? '🎓 Showing inter-school & university competitions only' : locale === 'zh-HK' ? '🎓 只顯示學界及大學比賽' : '🎓 只显示学界及大学比赛'}
+          </p>
+        )}
       </div>
 
       {!isLoading && (

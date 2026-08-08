@@ -18,6 +18,9 @@ const AGE_KEYS = ['儿童', '青少年', '成人/公开', '不限']
 interface Props {
   filters: CompetitionFilters
   onFilterChange: (key: keyof CompetitionFilters, value: string) => void
+  studentOnly?: boolean
+  onStudentToggle?: () => void
+  locale?: string
 }
 
 const DATE_VALUES = ['全部', '本周', '本月', '下月']
@@ -27,10 +30,11 @@ const btnBase = 'inline-flex shrink-0 items-center justify-center gap-1 rounded-
 const btnActive = 'bg-primary text-primary-foreground border-transparent hover:bg-primary/80'
 const btnInactive = 'border-border bg-background hover:bg-muted hover:text-foreground'
 
-export function FilterBar({ filters, onFilterChange }: Props) {
+export function FilterBar({ filters, onFilterChange, studentOnly, onStudentToggle }: Props) {
   const { locale } = useLocale()
 
   const hasActive =
+    studentOnly ||
     filters.type !== '全部' ||
     filters.location !== '全部' ||
     filters.fee_type !== '全部' ||
@@ -77,6 +81,22 @@ export function FilterBar({ filters, onFilterChange }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {/* 🎓 学生专属开关 — 放在筛选器最前面，一眼看到 */}
+      {onStudentToggle && (
+        <button
+          onClick={onStudentToggle}
+          className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-bold transition-all duration-200 ${
+            studentOnly
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30 scale-105'
+              : 'bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 border-2 border-violet-300 hover:border-violet-400 hover:shadow-md dark:from-violet-950 dark:to-fuchsia-950 dark:text-violet-300 dark:border-violet-700'
+          }`}
+        >
+          🎓 {studentOnly
+            ? (locale === 'en' ? 'Student View ON' : locale === 'zh-HK' ? '學生檢視中' : '学生检视中')
+            : (locale === 'en' ? 'Student Only' : locale === 'zh-HK' ? '學生專屬' : '学生专属')
+          }
+        </button>
+      )}
       <FilterPopover
         label={t(locale, 'home.filter.type')}
         value={filters.type ?? '全部'}
