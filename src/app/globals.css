@@ -84,14 +84,13 @@
 
   /*
    * CJK 字体统一策略：
-   * Geist 只含拉丁字符 → 中文字体回退到系统默认，不同字符可能来自不同字体导致「怪怪的」
-   * 在字体栈中明确指定统一的 CJK 回退字体：
-   *   Mac: PingFang HK / PingFang SC（统一、现代）
-   *   Windows: Microsoft YaHei（简体）/ Microsoft JhengHei（繁体）统一，排除旧字体 SimSun/PMingLiU
-   *   Android/Linux: Noto Sans CJK
-   *   最后兜底：sans-serif
+   * var(--font-geist-sans) 来自 Next.js Geist 字体（拉丁字符可变字体）
+   * CJK 字符依次回退：
+   *   Mac: PingFang HK → PingFang SC（统一、现代）
+   *   Windows: Microsoft YaHei（简体）→ Microsoft JhengHei（繁体）
+   *   排除旧字体 SimSun/PMingLiU（这些字体不同字符字形不统一，导致「怪怪的」）
    */
-  --font-sans: 'Geist', 'PingFang HK', 'PingFang SC', 'PingFang TC',
+  --font-sans: var(--font-geist-sans), 'PingFang HK', 'PingFang SC', 'PingFang TC',
     'Microsoft YaHei', 'Microsoft JhengHei',
     'Noto Sans CJK SC', 'Noto Sans CJK TC', 'Noto Sans HK', 'Noto Sans SC',
     'Source Han Sans SC', 'Source Han Sans HK',

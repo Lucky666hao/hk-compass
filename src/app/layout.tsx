@@ -6,6 +6,7 @@ import { ClientLayout } from '@/components/client-layout'
 const geist = Geist({
   subsets: ['latin'],
   display: 'swap',
+  variable: '--font-geist-sans',
 })
 
 export const metadata: Metadata = {
@@ -25,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-Hans-CN" suppressHydrationWarning className="h-full">
-      <body className={`${geist.className} min-h-full bg-background antialiased`}>
+    <html lang="zh-Hans-CN" suppressHydrationWarning className={`h-full ${geist.variable}`}>
+      <body className="min-h-full bg-background antialiased">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
