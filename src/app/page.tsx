@@ -26,10 +26,11 @@ export default function HomePage() {
     team_size: '全部',
     status: '全部',
   })
+  const [studentOnly, setStudentOnly] = useState(false)
   const [page, setPage] = useState(0)
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['competitions', filters, page],
+    queryKey: ['competitions', filters, page, studentOnly],
     queryFn: async () => {
       let query = supabase
         .from('competitions')
@@ -82,6 +83,11 @@ export default function HomePage() {
         }
       }
 
+      // 🎓 学生专属：只显示学校提名或两者皆可的比赛
+      if (studentOnly) {
+        query = query.in('eligibility', ['学校提名', '两者皆可'])
+      }
+
       if (filters.status && filters.status !== '全部') {
         query = query.eq('status', filters.status)
       } else {
@@ -125,7 +131,27 @@ export default function HomePage() {
 
       <div className="mb-6 space-y-4">
         <SearchBar onSearch={handleSearch} defaultValue={filters.keyword} />
-        <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+        <div className="flex items-center gap-3">
+          {/* 🎓 学生专属一键开关 */}
+          <button
+            onClick={() => setStudentOnly((prev) => !prev)}
+            className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+              studentOnly
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700'
+                : 'border-2 border-violet-300 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300'
+            }`}
+          >
+            {studentOnly ? t(locale, 'home.student_toggle.on') : t(locale, 'home.student_toggle.off')}
+          </button>
+          {studentOnly && (
+            <span className="text-xs text-muted-foreground">
+              {locale === 'en' ? 'Showing inter-school & university competitions' : locale === 'zh-HK' ? '只顯示學界及大學比賽' : '只显示学界及大学比赛'}
+            </span>
+          )}
+          <div className="flex-1">
+            <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+          </div>
+        </div>
       </div>
 
       {!isLoading && (

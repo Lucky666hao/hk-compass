@@ -23,6 +23,17 @@ export type AgeGroup = '儿童' | '青少年' | '成人/公开' | '不限'
 
 export type TeamSize = '个人赛' | '2-3人' | '4-6人' | '7人以上' | '不限'
 
+export type EligibilityType = '个人报名' | '学校提名' | '两者皆可' | '不限'
+
+export const ELIGIBILITY_OPTIONS: EligibilityType[] = ['个人报名', '学校提名', '两者皆可', '不限']
+
+export const ELIGIBILITY_LABELS: Record<EligibilityType, string> = {
+  '个人报名': '🧑 个人报名',
+  '学校提名': '🏫 学校提名',
+  '两者皆可': '🔄 两者皆可',
+  '不限': '🌐 不限',
+}
+
 export const TEAM_SIZE_OPTIONS: TeamSize[] = ['个人赛', '2-3人', '4-6人', '7人以上', '不限']
 
 export const TEAM_SIZE_LABELS: Record<TeamSize, string> = {
@@ -54,6 +65,7 @@ export interface Competition {
   registration_link: string | null
   age_group: AgeGroup | null
   team_size: TeamSize | null
+  eligibility: EligibilityType | null
   source_url: string | null
   poster_url: string | null
   source: string | null
@@ -92,6 +104,7 @@ export interface CompetitionFilters {
   date_range?: '本周' | '本月' | '下月' | '全部'
   team_size?: TeamSize | '全部'
   status?: CompetitionStatus | '全部'
+  student_only?: boolean
 }
 
 // 类型/地点/费用的中文标签映射

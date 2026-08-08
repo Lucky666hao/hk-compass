@@ -355,6 +355,15 @@ const en: TranslationDict = {
   'age.青少年': 'Youth',
   'age.成人/公开': 'Adults / Open',
   'age.不限': 'All Ages',
+
+  // Eligibility
+  'eligibility.个人报名': 'Individual',
+  'eligibility.学校提名': 'School Nomination',
+  'eligibility.两者皆可': 'Both OK',
+  'eligibility.不限': 'Any',
+  'home.student_toggle': '🎓 Student Only',
+  'home.student_toggle.off': '🎓 Student Only',
+  'home.student_toggle.on': '🎓 Showing Student Competitions',
 }
 
 // ---- Simplified Chinese ----
@@ -675,6 +684,15 @@ const zhCN: TranslationDict = {
   'age.青少年': '🧑 青少年',
   'age.成人/公开': '👤 成人/公开',
   'age.不限': '🌐 不限年龄',
+
+  // Eligibility
+  'eligibility.个人报名': '🧑 个人报名',
+  'eligibility.学校提名': '🏫 学校提名',
+  'eligibility.两者皆可': '🔄 两者皆可',
+  'eligibility.不限': '🌐 不限',
+  'home.student_toggle': '🎓 学生专属',
+  'home.student_toggle.off': '🎓 学生专属',
+  'home.student_toggle.on': '🎓 正在显示学生比赛',
 }
 
 // ---- Traditional Chinese ----
@@ -991,6 +1009,15 @@ const zhHK: TranslationDict = {
   'age.青少年': '🧑 青少年',
   'age.成人/公开': '👤 成人/公開',
   'age.不限': '🌐 不限年齡',
+
+  // Eligibility
+  'eligibility.个人报名': '🧑 個人報名',
+  'eligibility.学校提名': '🏫 學校提名',
+  'eligibility.两者皆可': '🔄 兩者皆可',
+  'eligibility.不限': '🌐 不限',
+  'home.student_toggle': '🎓 學生專屬',
+  'home.student_toggle.off': '🎓 學生專屬',
+  'home.student_toggle.on': '🎓 正在顯示學生比賽',
 }
 
 export const DICT: Record<Locale, TranslationDict> = { en, 'zh-CN': zhCN, 'zh-HK': zhHK }
