@@ -173,6 +173,33 @@ export const RECRUITMENT_STATUS_LABELS: Record<RecruitmentStatus, string> = {
   closed: '已截止',
 }
 
+// ============================================
+// 聊天系统
+// ============================================
+
+export type ConversationType = 'direct' | 'group'
+
+export interface Conversation {
+  id: string
+  type: ConversationType
+  name: string | null
+  created_at: string
+  // 虚拟字段
+  last_message?: string | null
+  last_message_at?: string | null
+  other_user_email?: string | null
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  user_id: string
+  content: string
+  created_at: string
+  // 虚拟字段
+  user_email?: string
+}
+
 export const REMIND_LABELS: Record<RemindBefore, string> = {
   '1小时前': '1小时前提醒',
   '1天前': '1天前提醒',

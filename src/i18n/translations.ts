@@ -245,6 +245,22 @@ const en: TranslationDict = {
   'recruit.reopen': 'Reopen Recruitment',
   'recruit.competition_linked': 'Linked competition',
 
+  // -- 聊天 --
+  'chat.title': 'Messages',
+  'chat.empty': 'No conversations yet. Start chatting with other users!',
+  'chat.new': 'New Chat',
+  'chat.search_users': 'Search users by email...',
+  'chat.start_conversation': 'Start a conversation with',
+  'chat.send': 'Send',
+  'chat.type_placeholder': 'Type a message...',
+  'chat.no_messages': 'No messages yet. Say hello!',
+  'chat.create_group': 'Create Group',
+  'chat.group_name': 'Group name',
+  'chat.group_name_placeholder': 'Enter group name...',
+  'chat.direct_message': 'Direct Message',
+  'chat.members': 'members',
+  'chat.you': 'You',
+
   'back': 'Back',
 
   // Sidebar
