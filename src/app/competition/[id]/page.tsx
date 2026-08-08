@@ -435,7 +435,8 @@ export default function CompetitionDetailPage() {
           {/* 主要操作 */}
           <Card>
             <CardContent className="p-4 space-y-3">
-              {competition.registration_link ? (
+              {/* 只有报名中 + deadline未过才显示报名按钮 */}
+              {competition.status === '报名中' && competition.registration_link && (
                 <Button
                   className="w-full gap-2"
                   size="lg"
@@ -443,7 +444,9 @@ export default function CompetitionDetailPage() {
                 >
                   {t(locale, 'detail.register_btn')} <ExternalLink className="h-4 w-4" />
                 </Button>
-              ) : competition.source_url ? (
+              )}
+              {/* 其他状态显示来源链接 */}
+              {(!competition.registration_link || competition.status !== '报名中') && competition.source_url ? (
                 <Button
                   className="w-full gap-2"
                   variant="secondary"
