@@ -1,4 +1,9 @@
 -- ============================================
+-- 先回填现有比赛的 team_size（NULL → '不限'）
+-- ============================================
+UPDATE public.competitions SET team_size = '不限' WHERE team_size IS NULL;
+
+-- ============================================
 -- 插入香港团体比赛测试数据
 -- ============================================
 
@@ -57,8 +62,8 @@ VALUES
   'CyberPort 創科黑客松 2026',
   'CyberPort Tech Hackathon 2026',
   'AI创作',
-  '48小時黑客松挑戰！圍繞智慧城市、金融科技及綠色科技三大主題進行開發。每隊2-5人，需提交可運行的原型及路演簡報。',
-  '48-hour hackathon challenge! Build solutions around Smart City, FinTech, and GreenTech themes. Teams of 2-5 must deliver a working prototype and pitch presentation.',
+  '48小時黑客松挑戰！圍繞智慧城市、金融科技及綠色科技三大主題進行開發。每隊2-3人，需提交可運行的原型及路演簡報。',
+  '48-hour hackathon challenge! Build solutions around Smart City, FinTech, and GreenTech themes. Teams of 2-3 must deliver a working prototype and pitch presentation.',
   '2026-11-08',
   '2026-11-10',
   '2026-10-25',
@@ -81,8 +86,8 @@ VALUES
   '香港校際音樂節 2026 — 樂隊比賽',
   'Hong Kong Schools Music Festival 2026 — Band Competition',
   '音乐表演',
-  '第75屆校際音樂節增設樂隊比賽項目，接受各類型樂隊參賽（流行、搖滾、爵士、古典室樂等）。每隊3-8人，需提交5-8分鐘演出曲目。',
-  'The 75th Schools Music Festival introduces a band competition category. Open to all band types (pop, rock, jazz, classical chamber). Teams of 3-8 perform a 5-8 minute piece.',
+  '第75屆校際音樂節增設樂隊比賽項目，接受各類型樂隊參賽（流行、搖滾、爵士、古典室樂等）。每隊4-6人，需提交5-8分鐘演出曲目。',
+  'The 75th Schools Music Festival introduces a band competition category. Open to all band types (pop, rock, jazz, classical chamber). Teams of 4-6 perform a 5-8 minute piece.',
   '2026-11-01',
   '2026-11-30',
   '2026-10-15',
@@ -96,7 +101,7 @@ VALUES
   'Hong Kong Schools Music and Speech Association',
   'https://example.com/hk-music-fest-2026',
   '不限',
-  '3-5人',
+  '4-6人',
   '报名中',
   'hksmsa-band'
 ),
@@ -120,7 +125,7 @@ VALUES
   'PolyU Esports Society',
   'https://example.com/polyu-esports-2026',
   '青少年',
-  '5-6人',
+  '4-6人',
   '报名中',
   'polyu-esports'
 ),
@@ -153,12 +158,12 @@ VALUES
   '香港國際電影節 2026 — 學生短片創作賽',
   'HKIFF 2026 — Student Short Film Competition',
   '创意摄影设计',
-  '以2-5人團隊創作5-15分鐘短片，主題為"我眼中的香港"。不限拍攝器材，需提交作品及幕後花絮。得獎作品將在電影節期間公開放映。',
-  'Create a 5-15 minute short film in teams of 2-5 on the theme "Hong Kong Through My Eyes". Any filming equipment allowed. Winning entries screened during the festival.',
+  '以2-3人團隊創作5-15分鐘短片，主題為"我眼中的香港"。不限拍攝器材，需提交作品及幕後花絮。得獎作品將在電影節期間公開放映。',
+  'Create a 5-15 minute short film in teams of 2-3 on the theme "Hong Kong Through My Eyes". Any filming equipment allowed. Winning entries screened during the festival.',
   '2026-10-01',
   '2026-12-15',
   '2026-09-15',
-  '不限',
+  '线上',
   '全港取景 / 線上提交',
   'Filming anywhere in HK / Online submission',
   '免费',

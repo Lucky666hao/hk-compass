@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Competition, TeamSize } from '@/lib/types'
@@ -9,6 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/components/ui/command'
 import {
   Select,
   SelectContent,
@@ -18,7 +27,7 @@ import {
 } from '@/components/ui/select'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, Send, X } from 'lucide-react'
+import { ArrowLeft, Send, X, Search, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function NewRecruitmentPage() {
@@ -31,11 +40,11 @@ export default function NewRecruitmentPage() {
   const [requirements, setRequirements] = useState('')
   const [contact, setContact] = useState('')
   const [competitionId, setCompetitionId] = useState<string | null>(null)
-  const [competitionTitle, setCompetitionTitle] = useState('')
+  const [competitionSearchOpen, setCompetitionSearchOpen] = useState(false)
   const [competitions, setCompetitions] = useState<Competition[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  // 加载所有比赛（用于下拉选择）
+  // 加载所有比赛（用于搜索选择）
   useEffect(() => {
     supabase
       .from('competitions')
@@ -102,40 +111,74 @@ export default function NewRecruitmentPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          {/* 关联比赛 — 下拉选择 */}
+          {/* 关联比赛 — 搜索选择器 */}
           <div>
             <label className="block text-sm font-medium mb-2">{t(locale, 'recruit.link_competition')}</label>
             {competitionId && selectedComp ? (
-              <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border">
-                <span className="text-sm flex-1">
+              /* 已选中 — 显示标签 + 可清除 */
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                <span className="text-sm flex-1 truncate">
                   🏆 {locale === 'en' && selectedComp.title_en ? selectedComp.title_en : selectedComp.title}
                 </span>
                 <button
                   onClick={() => setCompetitionId(null)}
-                  className="text-muted-foreground hover:text-foreground shrink-0"
+                  className="text-muted-foreground hover:text-foreground shrink-0 p-0.5 rounded hover:bg-amber-200 dark:hover:bg-amber-800"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
-              <Select
-                value={competitionId || ''}
-                onValueChange={(v) => setCompetitionId(v || null)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={locale === 'en' ? 'Select a competition (optional)...' : locale === 'zh-HK' ? '選擇比賽（可選）...' : '选择比赛（可选）...'} />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  <SelectItem value="_none">
-                    {t(locale, 'recruit.no_competition') as string}
-                  </SelectItem>
-                  {competitions.map((comp) => (
-                    <SelectItem key={comp.id} value={comp.id}>
-                      {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              /* 未选中 — 搜索型下拉 */
+              <Popover open={competitionSearchOpen} onOpenChange={setCompetitionSearchOpen}>
+                <PopoverTrigger>
+                  <button
+                    role="combobox"
+                    className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-muted-foreground">
+                      {locale === 'en' ? 'Search competitions...' : locale === 'zh-HK' ? '搜尋比賽...' : '搜索比赛...'}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder={locale === 'en' ? 'Type to search...' : locale === 'zh-HK' ? '輸入搜尋...' : '输入搜索...'}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        {locale === 'en' ? 'No competitions found' : locale === 'zh-HK' ? '未找到相關比賽' : '未找到相关比赛'}
+                      </CommandEmpty>
+                      <CommandGroup heading={locale === 'en' ? 'Competitions' : locale === 'zh-HK' ? '比賽' : '比赛'}>
+                        {/* 不关联选项 */}
+                        <CommandItem
+                          value="__none__"
+                          onSelect={() => {
+                            setCompetitionId(null)
+                            setCompetitionSearchOpen(false)
+                          }}
+                          className="text-muted-foreground"
+                        >
+                          🚫 {t(locale, 'recruit.no_competition')}
+                        </CommandItem>
+                        {competitions.map((comp) => (
+                          <CommandItem
+                            key={comp.id}
+                            value={`${comp.title} ${comp.title_en || ''}`}
+                            onSelect={() => {
+                              setCompetitionId(comp.id)
+                              setCompetitionSearchOpen(false)
+                            }}
+                          >
+                            {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 

@@ -74,7 +74,12 @@ export default function HomePage() {
       }
 
       if (filters.team_size && filters.team_size !== '全部') {
-        query = query.eq('team_size', filters.team_size)
+        // 不限 → 同时匹配 team_size='不限' 和 NULL（现有比赛默认不限）
+        if (filters.team_size === '不限') {
+          query = query.or('team_size.eq.不限,team_size.is.null')
+        } else {
+          query = query.eq('team_size', filters.team_size)
+        }
       }
 
       if (filters.status && filters.status !== '全部') {

@@ -211,6 +211,28 @@ function SidebarInner({
         )}
       </div>
 
+      {/* 折叠按钮 — 在 Logo 下方、导航上方，一眼看到 */}
+      <div className="px-2 pt-1 pb-0.5">
+        <button
+          onClick={toggle}
+          className={cn(
+            'w-full flex items-center rounded-md px-2 py-1.5 text-sm',
+            'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+            collapsed && 'justify-center'
+          )}
+          title={collapsed ? '展开导航栏' : '收起导航栏'}
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <>
+              <PanelLeftClose className="h-4 w-4 shrink-0" />
+              <span className="ml-2.5 text-xs">{t(locale, 'sidebar.collapse')}</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* 导航 */}
       <nav className="flex-1 py-3 px-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
@@ -231,25 +253,6 @@ function SidebarInner({
 
       {/* 底部 */}
       <div className="border-t border-sidebar-border p-2 space-y-1">
-        {/* 折叠按钮 — 放在最上面，更显眼 */}
-        <button
-          onClick={toggle}
-          className={cn(
-            'w-full flex items-center rounded-md px-2 py-2 text-sm',
-            'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-            collapsed && 'justify-center'
-          )}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
-          ) : (
-            <>
-              <PanelLeftClose className="h-4 w-4 shrink-0" />
-              <span className="ml-2.5">{t(locale, 'sidebar.collapse')}</span>
-            </>
-          )}
-        </button>
-
         {/* 语言切换 */}
         <LangSwitcher collapsed={collapsed} locale={locale} setLocale={setLocale} />
 
