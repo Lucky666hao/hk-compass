@@ -212,12 +212,12 @@ function SidebarInner({
       </div>
 
       {/* 折叠按钮 — 在 Logo 下方、导航上方，一眼看到 */}
-      <div className="px-2 pt-1 pb-0.5">
+      <div className="px-2 py-1">
         <button
           onClick={toggle}
           className={cn(
             'w-full flex items-center rounded-md px-2 py-1.5 text-sm',
-            'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+            'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border/60 bg-sidebar-accent/30 transition-colors',
             collapsed && 'justify-center'
           )}
           title={collapsed ? '展开导航栏' : '收起导航栏'}
