@@ -189,6 +189,16 @@ const en: TranslationDict = {
   // Generic
   'back': 'Back',
 
+  // Sidebar
+  'sidebar.discover': 'Discover',
+  'sidebar.posts': 'Community',
+  'sidebar.recruit': 'Team Up',
+  'sidebar.chat': 'Chat',
+  'sidebar.collapse': 'Collapse',
+  'sidebar.expand': 'Expand',
+  'sidebar.login': 'Log In',
+  'sidebar.language': 'Language',
+
   // Footer
   'footer.text': 'HK Compass · Discover Hong Kong Competitions',
 
@@ -403,6 +413,15 @@ const zhCN: TranslationDict = {
 
   'back': '返回',
 
+  'sidebar.discover': '发现比赛',
+  'sidebar.posts': '社区帖子',
+  'sidebar.recruit': '组队招募',
+  'sidebar.chat': '聊天',
+  'sidebar.collapse': '收起',
+  'sidebar.expand': '展开',
+  'sidebar.login': '登录',
+  'sidebar.language': '语言',
+
   'footer.text': 'HK Compass · 发现香港所有比赛',
 
   'toast.saved': '已收藏！',
@@ -604,6 +623,15 @@ const zhHK: TranslationDict = {
   'remind.1周前': '1週前提醒',
 
   'back': '返回',
+
+  'sidebar.discover': '發現比賽',
+  'sidebar.posts': '社區帖子',
+  'sidebar.recruit': '組隊招募',
+  'sidebar.chat': '聊天',
+  'sidebar.collapse': '收起',
+  'sidebar.expand': '展開',
+  'sidebar.login': '登入',
+  'sidebar.language': '語言',
 
   'footer.text': 'HK Compass · 發現香港所有比賽',
 

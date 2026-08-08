@@ -2,7 +2,7 @@
 
 import { LanguageProvider } from '@/i18n/LanguageContext'
 import { Providers } from '@/components/providers'
-import { Navbar } from '@/components/navbar'
+import { Sidebar, SidebarProvider, SidebarInset } from '@/components/sidebar'
 import { useLocale } from '@/i18n/LanguageContext'
 
 function FooterWithLocale() {
@@ -25,11 +25,15 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <LanguageProvider>
       <Providers>
-        <div className="flex min-h-full flex-col">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <FooterWithLocale />
-        </div>
+        <SidebarProvider>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <SidebarInset>
+              <main className="flex-1">{children}</main>
+              <FooterWithLocale />
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
       </Providers>
     </LanguageProvider>
   )
