@@ -1,10 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+function getSupabaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL is not set')
+  return url
+}
 
-// 客户端组件用
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+function getSupabaseAnonKey(): string {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!key) throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not set')
+  return key
+}
+
+// 延迟初始化 — 避免构建时环境变量不可用导致崩溃
+let _client: SupabaseClient | null = null
+
+function getClient(): SupabaseClient {
+  if (!_client) {
+    _client = createClient(getSupabaseUrl(), getSupabaseAnonKey())
+  }
+  return _client
+}
+
+// 客户端组件用（Proxy 延迟访问）
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop: string) {
+    return (getClient() as any)[prop]
+  },
+  apply(_target, _thisArg, args) {
+    return (getClient() as any)(...args)
+  },
+})
 
 // 服务端用 (带 service_role key — 仅 API routes 使用)
 export const getServiceSupabase = () => {
@@ -12,5 +39,5 @@ export const getServiceSupabase = () => {
   if (!serviceKey) {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
   }
-  return createClient(supabaseUrl, serviceKey)
+  return createClient(getSupabaseUrl(), serviceKey)
 }

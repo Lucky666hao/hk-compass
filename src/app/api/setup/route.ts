@@ -1,10 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// 延迟初始化 — 避免构建时环境变量为空导致崩溃
+
+let _adminClient: SupabaseClient | null = null
+function getAdminClient(): SupabaseClient {
+  if (!_adminClient) {
+    _adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+  }
+  return _adminClient
+}
 
 // 7 个香港团体比赛数据
 const TEAM_COMPETITIONS = [
@@ -180,7 +189,7 @@ export async function POST(req: Request) {
       // 回填现有比赛 team_size：NULL → '不限'
       // ============================================
       case 'backfill_team_size': {
-        const { data: nulls, error: selectErr } = await supabaseAdmin
+        const { data: nulls, error: selectErr } = await getAdminClient()
           .from('competitions')
           .select('id')
           .is('team_size', null)
@@ -197,7 +206,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ success: true, updated: 0, message: '所有比赛已有 team_size 值，无需回填' })
         }
 
-        const { error: updateErr } = await supabaseAdmin
+        const { error: updateErr } = await getAdminClient()
           .from('competitions')
           .update({ team_size: '不限' })
           .is('team_size', null)
@@ -214,7 +223,7 @@ export async function POST(req: Request) {
       // ============================================
       case 'insert_team_competitions': {
         // 先检查是否已插入（避免重复）
-        const { data: existing } = await supabaseAdmin
+        const { data: existing } = await getAdminClient()
           .from('competitions')
           .select('id')
           .eq('source', 'hku-debate')
@@ -224,7 +233,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ success: true, inserted: 0, message: '团体比赛数据已存在，跳过插入' })
         }
 
-        const { error } = await supabaseAdmin.from('competitions').insert(TEAM_COMPETITIONS)
+        const { error } = await getAdminClient().from('competitions').insert(TEAM_COMPETITIONS)
         if (error) {
           return NextResponse.json({ success: false, error: error.message })
         }
