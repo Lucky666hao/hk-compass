@@ -145,6 +145,34 @@ export interface Post {
   author_email?: string
 }
 
+// ============================================
+// 组队招募
+// ============================================
+
+export type RecruitmentStatus = 'open' | 'closed'
+
+export interface Recruitment {
+  id: string
+  user_id: string
+  competition_id: string | null  // 可关联具体比赛
+  title: string
+  description: string
+  team_size: string | null  // 如 "3-5人"
+  requirements: string | null
+  contact: string | null  // 联系方式
+  status: RecruitmentStatus
+  created_at: string
+  updated_at: string
+  // 虚拟字段
+  author_email?: string
+  competition_title?: string | null  // 关联的比赛标题
+}
+
+export const RECRUITMENT_STATUS_LABELS: Record<RecruitmentStatus, string> = {
+  open: '招募中',
+  closed: '已截止',
+}
+
 export const REMIND_LABELS: Record<RemindBefore, string> = {
   '1小时前': '1小时前提醒',
   '1天前': '1天前提醒',

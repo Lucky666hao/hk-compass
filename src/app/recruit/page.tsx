@@ -1,0 +1,100 @@
+'use client'
+
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import type { Recruitment } from '@/lib/types'
+import { RecruitmentCard } from '@/components/recruitment-card'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Users, Plus } from 'lucide-react'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
+import { useState } from 'react'
+
+export default function RecruitPage() {
+  const router = useRouter()
+  const { locale } = useLocale()
+  const [statusFilter, setStatusFilter] = useState<string>('open')
+
+  const { data: recruitments, isLoading } = useQuery({
+    queryKey: ['recruitments', statusFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from('recruitments')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
+      }
+
+      const { data } = await query
+      return (data as Recruitment[]) ?? []
+    },
+  })
+
+  const filters = [
+    { key: 'open', label: t(locale, 'recruit.status_open') as string },
+    { key: 'closed', label: t(locale, 'recruit.status_closed') as string },
+    { key: 'all', label: locale === 'en' ? 'All' : locale === 'zh-HK' ? '全部' : '全部' },
+  ]
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      {/* 顶部 */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Users className="h-6 w-6 text-amber-500" />
+          <h1 className="text-2xl font-bold">{t(locale, 'recruit.title')}</h1>
+        </div>
+        <Button onClick={() => router.push('/recruit/new')} className="bg-amber-500 hover:bg-amber-600">
+          <Plus className="h-4 w-4 mr-1.5" />
+          {t(locale, 'recruit.new')}
+        </Button>
+      </div>
+
+      {/* 状态筛选 */}
+      <div className="flex gap-1.5 mb-6">
+        {filters.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setStatusFilter(f.key)}
+            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+              statusFilter === f.key
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 列表 */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+      ) : recruitments && recruitments.length > 0 ? (
+        <div className="space-y-3">
+          {recruitments.map((r) => (
+            <RecruitmentCard key={r.id} recruitment={r} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center py-20 text-muted-foreground">
+          <Users className="mb-4 h-12 w-12" />
+          <p className="text-lg">{t(locale, 'recruit.empty')}</p>
+          <Button variant="outline" className="mt-4" onClick={() => router.push('/recruit/new')}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            {t(locale, 'recruit.new')}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
