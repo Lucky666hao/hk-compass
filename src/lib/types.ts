@@ -118,6 +118,33 @@ export const AGE_LABELS: Record<AgeGroup, string> = {
   '不限': '🌐 不限年龄',
 }
 
+// ============================================
+// 社区帖子
+// ============================================
+
+export type PostCategory = '赛事讨论' | '经验分享' | '求组队' | '其他'
+
+export const POST_CATEGORIES: PostCategory[] = ['赛事讨论', '经验分享', '求组队', '其他']
+
+export const POST_CATEGORY_LABELS: Record<PostCategory, string> = {
+  '赛事讨论': '🏆 赛事讨论',
+  '经验分享': '💡 经验分享',
+  '求组队': '🤝 求组队',
+  '其他': '💬 其他',
+}
+
+export interface Post {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  category: PostCategory
+  created_at: string
+  updated_at: string
+  // 虚拟字段（JOIN）
+  author_email?: string
+}
+
 export const REMIND_LABELS: Record<RemindBefore, string> = {
   '1小时前': '1小时前提醒',
   '1天前': '1天前提醒',

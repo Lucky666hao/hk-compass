@@ -187,6 +187,32 @@ const en: TranslationDict = {
   'remind.1周前': '1 week before',
 
   // Generic
+  // -- 社区帖子 --
+  'posts.title': 'Community Posts',
+  'posts.empty': 'No posts yet. Be the first to share!',
+  'posts.empty_login': 'Log in to start a discussion',
+  'posts.new': 'New Post',
+  'posts.create': 'Create Post',
+  'posts.publish': 'Publish',
+  'posts.category': 'Category',
+  'posts.select_category': 'Select a category',
+  'posts.title_placeholder': 'Give your post a title...',
+  'posts.content_placeholder': 'Share your thoughts, tips, questions, or find teammates...',
+  'posts.login_prompt': 'Log in to post',
+  'posts.login_desc': 'Join the community to share your thoughts and connect with others.',
+  'posts.publish_success': 'Post published!',
+  'posts.publish_error': 'Failed to publish. Please try again.',
+  'posts.no_title': 'Please enter a title.',
+  'posts.no_content': 'Please enter some content.',
+  'posts.back_to_list': 'Back to posts',
+  'posts.delete_confirm': 'Delete this post?',
+  'posts.delete_success': 'Post deleted.',
+  // 分类标签
+  'posts.cat.赛事讨论': 'Event Talk',
+  'posts.cat.经验分享': 'Experience',
+  'posts.cat.求组队': 'Recruiting',
+  'posts.cat.其他': 'General',
+
   'back': 'Back',
 
   // Sidebar
@@ -411,6 +437,32 @@ const zhCN: TranslationDict = {
   'remind.3天前': '3天前提醒',
   'remind.1周前': '1周前提醒',
 
+  // -- 社区帖子 --
+  'posts.title': '社区帖子',
+  'posts.empty': '还没有帖子，快来第一个分享吧！',
+  'posts.empty_login': '登录后参与讨论',
+  'posts.new': '发帖子',
+  'posts.create': '新建帖子',
+  'posts.publish': '发布',
+  'posts.category': '分类',
+  'posts.select_category': '选择分类',
+  'posts.title_placeholder': '给你的帖子起个标题...',
+  'posts.content_placeholder': '分享你的想法、经验、问题，或者找队友...',
+  'posts.login_prompt': '登录后发帖',
+  'posts.login_desc': '加入社区，分享你的想法，结识志同道合的伙伴。',
+  'posts.publish_success': '发布成功！',
+  'posts.publish_error': '发布失败，请重试。',
+  'posts.no_title': '请输入标题。',
+  'posts.no_content': '请输入内容。',
+  'posts.back_to_list': '返回帖子列表',
+  'posts.delete_confirm': '确定删除这条帖子？',
+  'posts.delete_success': '帖子已删除。',
+  // 分类标签
+  'posts.cat.赛事讨论': '🏆 赛事讨论',
+  'posts.cat.经验分享': '💡 经验分享',
+  'posts.cat.求组队': '🤝 求组队',
+  'posts.cat.其他': '💬 其他',
+
   'back': '返回',
 
   'sidebar.discover': '发现比赛',
@@ -621,6 +673,32 @@ const zhHK: TranslationDict = {
   'remind.1天前': '1天前提醒',
   'remind.3天前': '3天前提醒',
   'remind.1周前': '1週前提醒',
+
+  // -- 社區帖子 --
+  'posts.title': '社區帖子',
+  'posts.empty': '仲未有帖子，快啲嚟第一個分享啦！',
+  'posts.empty_login': '登入後參與討論',
+  'posts.new': '發帖子',
+  'posts.create': '新增帖子',
+  'posts.publish': '發布',
+  'posts.category': '分類',
+  'posts.select_category': '選擇分類',
+  'posts.title_placeholder': '幫你嘅帖子改個標題...',
+  'posts.content_placeholder': '分享你嘅想法、經驗、問題，或者搵隊友...',
+  'posts.login_prompt': '登入後發帖',
+  'posts.login_desc': '加入社群，分享你嘅想法，認識志同道合嘅夥伴。',
+  'posts.publish_success': '發布成功！',
+  'posts.publish_error': '發布失敗，請重試。',
+  'posts.no_title': '請輸入標題。',
+  'posts.no_content': '請輸入內容。',
+  'posts.back_to_list': '返回帖子列表',
+  'posts.delete_confirm': '確定刪除呢條帖子？',
+  'posts.delete_success': '帖子已刪除。',
+  // 分類標籤
+  'posts.cat.賽事討論': '🏆 賽事討論',
+  'posts.cat.經驗分享': '💡 經驗分享',
+  'posts.cat.求組隊': '🤝 求組隊',
+  'posts.cat.其他': '💬 其他',
 
   'back': '返回',
 
