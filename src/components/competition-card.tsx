@@ -136,7 +136,7 @@ export function CompetitionCard({ competition }: Props) {
                 )}
               </div>
               <h3 className="font-semibold text-base leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                {competition.title}
+                {locale === 'en' && competition.title_en ? competition.title_en : competition.title}
               </h3>
             </div>
 
