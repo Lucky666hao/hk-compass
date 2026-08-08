@@ -22,10 +22,10 @@ export default function RemindersPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) router.push('/auth/login?redirect=/reminders')
-      else setUserId(session.user.id)
+      if (session?.user) setUserId(session.user.id)
+      else setUserId(null)
     })
-  }, [router])
+  }, [])
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['reminders', userId],
@@ -48,10 +48,23 @@ export default function RemindersPage() {
     if (error) { toast.error('删除失败') } else { toast.success('已取消提醒'); refetch() }
   }
 
-  if (!userId) {
+  // 未登录引导
+  if (userId === null) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Skeleton className="h-10 w-40" />
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="flex flex-col items-center py-20 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+            <Bell className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">不错过任何报名截止</h2>
+          <p className="text-muted-foreground max-w-sm mb-6">
+            登录后即可为比赛设置截止提醒。免费注册，无需手机验证。
+          </p>
+          <div className="flex gap-3">
+            <Button onClick={() => router.push('/auth/login?redirect=/reminders')}>登录 / 注册</Button>
+            <Button variant="outline" onClick={() => router.push('/')}>先看看比赛</Button>
+          </div>
+        </div>
       </div>
     )
   }

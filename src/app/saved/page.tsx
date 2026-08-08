@@ -16,10 +16,10 @@ export default function SavedPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) router.push('/auth/login?redirect=/saved')
-      else setUserId(session.user.id)
+      if (session?.user) setUserId(session.user.id)
+      else setUserId(null)
     })
-  }, [router])
+  }, [])
 
   const { data: competitions, isLoading } = useQuery({
     queryKey: ['saved-competitions', userId],
@@ -44,10 +44,23 @@ export default function SavedPage() {
     enabled: !!userId,
   })
 
-  if (!userId) {
+  // 未登录引导
+  if (userId === null) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Skeleton className="h-10 w-40" />
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="flex flex-col items-center py-20 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+            <Heart className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">收藏你感兴趣的比赛</h2>
+          <p className="text-muted-foreground max-w-sm mb-6">
+            登录后即可收藏比赛、设置提醒、发表评论。免费注册，无需手机验证。
+          </p>
+          <div className="flex gap-3">
+            <Button onClick={() => router.push('/auth/login?redirect=/saved')}>登录 / 注册</Button>
+            <Button variant="outline" onClick={() => router.push('/')}>先看看比赛</Button>
+          </div>
+        </div>
       </div>
     )
   }

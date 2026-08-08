@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -14,12 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Compass, LogOut, Heart, Bell } from 'lucide-react'
+import { Compass, LogOut, Heart, Bell, User } from 'lucide-react'
 
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -69,14 +69,18 @@ export function Navbar() {
                         </AvatarFallback>
                       </Avatar>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-52">
                       <div className="px-2 py-1.5 text-sm text-muted-foreground truncate">
                         {user.email}
                       </div>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push('/account')}>
+                        <User className="mr-2 h-4 w-4" />
+                        个人中心
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/saved')}>
                         <Heart className="mr-2 h-4 w-4" />
-                        已收藏的比赛
+                        已收藏
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push('/reminders')}>
                         <Bell className="mr-2 h-4 w-4" />

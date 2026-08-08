@@ -30,17 +30,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 需要登录的页面
-  const protectedPaths = ['/saved', '/reminders']
-  const isProtected = protectedPaths.some((p) =>
-    request.nextUrl.pathname.startsWith(p),
-  )
-
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
+  // 免登录模式 — 不强制跳转，页面内部自行处理
+  // 将 user 信息通过 header 传递给服务端组件（可选）
+  if (user) {
+    supabaseResponse.headers.set('x-user-id', user.id)
   }
 
   return supabaseResponse
