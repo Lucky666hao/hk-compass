@@ -1,6 +1,7 @@
 'use client'
 
-import type { CompetitionFilters } from '@/lib/types'
+import type { CompetitionFilters, TeamSize } from '@/lib/types'
+import { TEAM_SIZE_OPTIONS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ChevronDown } from 'lucide-react'
@@ -35,6 +36,7 @@ export function FilterBar({ filters, onFilterChange }: Props) {
     filters.fee_type !== '全部' ||
     filters.date_range !== '全部' ||
     filters.age_group !== '全部' ||
+    filters.team_size !== '全部' ||
     filters.status !== '全部'
 
   const resetAll = () => {
@@ -43,6 +45,7 @@ export function FilterBar({ filters, onFilterChange }: Props) {
     onFilterChange('fee_type', '全部')
     onFilterChange('date_range', '全部')
     onFilterChange('age_group', '全部')
+    onFilterChange('team_size', '全部')
     onFilterChange('status', '全部')
   }
 
@@ -66,6 +69,10 @@ export function FilterBar({ filters, onFilterChange }: Props) {
   const ageOptions = [
     { value: '全部', label: t(locale, 'home.filter.all_ages') },
     ...AGE_KEYS.map((k) => ({ value: k, label: t(locale, `age.${k}`) })),
+  ]
+  const teamOptions = [
+    { value: '全部', label: locale === 'en' ? 'All Sizes' : locale === 'zh-HK' ? '所有人數' : '所有人数' },
+    ...TEAM_SIZE_OPTIONS.map((k) => ({ value: k, label: t(locale, `team_size.${k}`) as string })),
   ]
 
   return (
@@ -105,6 +112,12 @@ export function FilterBar({ filters, onFilterChange }: Props) {
         value={filters.age_group ?? '全部'}
         options={ageOptions}
         onChange={(v) => onFilterChange('age_group', v)}
+      />
+      <FilterPopover
+        label={locale === 'en' ? 'Team' : locale === 'zh-HK' ? '人數' : '人数'}
+        value={filters.team_size ?? '全部'}
+        options={teamOptions}
+        onChange={(v) => onFilterChange('team_size', v)}
       />
       {hasActive && (
         <Button variant="ghost" size="sm" onClick={resetAll}>

@@ -23,6 +23,7 @@ export default function HomePage() {
     fee_type: '全部',
     date_range: '全部',
     age_group: '全部',
+    team_size: '全部',
     status: '全部',
   })
   const [page, setPage] = useState(0)
@@ -70,6 +71,10 @@ export default function HomePage() {
 
       if (filters.age_group && filters.age_group !== '全部') {
         query = query.eq('age_group', filters.age_group)
+      }
+
+      if (filters.team_size && filters.team_size !== '全部') {
+        query = query.eq('team_size', filters.team_size)
       }
 
       if (filters.status && filters.status !== '全部') {

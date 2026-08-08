@@ -90,6 +90,7 @@ export interface CompetitionFilters {
   age_group?: AgeGroup | '全部'
   fee_type?: FeeType | '全部'
   date_range?: '本周' | '本月' | '下月' | '全部'
+  team_size?: TeamSize | '全部'
   status?: CompetitionStatus | '全部'
 }
 
