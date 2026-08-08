@@ -173,6 +173,11 @@ export function CompetitionCard({ competition }: Props) {
             </div>
             <div className="flex items-center gap-3">
               <span>{t(locale, `fee.${competition.fee_type}`)}</span>
+              {competition.team_size && (
+                <span className="text-muted-foreground">
+                  {t(locale, `team_size.${competition.team_size}`)}
+                </span>
+              )}
               {(locale === 'en' && competition.prize_en ? competition.prize_en : competition.prize) && (
                 <span className="text-amber-600 dark:text-amber-400">
                   🏆 {locale === 'en' && competition.prize_en ? competition.prize_en : competition.prize}

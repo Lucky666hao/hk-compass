@@ -3,14 +3,22 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Competition } from '@/lib/types'
+import type { Competition, TeamSize } from '@/lib/types'
+import { TEAM_SIZE_OPTIONS, TEAM_SIZE_LABELS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, Send, Search, X } from 'lucide-react'
+import { ArrowLeft, Send, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function NewRecruitmentPage() {
@@ -19,32 +27,26 @@ export default function NewRecruitmentPage() {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [teamSize, setTeamSize] = useState('')
+  const [teamSize, setTeamSize] = useState<string>('')
   const [requirements, setRequirements] = useState('')
   const [contact, setContact] = useState('')
   const [competitionId, setCompetitionId] = useState<string | null>(null)
   const [competitionTitle, setCompetitionTitle] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Competition[]>([])
-  const [showSearch, setShowSearch] = useState(false)
+  const [competitions, setCompetitions] = useState<Competition[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  // 搜索比赛
+  // 加载所有比赛（用于下拉选择）
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([])
-      return
-    }
-    const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from('competitions')
-        .select('id, title, title_en')
-        .ilike('title', `%${searchQuery}%`)
-        .limit(5)
-      setSearchResults((data as Competition[]) ?? [])
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    supabase
+      .from('competitions')
+      .select('id, title, title_en')
+      .order('title')
+      .then(({ data }) => {
+        setCompetitions((data as Competition[]) ?? [])
+      })
+  }, [])
+
+  const selectedComp = competitions.find((c) => c.id === competitionId)
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -67,7 +69,7 @@ export default function NewRecruitmentPage() {
     const { error } = await supabase.from('recruitments').insert({
       title: title.trim(),
       description: description.trim(),
-      team_size: teamSize.trim() || null,
+      team_size: (teamSize && teamSize !== '_any') ? teamSize : null,
       requirements: requirements.trim() || null,
       contact: contact.trim() || null,
       competition_id: competitionId,
@@ -100,65 +102,40 @@ export default function NewRecruitmentPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          {/* 关联比赛 */}
+          {/* 关联比赛 — 下拉选择 */}
           <div>
             <label className="block text-sm font-medium mb-2">{t(locale, 'recruit.link_competition')}</label>
-            {competitionTitle ? (
+            {competitionId && selectedComp ? (
               <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border">
-                <span className="text-sm flex-1">🏆 {competitionTitle}</span>
+                <span className="text-sm flex-1">
+                  🏆 {locale === 'en' && selectedComp.title_en ? selectedComp.title_en : selectedComp.title}
+                </span>
                 <button
-                  onClick={() => { setCompetitionId(null); setCompetitionTitle('') }}
-                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setCompetitionId(null)}
+                  className="text-muted-foreground hover:text-foreground shrink-0"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
-              <div className="relative">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSearch(!showSearch)}
-                    className="text-xs"
-                  >
-                    <Search className="h-3 w-3 mr-1" />
-                    {locale === 'en' ? 'Search competitions' : locale === 'zh-HK' ? '搜尋比賽' : '搜索比赛'}
-                  </Button>
-                  <span className="text-xs text-muted-foreground">{t(locale, 'recruit.no_competition')}</span>
-                </div>
-                {showSearch && (
-                  <div className="mt-2 border rounded-md p-2 space-y-1">
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={locale === 'en' ? 'Type to search...' : locale === 'zh-HK' ? '輸入搜尋...' : '输入搜索...'}
-                      className="text-sm h-8"
-                      autoFocus
-                    />
-                    {searchResults.map((comp) => (
-                      <button
-                        key={comp.id}
-                        onClick={() => {
-                          setCompetitionId(comp.id)
-                          setCompetitionTitle(locale === 'en' && comp.title_en ? comp.title_en : comp.title)
-                          setSearchQuery('')
-                          setSearchResults([])
-                          setShowSearch(false)
-                        }}
-                        className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent transition-colors"
-                      >
-                        {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
-                      </button>
-                    ))}
-                    {searchQuery && searchResults.length === 0 && (
-                      <p className="text-xs text-muted-foreground px-2 py-1">
-                        {locale === 'en' ? 'No results' : locale === 'zh-HK' ? '無結果' : '无结果'}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <Select
+                value={competitionId || ''}
+                onValueChange={(v) => setCompetitionId(v || null)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={locale === 'en' ? 'Select a competition (optional)...' : locale === 'zh-HK' ? '選擇比賽（可選）...' : '选择比赛（可选）...'} />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  <SelectItem value="_none">
+                    {t(locale, 'recruit.no_competition') as string}
+                  </SelectItem>
+                  {competitions.map((comp) => (
+                    <SelectItem key={comp.id} value={comp.id}>
+                      {locale === 'en' && comp.title_en ? comp.title_en : comp.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
@@ -185,15 +162,25 @@ export default function NewRecruitmentPage() {
             />
           </div>
 
-          {/* 队伍人数 + 要求 并排 */}
+          {/* 队伍人数 — 下拉选择 + 联系方式 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">{t(locale, 'recruit.team_size')}</label>
-              <Input
-                value={teamSize}
-                onChange={(e) => setTeamSize(e.target.value)}
-                placeholder={t(locale, 'recruit.team_size_placeholder')}
-              />
+              <Select value={teamSize || ''} onValueChange={(v) => setTeamSize(v ?? '')}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t(locale, 'recruit.team_size_placeholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_any">
+                    {locale === 'en' ? 'Any' : locale === 'zh-HK' ? '不限' : '不限'}
+                  </SelectItem>
+                  {TEAM_SIZE_OPTIONS.map((ts) => (
+                    <SelectItem key={ts} value={ts}>
+                      {TEAM_SIZE_LABELS[ts]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t(locale, 'recruit.contact')}</label>

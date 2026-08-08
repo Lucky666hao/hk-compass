@@ -21,6 +21,18 @@ export type RemindBefore = '1小时前' | '1天前' | '3天前' | '1周前'
 
 export type AgeGroup = '儿童' | '青少年' | '成人/公开' | '不限'
 
+export type TeamSize = '个人赛' | '2-3人' | '4-6人' | '7人以上' | '不限'
+
+export const TEAM_SIZE_OPTIONS: TeamSize[] = ['个人赛', '2-3人', '4-6人', '7人以上', '不限']
+
+export const TEAM_SIZE_LABELS: Record<TeamSize, string> = {
+  '个人赛': '🧑 个人赛',
+  '2-3人': '👥 2-3人',
+  '4-6人': '👥 4-6人',
+  '7人以上': '👥 7人以上',
+  '不限': '🌐 不限人数',
+}
+
 export interface Competition {
   id: string
   title: string
@@ -41,6 +53,7 @@ export interface Competition {
   organizer: string | null
   registration_link: string | null
   age_group: AgeGroup | null
+  team_size: TeamSize | null
   source_url: string | null
   poster_url: string | null
   source: string | null

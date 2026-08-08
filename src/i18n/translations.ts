@@ -261,6 +261,13 @@ const en: TranslationDict = {
   'chat.members': 'members',
   'chat.you': 'You',
 
+  // -- Team size --
+  'team_size.个人赛': '🧑 Solo',
+  'team_size.2-3人': '👥 2-3 People',
+  'team_size.4-6人': '👥 4-6 People',
+  'team_size.7人以上': '👥 7+ People',
+  'team_size.不限': '🌐 Any Size',
+
   'back': 'Back',
 
   // Sidebar
@@ -543,6 +550,29 @@ const zhCN: TranslationDict = {
   'recruit.reopen': '重新招募',
   'recruit.competition_linked': '关联比赛',
 
+  // -- 聊天 --
+  'chat.title': '消息',
+  'chat.empty': '暂无线索，点击右上角 + 开始聊天！',
+  'chat.new': '新建聊天',
+  'chat.search_users': '输入用户邮箱搜索...',
+  'chat.start_conversation': '开始与以下用户聊天',
+  'chat.send': '发送',
+  'chat.type_placeholder': '输入消息...',
+  'chat.no_messages': '暂无消息，打个招呼吧！',
+  'chat.create_group': '创建群组',
+  'chat.group_name': '群名称',
+  'chat.group_name_placeholder': '输入群名称...',
+  'chat.direct_message': '一对一私聊',
+  'chat.members': '人',
+  'chat.you': '你',
+
+  // -- 团队规模 --
+  'team_size.个人赛': '🧑 个人赛',
+  'team_size.2-3人': '👥 2-3人',
+  'team_size.4-6人': '👥 4-6人',
+  'team_size.7人以上': '👥 7人以上',
+  'team_size.不限': '🌐 不限人数',
+
   'back': '返回',
 
   'sidebar.discover': '发现比赛',
@@ -811,6 +841,29 @@ const zhHK: TranslationDict = {
   'recruit.close': '停止招募',
   'recruit.reopen': '重新招募',
   'recruit.competition_linked': '關聯比賽',
+
+  // -- 聊天 --
+  'chat.title': '訊息',
+  'chat.empty': '仲未有對話，點擊右上角 + 開始傾偈！',
+  'chat.new': '新增聊天',
+  'chat.search_users': '輸入用戶電郵搜尋...',
+  'chat.start_conversation': '開始同以下用戶傾偈',
+  'chat.send': '發送',
+  'chat.type_placeholder': '輸入訊息...',
+  'chat.no_messages': '未有訊息，打個招呼先啦！',
+  'chat.create_group': '建立群組',
+  'chat.group_name': '群組名',
+  'chat.group_name_placeholder': '輸入群組名...',
+  'chat.direct_message': '一對一私聊',
+  'chat.members': '人',
+  'chat.you': '你',
+
+  // -- 團隊規模 --
+  'team_size.個人賽': '🧑 個人賽',
+  'team_size.2-3人': '👥 2-3人',
+  'team_size.4-6人': '👥 4-6人',
+  'team_size.7人以上': '👥 7人以上',
+  'team_size.不限': '🌐 不限人數',
 
   'back': '返回',
 
