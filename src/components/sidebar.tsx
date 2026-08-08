@@ -46,6 +46,9 @@ export function useSidebar() {
   return useContext(SidebarContext)
 }
 
+const COLLAPSED_W = 64   // px
+const EXPANDED_W  = 224  // px = w-56
+
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -110,14 +113,13 @@ export function Sidebar() {
       {/* 移动端顶部条 */}
       <MobileHeader />
 
-      {/* 桌面端侧栏 */}
+      {/* 桌面端侧栏 — 用 style 保证宽度生效 */}
       <aside
-        className={cn(
-          'hidden lg:flex flex-col fixed inset-y-0 left-0 z-40',
-          'bg-sidebar border-r border-sidebar-border',
-          'transition-all duration-200',
-          collapsed ? 'w-16' : 'w-56'
-        )}
+        className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-sidebar border-r border-sidebar-border"
+        style={{
+          width: collapsed ? COLLAPSED_W : EXPANDED_W,
+          transition: 'width 200ms ease',
+        }}
       >
         <SidebarInner
           collapsed={collapsed}
@@ -451,14 +453,18 @@ export function SidebarInset({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar()
 
   return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col min-h-screen transition-all duration-200',
-        collapsed ? 'lg:ml-16' : 'lg:ml-56',
-        'pt-12 lg:pt-0'
-      )}
-    >
-      {children}
-    </div>
+    <>
+      <style>{`
+        @media (min-width: 1024px) {
+          .sidebar-inset {
+            margin-left: ${collapsed ? COLLAPSED_W : EXPANDED_W}px;
+            transition: margin-left 200ms ease;
+          }
+        }
+      `}</style>
+      <div className="flex flex-1 flex-col min-h-screen pt-12 lg:pt-0 sidebar-inset">
+        {children}
+      </div>
+    </>
   )
 }
