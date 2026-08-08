@@ -9,36 +9,35 @@ import { t, LOCALE_LABELS, LOCALE_FLAGS, type Locale } from '@/i18n/translations
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Separator } from '@/components/ui/separator'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import {
   Compass,
   MessageSquare,
   Users,
   MessageCircle,
-  ChevronLeft,
-  ChevronRight,
   Globe,
   LogOut,
   Menu,
   User,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 // ============================================
-// SidebarContext — 展开/收起状态
+// SidebarContext
 // ============================================
 type SidebarContextType = {
   collapsed: boolean
-  setCollapsed: (v: boolean) => void
+  toggle: () => void
   mobileOpen: boolean
   setMobileOpen: (v: boolean) => void
 }
 
 const SidebarContext = createContext<SidebarContextType>({
   collapsed: false,
-  setCollapsed: () => {},
+  toggle: () => {},
   mobileOpen: false,
   setMobileOpen: () => {},
 })
@@ -48,31 +47,33 @@ export function useSidebar() {
 }
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsedState] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('hk-compass-sidebar')
-    if (stored === 'collapsed') setCollapsedState(true)
+    if (stored === 'collapsed') setCollapsed(true)
     setMounted(true)
   }, [])
 
-  const setCollapsed = useCallback((v: boolean) => {
-    setCollapsedState(v)
-    localStorage.setItem('hk-compass-sidebar', v ? 'collapsed' : 'expanded')
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem('hk-compass-sidebar', next ? 'collapsed' : 'expanded')
+      return next
+    })
   }, [])
 
-  if (!mounted) {
-    return (
-      <SidebarContext.Provider value={{ collapsed: false, setCollapsed, mobileOpen: false, setMobileOpen }}>
-        {children}
-      </SidebarContext.Provider>
-    )
+  const ctx = {
+    collapsed: mounted ? collapsed : false,
+    toggle,
+    mobileOpen,
+    setMobileOpen,
   }
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+    <SidebarContext.Provider value={ctx}>
       {children}
     </SidebarContext.Provider>
   )
@@ -89,36 +90,38 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'sidebar.discover', href: '/', icon: Compass, colorClass: 'text-blue-400' },
-  { key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-400' },
-  { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-400' },
-  { key: 'sidebar.chat', href: '/chat', icon: MessageCircle, colorClass: 'text-violet-400' },
+  { key: 'sidebar.discover', href: '/', icon: Compass, colorClass: 'text-blue-500' },
+  { key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500' },
+  { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-500' },
+  { key: 'sidebar.chat', href: '/chat', icon: MessageCircle, colorClass: 'text-violet-500' },
 ]
 
 // ============================================
 // Sidebar 主组件
 // ============================================
 export function Sidebar() {
-  const { collapsed, setCollapsed } = useSidebar()
+  const { collapsed, toggle } = useSidebar()
   const pathname = usePathname()
   const router = useRouter()
   const { locale, setLocale } = useLocale()
 
-  // 桌面端：固定侧栏，仅在 md+ 显示
   return (
     <>
       {/* 移动端顶部条 */}
       <MobileHeader />
 
-      {/* 桌面端侧栏 — lg及以上 */}
+      {/* 桌面端侧栏 */}
       <aside
-        className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-zinc-900 text-zinc-300 border-r border-zinc-800 transition-all duration-200 ${
+        className={cn(
+          'hidden lg:flex flex-col fixed inset-y-0 left-0 z-40',
+          'bg-sidebar border-r border-sidebar-border',
+          'transition-all duration-200',
           collapsed ? 'w-16' : 'w-56'
-        }`}
+        )}
       >
-        <SidebarContent
+        <SidebarInner
           collapsed={collapsed}
-          setCollapsed={setCollapsed}
+          toggle={toggle}
           pathname={pathname}
           router={router}
           locale={locale}
@@ -126,7 +129,7 @@ export function Sidebar() {
         />
       </aside>
 
-      {/* 移动端 Sheet — 仅 <lg */}
+      {/* 移动端 Sheet */}
       <MobileSheet
         pathname={pathname}
         router={router}
@@ -138,18 +141,18 @@ export function Sidebar() {
 }
 
 // ============================================
-// 侧栏内容（桌面和移动端复用）
+// 侧栏内部内容
 // ============================================
-function SidebarContent({
+function SidebarInner({
   collapsed,
-  setCollapsed,
+  toggle,
   pathname,
   router,
   locale,
   setLocale,
 }: {
   collapsed: boolean
-  setCollapsed: (v: boolean) => void
+  toggle: () => void
   pathname: string
   router: ReturnType<typeof useRouter>
   locale: Locale
@@ -180,25 +183,28 @@ function SidebarContent({
 
   return (
     <div className="flex flex-col h-full">
-      {/* === Logo === */}
-      <div className={`flex items-center h-14 px-3 border-b border-zinc-800 ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-          <Compass className="h-5 w-5 text-white" />
+      {/* Logo */}
+      <div className={cn(
+        'flex items-center h-14 px-3 border-b border-sidebar-border',
+        collapsed ? 'justify-center' : 'gap-3'
+      )}>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+          <Compass className="h-5 w-5 text-primary-foreground" />
         </div>
         {!collapsed && (
-          <span className="font-semibold text-white text-sm whitespace-nowrap">
+          <span className="font-semibold text-sidebar-foreground text-sm whitespace-nowrap">
             HK Compass
           </span>
         )}
       </div>
 
-      {/* === 导航项 === */}
+      {/* 导航 */}
       <nav className="flex-1 py-3 px-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href)
           const Icon = item.icon
           return (
-            <SidebarNavItem
+            <NavItemLink
               key={item.key}
               collapsed={collapsed}
               item={item}
@@ -210,47 +216,46 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* === 底部区域 === */}
-      <div className="border-t border-zinc-800 p-2 space-y-1">
+      {/* 底部 */}
+      <div className="border-t border-sidebar-border p-2 space-y-1">
         {/* 语言切换 */}
-        <SidebarLangSwitcher collapsed={collapsed} locale={locale} setLocale={setLocale} />
+        <LangSwitcher collapsed={collapsed} locale={locale} setLocale={setLocale} />
 
         {/* 用户区 */}
         {user === undefined ? (
-          // 加载中
-          <div className={`flex items-center rounded-lg px-2 py-2 ${collapsed ? 'justify-center' : ''}`}>
-            <div className="w-6 h-6 rounded-full bg-zinc-700 animate-pulse" />
+          <div className={cn('flex items-center rounded-md px-2 py-2', collapsed && 'justify-center')}>
+            <div className="w-6 h-6 rounded-full bg-sidebar-accent animate-pulse" />
           </div>
         ) : user === null ? (
-          // 未登录
           <Tooltip disabled={!collapsed}>
             <TooltipTrigger>
               <button
                 onClick={() => router.push('/auth/login')}
-                className={`w-full flex items-center rounded-lg px-2 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors ${
-                  collapsed ? 'justify-center' : 'gap-2.5'
-                }`}
+                className={cn(
+                  'w-full flex items-center rounded-md px-2 py-2 text-sm',
+                  'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+                  collapsed && 'justify-center'
+                )}
               >
                 <User className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="truncate">{t(locale, 'sidebar.login')}</span>}
+                {!collapsed && <span className="ml-2.5 truncate">{t(locale, 'sidebar.login')}</span>}
               </button>
             </TooltipTrigger>
             {collapsed && <TooltipContent side="right">{t(locale, 'sidebar.login')}</TooltipContent>}
           </Tooltip>
         ) : (
-          // 已登录
-          <div className={`flex items-center rounded-lg px-2 py-1.5 ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
+          <div className={cn('flex items-center rounded-md px-2 py-1.5', collapsed && 'justify-center')}>
             <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="text-xs bg-zinc-700 text-zinc-300">
+              <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">
                 {user.email?.slice(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
               <>
-                <span className="text-xs text-zinc-400 truncate flex-1">{user.email}</span>
+                <span className="text-xs text-sidebar-foreground/60 truncate flex-1 ml-2.5">{user.email}</span>
                 <button
                   onClick={handleSignOut}
-                  className="shrink-0 p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="shrink-0 p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
                   title={t(locale, 'nav.signout')}
                 >
                   <LogOut className="h-3.5 w-3.5" />
@@ -260,19 +265,21 @@ function SidebarContent({
           </div>
         )}
 
-        {/* 收起/展开按钮 */}
+        {/* 折叠按钮 */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={`w-full flex items-center rounded-lg px-2 py-2 text-sm text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors ${
-            collapsed ? 'justify-center' : 'gap-2.5'
-          }`}
+          onClick={toggle}
+          className={cn(
+            'w-full flex items-center rounded-md px-2 py-2 text-sm',
+            'text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+            collapsed && 'justify-center'
+          )}
         >
           {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
+            <PanelLeftOpen className="h-4 w-4" />
           ) : (
             <>
-              <ChevronLeft className="h-4 w-4 shrink-0" />
-              <span>{t(locale, 'sidebar.collapse')}</span>
+              <PanelLeftClose className="h-4 w-4 shrink-0" />
+              <span className="ml-2.5">{t(locale, 'sidebar.collapse')}</span>
             </>
           )}
         </button>
@@ -282,9 +289,9 @@ function SidebarContent({
 }
 
 // ============================================
-// 单个导航项
+// 单个导航链接
 // ============================================
-function SidebarNavItem({
+function NavItemLink({
   collapsed,
   item,
   active,
@@ -302,15 +309,15 @@ function SidebarNavItem({
   const link = (
     <Link
       href={item.href}
-      className={`flex items-center rounded-lg px-2 py-2.5 text-sm transition-colors ${
-        collapsed ? 'justify-center' : 'gap-2.5'
-      } ${
+      className={cn(
+        'flex items-center rounded-md px-2 py-2.5 text-sm transition-colors',
+        collapsed ? 'justify-center' : 'gap-2.5',
         active
-          ? 'bg-white/10 text-white font-medium'
-          : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-      }`}
+          ? 'bg-sidebar-accent text-sidebar-foreground font-medium'
+          : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/60'
+      )}
     >
-      <Icon className={`h-5 w-5 shrink-0 ${active ? item.colorClass : ''}`} />
+      <Icon className={cn('h-5 w-5 shrink-0', active && item.colorClass)} />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   )
@@ -328,9 +335,9 @@ function SidebarNavItem({
 }
 
 // ============================================
-// 语言切换器（侧栏内）
+// 语言切换
 // ============================================
-function SidebarLangSwitcher({
+function LangSwitcher({
   collapsed,
   locale,
   setLocale,
@@ -350,7 +357,10 @@ function SidebarLangSwitcher({
               const idx = locales.indexOf(locale)
               setLocale(locales[(idx + 1) % locales.length])
             }}
-            className="w-full flex items-center justify-center rounded-lg px-2 py-2 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className={cn(
+              'w-full flex items-center justify-center rounded-md px-2 py-2',
+              'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors'
+            )}
           >
             <Globe className="h-5 w-5" />
           </button>
@@ -362,14 +372,14 @@ function SidebarLangSwitcher({
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5">
-      <Globe className="h-4 w-4 text-zinc-500 shrink-0" />
+      <Globe className="h-4 w-4 text-sidebar-foreground/40 shrink-0" />
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
-        className="flex-1 bg-transparent text-xs text-zinc-400 border-none outline-none cursor-pointer hover:text-zinc-200"
+        className="flex-1 bg-transparent text-xs text-sidebar-foreground/60 border-none outline-none cursor-pointer hover:text-sidebar-foreground"
       >
         {locales.map((l) => (
-          <option key={l} value={l} className="bg-zinc-800 text-zinc-200">
+          <option key={l} value={l} className="bg-background text-foreground">
             {LOCALE_FLAGS[l]} {LOCALE_LABELS[l]}
           </option>
         ))}
@@ -382,26 +392,20 @@ function SidebarLangSwitcher({
 // 移动端顶部条
 // ============================================
 function MobileHeader() {
+  const { setMobileOpen } = useSidebar()
+
   return (
     <div className="lg:hidden sticky top-0 z-30 flex items-center h-12 px-3 bg-background border-b">
-      <MobileMenuTrigger />
+      <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1" onClick={() => setMobileOpen(true)}>
+        <Menu className="h-5 w-5" />
+      </Button>
       <div className="flex items-center gap-2 ml-2">
-        <div className="w-6 h-6 rounded-md bg-blue-500 flex items-center justify-center">
-          <Compass className="h-4 w-4 text-white" />
+        <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+          <Compass className="h-4 w-4 text-primary-foreground" />
         </div>
         <span className="font-semibold text-sm">HK Compass</span>
       </div>
     </div>
-  )
-}
-
-function MobileMenuTrigger() {
-  const { setMobileOpen } = useSidebar()
-
-  return (
-    <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1" onClick={() => setMobileOpen(true)}>
-      <Menu className="h-5 w-5" />
-    </Button>
   )
 }
 
@@ -423,10 +427,10 @@ function MobileSheet({
 
   return (
     <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-      <SheetContent side="left" className="w-64 p-0 bg-zinc-900 border-r-zinc-800">
-        <SidebarContent
+      <SheetContent side="left" className="w-64 p-0 bg-sidebar border-r-sidebar-border">
+        <SidebarInner
           collapsed={false}
-          setCollapsed={() => {}}
+          toggle={() => {}}
           pathname={pathname}
           router={router}
           locale={locale}
@@ -441,7 +445,7 @@ function MobileSheet({
 }
 
 // ============================================
-// SidebarInset — 主内容区包装器（根据侧栏状态动态调整边距）
+// SidebarInset — 主内容区，根据侧栏状态自动调整
 // ============================================
 export function SidebarInset({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar()
@@ -451,7 +455,7 @@ export function SidebarInset({ children }: { children: React.ReactNode }) {
       className={cn(
         'flex flex-1 flex-col min-h-screen transition-all duration-200',
         collapsed ? 'lg:ml-16' : 'lg:ml-56',
-        'pt-12 lg:pt-0' // 移动端为 MobileHeader 留空间
+        'pt-12 lg:pt-0'
       )}
     >
       {children}
