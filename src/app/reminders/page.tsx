@@ -18,13 +18,19 @@ import Link from 'next/link'
 
 export default function RemindersPage() {
   const router = useRouter()
-  const [userId, setUserId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null | undefined>(undefined) // undefined = 加载中
+  const [sessionLoading, setSessionLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setUserId(session.user.id)
-      else setUserId(null)
+      setUserId(session?.user?.id ?? null)
+      setSessionLoading(false)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const { data, isLoading, refetch } = useQuery({
@@ -46,6 +52,19 @@ export default function RemindersPage() {
   const handleRemove = async (reminderId: string) => {
     const { error } = await supabase.from('reminders').delete().eq('id', reminderId)
     if (error) { toast.error('删除失败') } else { toast.success('已取消提醒'); refetch() }
+  }
+
+  // 加载中
+  if (sessionLoading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   // 未登录引导

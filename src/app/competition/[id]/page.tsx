@@ -83,6 +83,21 @@ export default function CompetitionDetailPage() {
     })
   }, [id])
 
+  // 加载时检查收藏/提醒状态
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const [savedRes, remindedRes] = await Promise.all([
+        supabase.from('saved_competitions').select('id').eq('user_id', user.id).eq('competition_id', id).maybeSingle(),
+        supabase.from('reminders').select('id').eq('user_id', user.id).eq('competition_id', id).maybeSingle(),
+      ])
+      if (savedRes.data) setSaved(true)
+      if (remindedRes.data) setReminded(true)
+    }
+    check()
+  }, [id])
+
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth/login'); return }

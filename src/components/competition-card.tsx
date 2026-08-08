@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
 import { TYPE_LABELS, LOCATION_LABELS, FEE_LABELS } from '@/lib/types'
@@ -22,6 +22,22 @@ export function CompetitionCard({ competition }: Props) {
   const router = useRouter()
   const [saved, setSaved] = useState(false)
   const [reminding, setReminding] = useState(false)
+
+  // 组件挂载时检查是否已收藏
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('saved_competitions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('competition_id', competition.id)
+        .maybeSingle()
+      if (data) setSaved(true)
+    }
+    check()
+  }, [competition.id])
 
   const deadlineText = competition.registration_deadline
     ? format(new Date(competition.registration_deadline), 'M月d日 (EEE) HH:mm', {

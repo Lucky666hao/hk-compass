@@ -12,13 +12,19 @@ import { useEffect, useState } from 'react'
 
 export default function SavedPage() {
   const router = useRouter()
-  const [userId, setUserId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null | undefined>(undefined) // undefined = 加载中
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setUserId(session.user.id)
-      else setUserId(null)
+      setUserId(session?.user?.id ?? null)
+      setLoading(false)
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const { data: competitions, isLoading } = useQuery({
@@ -43,6 +49,19 @@ export default function SavedPage() {
     },
     enabled: !!userId,
   })
+
+  // 加载中
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   // 未登录引导
   if (userId === null) {
