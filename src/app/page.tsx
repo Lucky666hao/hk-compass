@@ -28,11 +28,11 @@ export default function HomePage() {
     team_size: '全部',
     status: '全部',
   })
-  const [studentOnly, setStudentOnly] = useState(false)
+  const [uniOnly, setUniOnly] = useState(false)
   const [page, setPage] = useState(0)
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['competitions', filters, page, studentOnly],
+    queryKey: ['competitions', filters, page, uniOnly],
     queryFn: async () => {
       let query = supabase
         .from('competitions')
@@ -86,9 +86,14 @@ export default function HomePage() {
         }
       }
 
-      // 🎓 学生专属：只显示学校提名或两者皆可的比赛
-      if (studentOnly) {
-        query = query.in('eligibility', ['学校提名', '两者皆可'])
+      // 🎓 大学生专属：成人/不限年龄 + 排除K12标题词
+      if (uniOnly) {
+        query = query
+          .in('age_group', ['成人公开', '不限'])
+          .not('title', 'ilike', '%小學%').not('title', 'ilike', '%小学%')
+          .not('title', 'ilike', '%中學%').not('title', 'ilike', '%中学%')
+          .not('title', 'ilike', '%幼稚園%').not('title', 'ilike', '%幼儿园%')
+          .not('title', 'ilike', '%兒童%').not('title', 'ilike', '%儿童%')
       }
 
       if (filters.status && filters.status !== '全部') {
@@ -150,12 +155,12 @@ export default function HomePage() {
         <FilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          studentOnly={studentOnly}
-          onStudentToggle={() => setStudentOnly((prev) => !prev)}
+          uniOnly={uniOnly}
+          onUniToggle={() => setUniOnly((prev) => !prev)}
         />
-        {studentOnly && (
+        {uniOnly && (
           <p className="text-xs text-violet-600 dark:text-violet-400">
-            {locale === 'en' ? '🎓 Showing inter-school & university competitions only' : locale === 'zh-HK' ? '🎓 只顯示學界及大學比賽' : '🎓 只显示学界及大学比赛'}
+            {locale === 'en' ? '🎓 University/tertiary competitions — adult, non-K12' : locale === 'zh-HK' ? '🎓 大專及大學級別比賽' : '🎓 大专及大学级别比赛'}
           </p>
         )}
       </div>

@@ -80,18 +80,11 @@ function validateDates(record, title) {
   }
 
   // registration_deadline 应该在 date_start 之前
-  // 如果 deadline > date_start 超过7天 → 几乎肯定是写反了，自动交换
+  // 如果 deadline 严重晚于 start → 警告（不再自动交换，因为部分项目有长期报名机制）
   if (dStart && dDeadline && dDeadline > dStart) {
     const diffDays = (dDeadline - dStart) / (1000 * 60 * 60 * 24)
-    if (diffDays > 7) {
-      // 交换：date_start ↔ registration_deadline
-      const tmp = record.date_start
-      record.date_start = record.registration_deadline
-      record.registration_deadline = tmp
-      warnings.push(`🔄 ${title}: date_start 和 registration_deadline 已自动交换（deadline 比 start 晚 ${Math.round(diffDays)} 天，可能录入时写反）`)
-    } else {
-      // deadline 比 start 晚一点点，可能 deadline 就是比赛当天
-      warnings.push(`⚠️ ${title}: registration_deadline (${record.registration_deadline}) 晚于 date_start (${record.date_start}) — 如果报名截止日在活动开始后，请检查`)
+    if (diffDays > 60) {
+      warnings.push(`⚠️ ${title}: registration_deadline (${record.registration_deadline}) 晚于 date_start (${record.date_start}) ${Math.round(diffDays)} 天 — 请人工确认是否合理`)
     }
   }
 
