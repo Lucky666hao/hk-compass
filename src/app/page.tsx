@@ -9,10 +9,13 @@ import { FilterBar } from '@/components/filter-bar'
 import { CompetitionCard } from '@/components/competition-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Compass, SearchX } from 'lucide-react'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 const ITEMS_PER_PAGE = 20
 
 export default function HomePage() {
+  const { locale } = useLocale()
   const [filters, setFilters] = useState<CompetitionFilters>({
     keyword: '',
     type: '全部',
@@ -103,10 +106,10 @@ export default function HomePage() {
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           <Compass className="mr-3 inline-block h-8 w-8 text-primary" />
-          发现香港所有比赛
+          {t(locale, 'home.title')}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          闲暇时看看有什么比赛可以参加，获奖最好，没获奖也没关系
+          {t(locale, 'home.subtitle')}
         </p>
       </div>
 
@@ -117,8 +120,8 @@ export default function HomePage() {
 
       {!isLoading && (
         <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <span>共 {total} 个比赛</span>
-          {isFetching && <span className="animate-pulse">· 更新中...</span>}
+          <span>{t(locale, 'home.total', { count: total })}</span>
+          {isFetching && <span className="animate-pulse">{t(locale, 'home.updating')}</span>}
         </div>
       )}
 
@@ -131,8 +134,8 @@ export default function HomePage() {
       ) : competitions.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-muted-foreground">
           <SearchX className="mb-4 h-12 w-12" />
-          <p className="text-lg">未找到匹配的比赛</p>
-          <p className="text-sm">尝试调整筛选条件或搜索关键词</p>
+          <p className="text-lg">{t(locale, 'home.empty')}</p>
+          <p className="text-sm">{t(locale, 'home.empty.hint')}</p>
         </div>
       ) : (
         <>
@@ -149,17 +152,17 @@ export default function HomePage() {
                 disabled={page === 0}
                 className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
               >
-                上一页
+                {t(locale, 'home.prev')}
               </button>
               <span className="flex items-center px-4 text-sm text-muted-foreground">
-                第 {page + 1} 页 / 共 {Math.ceil(total / ITEMS_PER_PAGE)} 页
+                {t(locale, 'home.page', { current: page + 1, total: Math.ceil(total / ITEMS_PER_PAGE) })}
               </span>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={(page + 1) * ITEMS_PER_PAGE >= total}
                 className="rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
               >
-                下一页
+                {t(locale, 'home.next')}
               </button>
             </div>
           )}

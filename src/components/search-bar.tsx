@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, X } from 'lucide-react'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 interface Props {
   onSearch: (keyword: string) => void
@@ -11,6 +13,7 @@ interface Props {
 }
 
 export function SearchBar({ onSearch, defaultValue = '' }: Props) {
+  const { locale } = useLocale()
   const [value, setValue] = useState(defaultValue)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,7 +32,7 @@ export function SearchBar({ onSearch, defaultValue = '' }: Props) {
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="搜索比赛名称、类型、主办方..."
+        placeholder={t(locale, 'home.search.placeholder')}
         className="h-11 pl-9 pr-20 text-base"
       />
       <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -39,7 +42,7 @@ export function SearchBar({ onSearch, defaultValue = '' }: Props) {
           </Button>
         )}
         <Button type="submit" size="sm" className="h-8">
-          搜索
+          {t(locale, 'home.search.placeholder').includes('Search') ? 'Search' : '搜索'}
         </Button>
       </div>
     </form>

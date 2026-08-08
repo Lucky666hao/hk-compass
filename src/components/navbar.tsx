@@ -89,7 +89,7 @@ export function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors outline-none">
               <Languages className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">{LOCALE_FLAGS[locale]} {LOCALE_LABELS[locale]}</span>
+              <span className="text-xs">{LOCALE_FLAGS[locale]} <span className="hidden sm:inline">{LOCALE_LABELS[locale]}</span></span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               {LANGUAGES.map((lang) => (

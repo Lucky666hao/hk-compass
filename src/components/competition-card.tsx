@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
-import { TYPE_LABELS, LOCATION_LABELS, FEE_LABELS } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Heart, Bell, Calendar, MapPin, ExternalLink, Clock } from 'lucide-react'
 import { format } from 'date-fns'
-import { zhHK } from 'date-fns/locale'
+import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { useLocale } from '@/i18n/LanguageContext'
+import { t } from '@/i18n/translations'
 
 interface Props {
   competition: Competition
@@ -20,8 +21,11 @@ interface Props {
 
 export function CompetitionCard({ competition }: Props) {
   const router = useRouter()
+  const { locale } = useLocale()
   const [saved, setSaved] = useState(false)
   const [reminding, setReminding] = useState(false)
+
+  const dateLocale = locale === 'en' ? enUS : zhHK
 
   // 组件挂载时检查是否已收藏
   useEffect(() => {
@@ -41,7 +45,7 @@ export function CompetitionCard({ competition }: Props) {
 
   const deadlineText = competition.registration_deadline
     ? format(new Date(competition.registration_deadline), 'M月d日 (EEE) HH:mm', {
-        locale: zhHK,
+        locale: dateLocale,
       })
     : null
 
@@ -67,13 +71,13 @@ export function CompetitionCard({ competition }: Props) {
         .eq('user_id', user.id)
         .eq('competition_id', competition.id)
       setSaved(false)
-      toast.success('已取消收藏')
+      toast.success(t(locale, 'toast.unsaved'))
     } else {
       await supabase
         .from('saved_competitions')
         .insert({ user_id: user.id, competition_id: competition.id })
       setSaved(true)
-      toast.success('已收藏')
+      toast.success(t(locale, 'toast.saved'))
     }
   }
 
@@ -97,15 +101,15 @@ export function CompetitionCard({ competition }: Props) {
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('已设置过提醒')
+          toast.error(t(locale, 'toast.reminder_duplicate'))
         } else {
           throw error
         }
       } else {
-        toast.success('已设置提醒，截止前一天通知你')
+        toast.success(t(locale, 'toast.reminder_set'))
       }
     } catch {
-      toast.error('设置提醒失败')
+      toast.error(t(locale, 'toast.reminder_failed'))
     } finally {
       setReminding(false)
     }
@@ -120,11 +124,11 @@ export function CompetitionCard({ competition }: Props) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="shrink-0">
-                  {TYPE_LABELS[competition.type] || competition.type}
+                  {t(locale, `type.${competition.type}`)}
                 </Badge>
                 {isUrgent && (
                   <Badge variant="destructive" className="shrink-0 animate-pulse">
-                    即将截止
+                    {t(locale, 'card.urgent')}
                   </Badge>
                 )}
               </div>
@@ -154,18 +158,18 @@ export function CompetitionCard({ competition }: Props) {
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>
                 {format(new Date(competition.date_start), 'yyyy年M月d日', {
-                  locale: zhHK,
+                  locale: dateLocale,
                 })}
                 {competition.date_end &&
-                  ` — ${format(new Date(competition.date_end), 'M月d日', { locale: zhHK })}`}
+                  ` — ${format(new Date(competition.date_end), 'M月d日', { locale: dateLocale })}`}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span>{LOCATION_LABELS[competition.location]} · {competition.venue || '待定'}</span>
+              <span>{t(locale, `location.${competition.location}`)} · {competition.venue || '待定'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span>{FEE_LABELS[competition.fee_type]}</span>
+              <span>{t(locale, `fee.${competition.fee_type}`)}</span>
               {competition.prize && (
                 <span className="text-amber-600 dark:text-amber-400">
                   🏆 {competition.prize}
@@ -175,7 +179,7 @@ export function CompetitionCard({ competition }: Props) {
             {deadlineText && (
               <div className="flex items-center gap-1.5 text-xs">
                 <Clock className="h-3 w-3 shrink-0" />
-                <span>报名截止：{deadlineText}</span>
+                <span>{t(locale, 'card.deadline', { date: deadlineText })}</span>
               </div>
             )}
           </div>
@@ -192,7 +196,7 @@ export function CompetitionCard({ competition }: Props) {
                   window.open(competition.registration_link!, '_blank')
                 }}
               >
-                去报名 <ExternalLink className="h-3 w-3" />
+                {t(locale, 'card.register')} <ExternalLink className="h-3 w-3" />
               </Button>
             ) : competition.source_url ? (
               <Button
@@ -205,7 +209,7 @@ export function CompetitionCard({ competition }: Props) {
                   window.open(competition.source_url!, '_blank')
                 }}
               >
-                查看来源 <ExternalLink className="h-3 w-3" />
+                {t(locale, 'card.view_source')} <ExternalLink className="h-3 w-3" />
               </Button>
             ) : null}
             <Button
@@ -216,7 +220,7 @@ export function CompetitionCard({ competition }: Props) {
               disabled={reminding}
             >
               <Bell className="h-3.5 w-3.5" />
-              {reminding ? '设置中...' : '提醒我'}
+              {reminding ? t(locale, 'card.reminding') : t(locale, 'card.remind_me')}
             </Button>
           </div>
         </CardContent>
