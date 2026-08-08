@@ -161,13 +161,24 @@ function SidebarInner({
   setLocale: (l: Locale) => void
 }) {
   const [user, setUser] = useState<any>(undefined)
+  const [displayName, setDisplayName] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        supabase.from('profiles').select('display_name').eq('user_id', session.user.id).single()
+          .then(({ data }) => { if (data) setDisplayName(data.display_name) })
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setUser(s?.user ?? null)
+      if (s?.user) {
+        supabase.from('profiles').select('display_name').eq('user_id', s.user.id).single()
+          .then(({ data }) => { if (data) setDisplayName(data?.display_name ?? null) })
+      } else {
+        setDisplayName(null)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -249,12 +260,21 @@ function SidebarInner({
           <div className={cn('flex items-center rounded-md px-2 py-1.5', collapsed && 'justify-center')}>
             <Avatar className="h-7 w-7 shrink-0">
               <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">
-                {user.email?.slice(0, 2).toUpperCase() || 'U'}
+                {displayName?.slice(0, 2).toUpperCase() || user.email?.slice(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
               <>
-                <span className="text-xs text-sidebar-foreground/60 truncate flex-1 ml-2.5">{user.email}</span>
+                <span className="text-xs text-sidebar-foreground/60 truncate flex-1 ml-2.5">
+                  {displayName || user.email?.split('@')[0]}
+                </span>
+                <button
+                  onClick={() => router.push('/account/profile')}
+                  className="shrink-0 p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
+                  title={t(locale, 'profile.title') as string}
+                >
+                  <User className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={handleSignOut}
                   className="shrink-0 p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"

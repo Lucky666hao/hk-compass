@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Conversation, Message } from '@/lib/types'
+import type { Conversation, Message, Profile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,6 +18,8 @@ import {
   ArrowLeft,
   Users,
   UserPlus,
+  X,
+  Check,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -30,20 +32,24 @@ export default function ChatPage() {
   const router = useRouter()
 
   const [userId, setUserId] = useState<string | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [sessionLoading, setSessionLoading] = useState(true)
 
-  // 会话列表
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [convLoading, setConvLoading] = useState(true)
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
 
-  // 搜索/新建
-  const [showNewChat, setShowNewChat] = useState(false)
-  const [searchEmail, setSearchEmail] = useState('')
-  const [searching, setSearching] = useState(false)
-
-  // 移动端视图切换
   const [view, setView] = useState<'list' | 'chat'>('list')
+
+  // 新建聊天
+  const [showNewChat, setShowNewChat] = useState(false)
+  const [newChatMode, setNewChatMode] = useState<'direct' | 'group'>('direct')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Profile[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selectedMembers, setSelectedMembers] = useState<Profile[]>([])
+  const [groupName, setGroupName] = useState('')
+  const [creating, setCreating] = useState(false)
 
   // 登录检查
   useEffect(() => {
@@ -56,6 +62,19 @@ export default function ChatPage() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // 加载自己的 profile
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfile(data as Profile)
+      })
+  }, [userId])
 
   // 加载会话列表
   const loadConversations = useCallback(async () => {
@@ -84,32 +103,30 @@ export default function ChatPage() {
       return
     }
 
-    // 获取每个会话的参与者邮箱和最后消息
     const enriched = await Promise.all(
       convs.map(async (conv) => {
-        // 参与者
+        // 获取参与者 profile
         const { data: participants } = await supabase
           .from('conversation_participants')
           .select('user_id')
           .eq('conversation_id', conv.id)
 
-        // 找另一个用户的邮箱（DM场景）
-        let otherUserEmail: string | null = null
-        if (conv.type === 'direct' && participants) {
-          const otherId = participants.find((p) => p.user_id !== userId)?.user_id
-          if (otherId) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('email')
-              .eq('id', otherId)
-              .single()
-            otherUserEmail = profile?.email ?? null
-          }
-          if (!otherUserEmail && otherId) {
-            // 用 auth.users 兜底
-            const { data: { user } } = await supabase.auth.admin.getUserById(otherId)
-            otherUserEmail = user?.email ?? null
-          }
+        const otherIds = (participants ?? [])
+          .filter((p) => p.user_id !== userId)
+          .map((p) => p.user_id)
+
+        let displayLabel: string
+        if (conv.type === 'group') {
+          displayLabel = conv.name || (locale === 'en' ? 'Group' : '群组')
+        } else if (otherIds.length > 0) {
+          const { data: otherProfile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('user_id', otherIds[0])
+            .single()
+          displayLabel = otherProfile?.display_name || (locale === 'en' ? 'User' : '用户')
+        } else {
+          displayLabel = locale === 'en' ? 'Chat' : '聊天'
         }
 
         // 最后消息
@@ -121,9 +138,11 @@ export default function ChatPage() {
           .limit(1)
           .single()
 
+        // Store display label in a way we can use
         return {
           ...conv,
-          other_user_email: otherUserEmail,
+          other_user_email: otherIds.length > 0 ? otherIds[0] : null,
+          name: displayLabel,
           last_message: lastMsg?.content ?? null,
           last_message_at: lastMsg?.created_at ?? null,
         } as Conversation
@@ -132,37 +151,31 @@ export default function ChatPage() {
 
     setConversations(enriched)
     setConvLoading(false)
-  }, [userId])
+  }, [userId, locale])
 
   useEffect(() => {
     if (userId) loadConversations()
   }, [userId, loadConversations])
 
-  // 新建 DM
-  const startDM = async (targetEmail: string) => {
-    if (!userId) return
+  // 搜索用户（按显示名称）
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !userId) return
     setSearching(true)
-
-    // 通过 email 找用户（用 profiles 表）
-    const { data: profiles } = await supabase
+    const { data } = await supabase
       .from('profiles')
-      .select('id, email')
-      .eq('email', targetEmail.trim().toLowerCase())
-      .limit(1)
+      .select('*')
+      .neq('user_id', userId)
+      .ilike('display_name', `%${searchQuery.trim()}%`)
+      .limit(10)
+    setSearchResults((data as Profile[]) ?? [])
+    setSearching(false)
+  }
 
-    const targetId = profiles?.[0]?.id
-    if (!targetId) {
-      toast.error(locale === 'en' ? 'User not found' : locale === 'zh-HK' ? '搵唔到用戶' : '未找到用户')
-      setSearching(false)
-      return
-    }
-    if (targetId === userId) {
-      toast.error(locale === 'en' ? 'Cannot chat with yourself' : locale === 'zh-HK' ? '唔可以同自己傾偈' : '不能和自己聊天')
-      setSearching(false)
-      return
-    }
+  // 开始一对一聊天
+  const startDM = async (targetProfile: Profile) => {
+    if (!userId) return
 
-    // 检查是否已有 DM 会话
+    // 检查是否已有 DM
     const { data: myConvs } = await supabase
       .from('conversation_participants')
       .select('conversation_id')
@@ -174,11 +187,10 @@ export default function ChatPage() {
           .from('conversation_participants')
           .select('conversation_id')
           .eq('conversation_id', mc.conversation_id)
-          .eq('user_id', targetId)
+          .eq('user_id', targetProfile.user_id)
           .limit(1)
 
         if (other?.length) {
-          // 已有会话，直接打开
           const { data: conv } = await supabase
             .from('conversations')
             .select('*')
@@ -189,8 +201,8 @@ export default function ChatPage() {
           if (conv) {
             setActiveConvId(conv.id)
             setShowNewChat(false)
-            setSearchEmail('')
-            setSearching(false)
+            setSearchQuery('')
+            setSearchResults([])
             setView('chat')
             return
           }
@@ -198,7 +210,7 @@ export default function ChatPage() {
       }
     }
 
-    // 新建 DM 会话
+    // 新建 DM
     const { data: newConv } = await supabase
       .from('conversations')
       .insert({ type: 'direct' })
@@ -208,22 +220,56 @@ export default function ChatPage() {
     if (newConv) {
       await supabase.from('conversation_participants').insert([
         { conversation_id: newConv.id, user_id: userId },
-        { conversation_id: newConv.id, user_id: targetId },
+        { conversation_id: newConv.id, user_id: targetProfile.user_id },
       ])
       loadConversations()
       setActiveConvId(newConv.id)
       setShowNewChat(false)
-      setSearchEmail('')
+      setSearchQuery('')
+      setSearchResults([])
       setView('chat')
     }
-    setSearching(false)
   }
 
-  // 已登录且没在加载
+  // 创建群组
+  const createGroup = async () => {
+    if (!userId || selectedMembers.length === 0) return
+    setCreating(true)
+
+    const gName = groupName.trim() || selectedMembers.slice(0, 3).map((m) => m.display_name).join(', ')
+    const { data: newConv } = await supabase
+      .from('conversations')
+      .insert({ type: 'group', name: gName })
+      .select()
+      .single()
+
+    if (newConv) {
+      const participantRows = [
+        { conversation_id: newConv.id, user_id: userId },
+        ...selectedMembers.map((m) => ({ conversation_id: newConv.id, user_id: m.user_id })),
+      ]
+      await supabase.from('conversation_participants').insert(participantRows)
+      toast.success(t(locale, 'chat.group_created'))
+      loadConversations()
+      setActiveConvId(newConv.id)
+      setShowNewChat(false)
+      setGroupName('')
+      setSelectedMembers([])
+      setSearchQuery('')
+      setSearchResults([])
+      setView('chat')
+    }
+    setCreating(false)
+  }
+
+  // 加载中
   if (sessionLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <Skeleton className="h-[60vh] rounded-xl" />
+      <div className="mx-auto max-w-5xl px-4 py-4 lg:py-6">
+        <div className="flex h-[calc(100vh-7rem)] lg:h-[calc(100vh-5rem)] border rounded-xl overflow-hidden bg-background">
+          <Skeleton className="w-80 shrink-0 hidden lg:block" />
+          <Skeleton className="flex-1" />
+        </div>
       </div>
     )
   }
@@ -239,10 +285,10 @@ export default function ChatPage() {
           <h2 className="text-xl font-semibold mb-2">{t(locale, 'posts.login_prompt')}</h2>
           <p className="text-muted-foreground max-w-sm mb-6">
             {locale === 'en'
-              ? 'Chat with other competitors, organizers, and teammates in real time.'
+              ? 'Chat with other competitors in real time.'
               : locale === 'zh-HK'
-              ? '同其他參賽者、主辦方同隊友即時傾偈。'
-              : '与其他参赛者、主办方和队友实时聊天。'}
+              ? '同其他參賽者即時傾偈。'
+              : '与其他参赛者实时聊天。'}
           </p>
           <Button onClick={() => router.push('/auth/login?redirect=/chat')}>
             {t(locale, 'saved.login_btn')}
@@ -259,7 +305,7 @@ export default function ChatPage() {
         <div className={`${
           view === 'chat' ? 'hidden' : 'flex'
         } lg:flex w-full lg:w-80 flex-col border-r shrink-0`}>
-          {/* 列表顶部 */}
+          {/* 顶部 */}
           <div className="flex items-center justify-between p-3 border-b">
             <h2 className="font-semibold text-sm flex items-center gap-1.5">
               <MessageCircle className="h-4 w-4 text-violet-500" />
@@ -269,7 +315,14 @@ export default function ChatPage() {
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={() => setShowNewChat(!showNewChat)}
+              onClick={() => {
+                setShowNewChat(!showNewChat)
+                setNewChatMode('direct')
+                setSelectedMembers([])
+                setGroupName('')
+                setSearchQuery('')
+                setSearchResults([])
+              }}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -278,32 +331,107 @@ export default function ChatPage() {
           {/* 新建聊天面板 */}
           {showNewChat && (
             <div className="p-3 border-b space-y-2 bg-muted/30">
+              {/* 模式切换 */}
+              <div className="flex gap-1 bg-muted rounded-lg p-0.5">
+                <button
+                  onClick={() => { setNewChatMode('direct'); setSelectedMembers([]) }}
+                  className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${
+                    newChatMode === 'direct' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'
+                  }`}
+                >
+                  {t(locale, 'chat.direct_message')}
+                </button>
+                <button
+                  onClick={() => setNewChatMode('group')}
+                  className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${
+                    newChatMode === 'group' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground'
+                  }`}
+                >
+                  {t(locale, 'chat.create_group')}
+                </button>
+              </div>
+
+              {/* 群组名称 */}
+              {newChatMode === 'group' && (
+                <Input
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  placeholder={t(locale, 'chat.group_name_placeholder') as string}
+                  className="h-8 text-sm"
+                />
+              )}
+
+              {/* 已选成员 */}
+              {newChatMode === 'group' && selectedMembers.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedMembers.map((m) => (
+                    <span key={m.user_id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                      {m.display_name}
+                      <button onClick={() => setSelectedMembers((prev) => prev.filter((p) => p.user_id !== m.user_id))}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* 搜索 */}
               <div className="flex gap-1.5">
                 <Input
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                  placeholder={t(locale, 'chat.search_users') as string}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t(locale, 'profile.search_users') as string}
                   className="h-8 text-sm"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchEmail.trim()) startDM(searchEmail.trim())
-                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                <Button
-                  size="sm"
-                  className="h-8 shrink-0"
-                  onClick={() => searchEmail.trim() && startDM(searchEmail.trim())}
-                  disabled={searching || !searchEmail.trim()}
-                >
-                  {searching ? <span className="animate-pulse">...</span> : <UserPlus className="h-3.5 w-3.5" />}
+                <Button size="sm" variant="outline" className="h-8 shrink-0" onClick={handleSearch} disabled={searching}>
+                  <Search className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                {locale === 'en'
-                  ? 'Enter email to start a direct chat'
-                  : locale === 'zh-HK'
-                  ? '輸入電郵開始一對一傾偈'
-                  : '输入邮箱开始一对一聊天'}
-              </p>
+
+              {/* 搜索结果 */}
+              {searchResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto space-y-0.5">
+                  {searchResults.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        if (newChatMode === 'direct') {
+                          startDM(p)
+                        } else {
+                          setSelectedMembers((prev) =>
+                            prev.some((m) => m.user_id === p.user_id)
+                              ? prev
+                              : [...prev, p]
+                          )
+                        }
+                      }}
+                      className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-2.5 text-sm"
+                    >
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="text-[10px]">{p.display_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1 truncate">{p.display_name}</span>
+                      {newChatMode === 'group' && selectedMembers.some((m) => m.user_id === p.user_id) && (
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 创建群组按钮 */}
+              {newChatMode === 'group' && selectedMembers.length > 0 && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={createGroup}
+                  disabled={creating}
+                >
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  {t(locale, 'chat.create_group_done')} ({selectedMembers.length})
+                </Button>
+              )}
             </div>
           )}
 
@@ -324,11 +452,9 @@ export default function ChatPage() {
               <div className="p-1.5 space-y-0.5">
                 {conversations.map((conv) => {
                   const isActive = conv.id === activeConvId
-                  const displayName =
-                    conv.type === 'group'
-                      ? conv.name
-                      : conv.other_user_email?.split('@')[0] ?? locale === 'en' ? 'Chat' : '聊天'
-                  const initials = displayName?.slice(0, 2).toUpperCase() ?? 'CH'
+                  const isGroup = conv.type === 'group'
+                  const displayName = conv.name || (locale === 'en' ? 'Chat' : '聊天')
+                  const initials = isGroup ? 'G' : displayName.slice(0, 2).toUpperCase()
 
                   return (
                     <button
@@ -338,14 +464,14 @@ export default function ChatPage() {
                         setView('chat')
                       }}
                       className={`w-full text-left p-2.5 rounded-lg transition-colors flex items-center gap-2.5 ${
-                        isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'hover:bg-muted'
+                        isActive ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                       }`}
                     >
                       <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarFallback className={`text-xs ${isActive ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>
-                          {conv.type === 'group' ? <Users className="h-3.5 w-3.5" /> : initials}
+                        <AvatarFallback className={`text-xs ${
+                          isGroup ? 'bg-violet-500/10 text-violet-600' : isActive ? 'bg-primary/20' : 'bg-muted-foreground/10'
+                        }`}>
+                          {isGroup ? <Users className="h-3.5 w-3.5" /> : initials}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
@@ -378,6 +504,7 @@ export default function ChatPage() {
               conversationId={activeConvId}
               userId={userId}
               locale={locale}
+              profile={profile}
               conversations={conversations}
               onBack={() => setView('list')}
             />
@@ -402,18 +529,20 @@ export default function ChatPage() {
 }
 
 // ============================================
-// 聊天窗口子组件
+// 聊天窗口
 // ============================================
 function ChatWindow({
   conversationId,
   userId,
   locale,
+  profile,
   conversations,
   onBack,
 }: {
   conversationId: string
   userId: string
   locale: Locale
+  profile: Profile | null
   conversations: Conversation[]
   onBack: () => void
 }) {
@@ -421,13 +550,12 @@ function ChatWindow({
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [userProfiles, setUserProfiles] = useState<Record<string, string>>({})
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const conv = conversations.find((c) => c.id === conversationId)
-  const displayName =
-    conv?.type === 'group'
-      ? conv.name
-      : conv?.other_user_email?.split('@')[0] ?? 'Chat'
+  const isGroup = conv?.type === 'group'
+  const displayName = conv?.name || (locale === 'en' ? 'Chat' : '聊天')
 
   // 加载历史消息
   useEffect(() => {
@@ -439,12 +567,28 @@ function ChatWindow({
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
 
-      setMessages((data as Message[]) ?? [])
+      const msgs = (data as Message[]) ?? []
+      setMessages(msgs)
+
+      // 加载所有发言者的显示名称
+      const userIds = [...new Set(msgs.map((m) => m.user_id))]
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', userIds)
+        const map: Record<string, string> = {}
+        ;(profiles ?? []).forEach((p: any) => {
+          map[p.user_id] = p.display_name
+        })
+        setUserProfiles(map)
+      }
+
       setLoading(false)
     }
     loadMessages()
 
-    // Realtime 订阅
+    // Realtime
     const channel = supabase
       .channel(`chat:${conversationId}`)
       .on(
@@ -456,7 +600,21 @@ function ChatWindow({
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message])
+          const newMsg = payload.new as Message
+          setMessages((prev) => [...prev, newMsg])
+          // Load display name for new message sender
+          if (!userProfiles[newMsg.user_id]) {
+            supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('user_id', newMsg.user_id)
+              .single()
+              .then(({ data }) => {
+                if (data) {
+                  setUserProfiles((prev) => ({ ...prev, [newMsg.user_id]: data.display_name }))
+                }
+              })
+          }
         }
       )
       .subscribe()
@@ -466,12 +624,11 @@ function ChatWindow({
     }
   }, [conversationId])
 
-  // 自动滚动到底部
+  // 自动滚到底部
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // 发送消息
   const handleSend = async () => {
     if (!input.trim()) return
     setSending(true)
@@ -481,29 +638,33 @@ function ChatWindow({
       content: input.trim(),
     })
     setSending(false)
-    if (!error) {
-      setInput('')
-    } else {
-      toast.error(locale === 'en' ? 'Send failed' : '发送失败')
-    }
+    if (!error) setInput('')
+    else toast.error(locale === 'en' ? 'Send failed' : '发送失败')
+  }
+
+  const getUserName = (uid: string) => {
+    if (uid === userId) return locale === 'en' ? 'You' : locale === 'zh-HK' ? '你' : '你'
+    return userProfiles[uid] || (locale === 'en' ? 'User' : '用户')
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* 顶部条 */}
       <div className="flex items-center gap-2 p-3 border-b shrink-0">
-        <button
-          onClick={onBack}
-          className="lg:hidden p-1 -ml-1 hover:bg-muted rounded"
-        >
+        <button onClick={onBack} className="lg:hidden p-1 -ml-1 hover:bg-muted rounded">
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <Avatar className="h-7 w-7">
-          <AvatarFallback className="text-[10px] bg-violet-500/10">
-            {conv?.type === 'group' ? <Users className="h-3 w-3" /> : displayName?.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+          isGroup ? 'bg-violet-500/10' : 'bg-primary/10'
+        }`}>
+          {isGroup ? <Users className="h-3.5 w-3.5 text-violet-500" /> : (
+            <span className="text-[10px] font-bold text-primary">{displayName.slice(0, 2).toUpperCase()}</span>
+          )}
+        </div>
         <span className="font-medium text-sm truncate">{displayName}</span>
+        {isGroup && conv?.other_user_email && (
+          <span className="text-xs text-muted-foreground">({locale === 'en' ? 'group' : '群組'})</span>
+        )}
       </div>
 
       {/* 消息列表 */}
@@ -511,10 +672,7 @@ function ChatWindow({
         {loading ? (
           <div className="space-y-3 p-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                className={`h-10 rounded-lg w-2/3 ${i % 2 === 0 ? 'ml-auto' : ''}`}
-              />
+              <Skeleton key={i} className={`h-10 rounded-lg w-2/3 ${i % 2 === 0 ? 'ml-auto' : ''}`} />
             ))}
           </div>
         ) : messages.length === 0 ? (
@@ -526,21 +684,22 @@ function ChatWindow({
             const isMe = msg.user_id === userId
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[75%] px-3 py-1.5 rounded-2xl text-sm ${
-                    isMe
-                      ? 'bg-primary text-primary-foreground rounded-br-md'
-                      : 'bg-muted rounded-bl-md'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  <span
-                    className={`text-[10px] mt-0.5 block ${
-                      isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                <div className={`max-w-[75%] ${isMe ? '' : 'flex items-end gap-1.5'}`}>
+                  {!isMe && (
+                    <span className="text-[10px] text-muted-foreground shrink-0 mb-0.5">{getUserName(msg.user_id)}</span>
+                  )}
+                  <div
+                    className={`px-3 py-1.5 rounded-2xl text-sm ${
+                      isMe
+                        ? 'bg-primary text-primary-foreground rounded-br-md'
+                        : 'bg-muted rounded-bl-md'
                     }`}
                   >
-                    {format(new Date(msg.created_at), 'HH:mm')}
-                  </span>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    <span className={`text-[10px] mt-0.5 block ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                      {format(new Date(msg.created_at), 'HH:mm')}
+                    </span>
+                  </div>
                 </div>
               </div>
             )
