@@ -86,14 +86,32 @@ export default function HomePage() {
         }
       }
 
-      // 🎓 大学生专属：成人/不限年龄 + 排除K12标题词
+      // 🎓 大学生专属：主办方为大学 或 标题含大学/大专 或 创业路演类型
       if (uniOnly) {
         query = query
           .in('age_group', ['成人公开', '不限'])
+          // 排除K-12
           .not('title', 'ilike', '%小學%').not('title', 'ilike', '%小学%')
           .not('title', 'ilike', '%中學%').not('title', 'ilike', '%中学%')
           .not('title', 'ilike', '%幼稚園%').not('title', 'ilike', '%幼儿园%')
           .not('title', 'ilike', '%兒童%').not('title', 'ilike', '%儿童%')
+          // 正向：必须命中至少一条大学相关信号
+          .or(
+            'title.ilike.%大學%,title.ilike.%大学%,title.ilike.%大專%,title.ilike.%大专%,' +
+            'title.ilike.%HKU%,title.ilike.%CUHK%,title.ilike.%HKUST%,title.ilike.%CityU%,' +
+            'title.ilike.%PolyU%,title.ilike.%HKBU%,title.ilike.%Lingnan%,title.ilike.%EdUHK%,' +
+            'title.ilike.%Tertiary%,title.ilike.%Undergraduate%,title.ilike.%Postgraduate%,' +
+            'title.ilike.%院校%,title.ilike.%學院%,title.ilike.%学院%,' +
+            'organizer.ilike.%大學%,organizer.ilike.%大学%,organizer.ilike.%大專%,' +
+            'organizer.ilike.%HKU%,organizer.ilike.%CUHK%,organizer.ilike.%HKUST%,' +
+            'organizer.ilike.%CityU%,organizer.ilike.%PolyU%,organizer.ilike.%HKBU%,' +
+            'organizer.ilike.%Lingnan%,organizer.ilike.%EdUHK%,' +
+            'type.eq.创业路演,' +
+            'title.ilike.%Case Competition%,title.ilike.%Hackathon%,title.ilike.%黑客松%,' +
+            'title.ilike.%Moot%,title.ilike.%模擬法庭%,title.ilike.%模拟法庭%,' +
+            'title.ilike.%Fellowship%,title.ilike.%Scholarship%,title.ilike.%獎學金%,' +
+            'title.ilike.%大專杯%,title.ilike.%大專盃%,title.ilike.%大專%,title.ilike.%大专杯%'
+          )
       }
 
       if (filters.status && filters.status !== '全部') {
