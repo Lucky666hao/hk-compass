@@ -28,11 +28,10 @@ export default function HomePage() {
     team_size: '全部',
     status: '全部',
   })
-  const [uniOnly, setUniOnly] = useState(false)
   const [page, setPage] = useState(0)
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['competitions', filters, page, uniOnly],
+    queryKey: ['competitions', filters, page],
     queryFn: async () => {
       let query = supabase
         .from('competitions')
@@ -84,34 +83,6 @@ export default function HomePage() {
         } else {
           query = query.eq('team_size', filters.team_size)
         }
-      }
-
-      // 🎓 大学生专属：主办方为大学 或 标题含大学/大专 或 创业路演类型
-      if (uniOnly) {
-        query = query
-          .in('age_group', ['成人公开', '不限'])
-          // 排除K-12
-          .not('title', 'ilike', '%小學%').not('title', 'ilike', '%小学%')
-          .not('title', 'ilike', '%中學%').not('title', 'ilike', '%中学%')
-          .not('title', 'ilike', '%幼稚園%').not('title', 'ilike', '%幼儿园%')
-          .not('title', 'ilike', '%兒童%').not('title', 'ilike', '%儿童%')
-          // 正向：必须命中至少一条大学相关信号
-          .or(
-            'title.ilike.%大學%,title.ilike.%大学%,title.ilike.%大專%,title.ilike.%大专%,' +
-            'title.ilike.%HKU%,title.ilike.%CUHK%,title.ilike.%HKUST%,title.ilike.%CityU%,' +
-            'title.ilike.%PolyU%,title.ilike.%HKBU%,title.ilike.%Lingnan%,title.ilike.%EdUHK%,' +
-            'title.ilike.%Tertiary%,title.ilike.%Undergraduate%,title.ilike.%Postgraduate%,' +
-            'title.ilike.%院校%,title.ilike.%學院%,title.ilike.%学院%,' +
-            'organizer.ilike.%大學%,organizer.ilike.%大学%,organizer.ilike.%大專%,' +
-            'organizer.ilike.%HKU%,organizer.ilike.%CUHK%,organizer.ilike.%HKUST%,' +
-            'organizer.ilike.%CityU%,organizer.ilike.%PolyU%,organizer.ilike.%HKBU%,' +
-            'organizer.ilike.%Lingnan%,organizer.ilike.%EdUHK%,' +
-            'type.eq.创业路演,' +
-            'title.ilike.%Case Competition%,title.ilike.%Hackathon%,title.ilike.%黑客松%,' +
-            'title.ilike.%Moot%,title.ilike.%模擬法庭%,title.ilike.%模拟法庭%,' +
-            'title.ilike.%Fellowship%,title.ilike.%Scholarship%,title.ilike.%獎學金%,' +
-            'title.ilike.%大專杯%,title.ilike.%大專盃%,title.ilike.%大專%,title.ilike.%大专杯%'
-          )
       }
 
       if (filters.status && filters.status !== '全部') {
@@ -173,14 +144,7 @@ export default function HomePage() {
         <FilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
-          uniOnly={uniOnly}
-          onUniToggle={() => setUniOnly((prev) => !prev)}
         />
-        {uniOnly && (
-          <p className="text-xs text-violet-600 dark:text-violet-400">
-            {locale === 'en' ? '🎓 University/tertiary competitions — adult, non-K12' : locale === 'zh-HK' ? '🎓 大專及大學級別比賽' : '🎓 大专及大学级别比赛'}
-          </p>
-        )}
       </div>
 
       {!isLoading && (
