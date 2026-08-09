@@ -207,6 +207,11 @@ const en: TranslationDict = {
   'posts.back_to_list': 'Back to posts',
   'posts.delete_confirm': 'Delete this post?',
   'posts.delete_success': 'Post deleted.',
+  'posts.cancel': 'Cancel',
+  'posts.publishing': 'Publishing...',
+  'posts.delete_failed': 'Delete failed',
+  'posts.not_found': 'Post not found',
+  'posts.all_categories': 'All',
   // 分类标签
   'posts.cat.赛事讨论': 'Event Talk',
   'posts.cat.经验分享': 'Experience',
@@ -244,6 +249,17 @@ const en: TranslationDict = {
   'recruit.close': 'Close Recruitment',
   'recruit.reopen': 'Reopen Recruitment',
   'recruit.competition_linked': 'Linked competition',
+  'recruit.cancel': 'Cancel',
+  'recruit.publishing': 'Publishing...',
+  'recruit.delete_failed': 'Delete failed',
+  'recruit.update_failed': 'Update failed',
+  'recruit.not_found': 'Recruitment not found',
+  'recruit.any': 'Any',
+  'recruit.all': 'All',
+  'recruit.search_placeholder': 'Search competitions...',
+  'recruit.type_to_search': 'Type to search...',
+  'recruit.no_comp_found': 'No competitions found',
+  'recruit.competitions_heading': 'Competitions',
 
   // -- 聊天 --
   'chat.title': 'Messages',
@@ -265,6 +281,9 @@ const en: TranslationDict = {
   'chat.create_group_done': 'Create',
   'chat.group_created': 'Group created!',
   'chat.no_friends': 'No friends yet. Go to Profile to search and add friends.',
+  'chat.send_failed': 'Send failed',
+  'chat.no_conv_selected': 'Select a conversation or start a new one',
+  'chat.about': 'Chat with other competitors in real time.',
 
   // -- 用户资料 --
   'profile.title': 'Profile',
@@ -545,6 +564,11 @@ const zhCN: TranslationDict = {
   'posts.back_to_list': '返回帖子列表',
   'posts.delete_confirm': '确定删除这条帖子？',
   'posts.delete_success': '帖子已删除。',
+  'posts.cancel': '取消',
+  'posts.publishing': '发布中...',
+  'posts.delete_failed': '删除失败',
+  'posts.not_found': '找不到帖子',
+  'posts.all_categories': '全部',
   // 分类标签
   'posts.cat.赛事讨论': '🏆 赛事讨论',
   'posts.cat.经验分享': '💡 经验分享',
@@ -582,6 +606,17 @@ const zhCN: TranslationDict = {
   'recruit.close': '停止招募',
   'recruit.reopen': '重新招募',
   'recruit.competition_linked': '关联比赛',
+  'recruit.cancel': '取消',
+  'recruit.publishing': '发布中...',
+  'recruit.delete_failed': '删除失败',
+  'recruit.update_failed': '更新失败',
+  'recruit.not_found': '找不到招募',
+  'recruit.any': '不限',
+  'recruit.all': '全部',
+  'recruit.search_placeholder': '搜索比赛...',
+  'recruit.type_to_search': '输入搜索...',
+  'recruit.no_comp_found': '未找到相关比赛',
+  'recruit.competitions_heading': '比赛',
 
   // -- 聊天 --
   'chat.title': '消息',
@@ -603,6 +638,9 @@ const zhCN: TranslationDict = {
   'chat.create_group_done': '创建',
   'chat.group_created': '群组已创建！',
   'chat.no_friends': '还没有好友。去个人资料页搜索添加好友吧。',
+  'chat.send_failed': '发送失败',
+  'chat.no_conv_selected': '选择一个对话或开始新的',
+  'chat.about': '与其他参赛者实时聊天。',
 
   // -- 用户资料 --
   'profile.title': '个人资料',
@@ -870,6 +908,11 @@ const zhHK: TranslationDict = {
   'posts.back_to_list': '返回帖子列表',
   'posts.delete_confirm': '確定刪除呢條帖子？',
   'posts.delete_success': '帖子已刪除。',
+  'posts.cancel': '取消',
+  'posts.publishing': '發布中...',
+  'posts.delete_failed': '刪除失敗',
+  'posts.not_found': '搵唔到帖子',
+  'posts.all_categories': '全部',
   // 分類標籤
   'posts.cat.賽事討論': '🏆 賽事討論',
   'posts.cat.經驗分享': '💡 經驗分享',
@@ -907,6 +950,17 @@ const zhHK: TranslationDict = {
   'recruit.close': '停止招募',
   'recruit.reopen': '重新招募',
   'recruit.competition_linked': '關聯比賽',
+  'recruit.cancel': '取消',
+  'recruit.publishing': '發布中...',
+  'recruit.delete_failed': '刪除失敗',
+  'recruit.update_failed': '更新失敗',
+  'recruit.not_found': '搵唔到招募',
+  'recruit.any': '不限',
+  'recruit.all': '全部',
+  'recruit.search_placeholder': '搜尋比賽...',
+  'recruit.type_to_search': '輸入搜尋...',
+  'recruit.no_comp_found': '未找到相關比賽',
+  'recruit.competitions_heading': '比賽',
 
   // -- 聊天 --
   'chat.title': '訊息',
@@ -928,6 +982,9 @@ const zhHK: TranslationDict = {
   'chat.create_group_done': '建立',
   'chat.group_created': '群組已建立！',
   'chat.no_friends': '仲未有朋友。去個人資料頁搜尋添加啦。',
+  'chat.send_failed': '發送失敗',
+  'chat.no_conv_selected': '選擇一個對話或者開始新嘅',
+  'chat.about': '同其他參賽者即時傾偈。',
 
   // -- 用戶資料 --
   'profile.title': '個人資料',

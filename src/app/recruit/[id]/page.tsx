@@ -47,7 +47,7 @@ export default function RecruitmentDetailPage() {
   const handleDelete = async () => {
     const { error } = await supabase.from('recruitments').delete().eq('id', id)
     if (error) {
-      toast.error(locale === 'en' ? 'Delete failed' : '删除失败')
+      toast.error(t(locale, 'recruit.delete_failed'))
     } else {
       toast.success(t(locale, 'recruit.delete_success'))
       router.push('/recruit')
@@ -63,7 +63,7 @@ export default function RecruitmentDetailPage() {
       .eq('id', id)
 
     if (error) {
-      toast.error(locale === 'en' ? 'Update failed' : '更新失败')
+      toast.error(t(locale, 'recruit.update_failed'))
     } else {
       queryClient.invalidateQueries({ queryKey: ['recruitment', id] })
       toast.success(
@@ -86,7 +86,7 @@ export default function RecruitmentDetailPage() {
   if (!recruitment) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 text-center text-muted-foreground py-20">
-        <p className="text-lg">{locale === 'en' ? 'Recruitment not found' : locale === 'zh-HK' ? '找不到招募' : '找不到招募'}</p>
+        <p className="text-lg">{t(locale, 'recruit.not_found') as string}</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/recruit')}>
           {t(locale, 'recruit.back_to_list')}
         </Button>

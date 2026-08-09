@@ -48,7 +48,7 @@ export default function PostDetailPage() {
     if (!post) return
     const { error } = await supabase.from('posts').delete().eq('id', post.id)
     if (error) {
-      toast.error(locale === 'en' ? 'Delete failed' : '删除失败')
+      toast.error(t(locale, 'posts.delete_failed'))
     } else {
       toast.success(t(locale, 'posts.delete_success'))
       router.push('/posts')
@@ -67,7 +67,7 @@ export default function PostDetailPage() {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8 text-center text-muted-foreground py-20">
-        <p className="text-lg">{locale === 'en' ? 'Post not found' : locale === 'zh-HK' ? '找不到帖子' : '找不到帖子'}</p>
+        <p className="text-lg">{t(locale, 'posts.not_found') as string}</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push('/posts')}>
           {t(locale, 'posts.back_to_list')}
         </Button>

@@ -20,7 +20,7 @@ export default function NewPostPage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [category, setCategory] = useState<PostCategory>('赛事讨论')
+  const [category, setCategory] = useState<PostCategory>(POST_CATEGORIES[0])
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -118,13 +118,11 @@ export default function NewPostPage() {
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => router.back()}>
-              {locale === 'en' ? 'Cancel' : locale === 'zh-HK' ? '取消' : '取消'}
+              {t(locale, 'posts.cancel') as string}
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
               <Send className="h-4 w-4 mr-1.5" />
-              {submitting
-                ? locale === 'en' ? 'Publishing...' : locale === 'zh-HK' ? '發布中...' : '发布中...'
-                : t(locale, 'posts.publish')}
+              {submitting ? t(locale, 'posts.publishing') as string : t(locale, 'posts.publish') as string}
             </Button>
           </div>
         </CardContent>

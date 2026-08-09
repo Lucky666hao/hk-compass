@@ -38,7 +38,7 @@ export default function RecruitPage() {
   const filters = [
     { key: 'open', label: t(locale, 'recruit.status_open') as string },
     { key: 'closed', label: t(locale, 'recruit.status_closed') as string },
-    { key: 'all', label: locale === 'en' ? 'All' : locale === 'zh-HK' ? '全部' : '全部' },
+    { key: 'all', label: t(locale, 'recruit.all') as string },
   ]
 
   return (

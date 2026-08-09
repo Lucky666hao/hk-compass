@@ -284,11 +284,7 @@ export default function ChatPage() {
           </div>
           <h2 className="text-xl font-semibold mb-2">{t(locale, 'posts.login_prompt')}</h2>
           <p className="text-muted-foreground max-w-sm mb-6">
-            {locale === 'en'
-              ? 'Chat with other competitors in real time.'
-              : locale === 'zh-HK'
-              ? '同其他參賽者即時傾偈。'
-              : '与其他参赛者实时聊天。'}
+            {t(locale, 'chat.about') as string}
           </p>
           <Button onClick={() => router.push('/auth/login?redirect=/chat')}>
             {t(locale, 'saved.login_btn')}
@@ -513,11 +509,7 @@ export default function ChatPage() {
               <div className="text-center">
                 <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">
-                  {locale === 'en'
-                    ? 'Select a conversation or start a new one'
-                    : locale === 'zh-HK'
-                    ? '選擇一個對話或者開始新嘅'
-                    : '选择一个对话或开始新的'}
+                  {t(locale, 'chat.no_conv_selected') as string}
                 </p>
               </div>
             </div>
@@ -639,7 +631,7 @@ function ChatWindow({
     })
     setSending(false)
     if (!error) setInput('')
-    else toast.error(locale === 'en' ? 'Send failed' : '发送失败')
+    else toast.error(t(locale, 'chat.send_failed'))
   }
 
   const getUserName = (uid: string) => {

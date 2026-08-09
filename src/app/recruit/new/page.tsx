@@ -95,8 +95,7 @@ export default function NewRecruitmentPage() {
     }
   }
 
-  const cancelText =
-    locale === 'en' ? 'Cancel' : locale === 'zh-HK' ? '取消' : '取消'
+  const cancelText = t(locale, 'recruit.cancel') as string
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -136,7 +135,7 @@ export default function NewRecruitmentPage() {
                     className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
                   >
                     <span className="text-muted-foreground">
-                      {locale === 'en' ? 'Search competitions...' : locale === 'zh-HK' ? '搜尋比賽...' : '搜索比赛...'}
+                      {t(locale, 'recruit.search_placeholder') as string}
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                   </button>
@@ -144,13 +143,13 @@ export default function NewRecruitmentPage() {
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
                     <CommandInput
-                      placeholder={locale === 'en' ? 'Type to search...' : locale === 'zh-HK' ? '輸入搜尋...' : '输入搜索...'}
+                      placeholder={t(locale, 'recruit.type_to_search') as string}
                     />
                     <CommandList>
                       <CommandEmpty>
-                        {locale === 'en' ? 'No competitions found' : locale === 'zh-HK' ? '未找到相關比賽' : '未找到相关比赛'}
+                        {t(locale, 'recruit.no_comp_found') as string}
                       </CommandEmpty>
-                      <CommandGroup heading={locale === 'en' ? 'Competitions' : locale === 'zh-HK' ? '比賽' : '比赛'}>
+                      <CommandGroup heading={t(locale, 'recruit.competitions_heading') as string}>
                         {/* 不关联选项 */}
                         <CommandItem
                           value="__none__"
@@ -215,7 +214,7 @@ export default function NewRecruitmentPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_any">
-                    {locale === 'en' ? 'Any' : locale === 'zh-HK' ? '不限' : '不限'}
+                    {t(locale, 'recruit.any') as string}
                   </SelectItem>
                   {TEAM_SIZE_OPTIONS.map((ts) => (
                     <SelectItem key={ts} value={ts}>
@@ -251,9 +250,7 @@ export default function NewRecruitmentPage() {
             <Button variant="outline" onClick={() => router.back()}>{cancelText}</Button>
             <Button onClick={handleSubmit} disabled={submitting} className="bg-amber-500 hover:bg-amber-600">
               <Send className="h-4 w-4 mr-1.5" />
-              {submitting
-                ? locale === 'en' ? 'Publishing...' : locale === 'zh-HK' ? '發布中...' : '发布中...'
-                : t(locale, 'recruit.publish')}
+              {submitting ? t(locale, 'recruit.publishing') as string : t(locale, 'recruit.publish') as string}
             </Button>
           </div>
         </CardContent>

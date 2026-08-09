@@ -72,9 +72,7 @@ export default function PostsPage() {
                   : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
               }`}
             >
-              {cat === '全部'
-                ? locale === 'en' ? 'All' : locale === 'zh-HK' ? '全部' : '全部'
-                : t(locale, `posts.cat.${cat}`)}
+              {cat === '全部' ? t(locale, 'posts.all_categories') : t(locale, `posts.cat.${cat}`)}
             </button>
           ))}
         </div>
