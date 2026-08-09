@@ -8,7 +8,7 @@ import type { Competition } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Heart, Bell, Calendar, MapPin, ExternalLink, Clock } from 'lucide-react'
+import { Heart, Bell, Calendar, MapPin, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -201,10 +201,10 @@ export function CompetitionCard({ competition }: Props) {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  window.open((competition.registration_link || competition.source_url)!, '_blank')
+                  router.push(`/competition/${competition.id}`)
                 }}
               >
-                {t(locale, 'card.learn_more')} <ExternalLink className="h-3 w-3" />
+                {t(locale, 'card.learn_more')}
               </Button>
             )}
             <Button

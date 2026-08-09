@@ -391,6 +391,20 @@ export default function CompetitionDetailPage() {
             </Card>
           )}
 
+          {/* === 外部链接 CTA === */}
+          {(competition.registration_link || competition.source_url) && (
+            <Button
+              size="lg"
+              className="w-full gap-2"
+              onClick={() => window.open((competition.registration_link || competition.source_url)!, '_blank')}
+            >
+              <ExternalLink className="h-5 w-5" />
+              {competition.status === '报名中' && competition.registration_link
+                ? t(locale, 'detail.register_btn')
+                : t(locale, 'detail.view_source_btn')}
+            </Button>
+          )}
+
           {/* === 评论区 === */}
           <CommentSection competitionId={id} />
 
