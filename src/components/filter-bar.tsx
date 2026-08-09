@@ -13,7 +13,7 @@ const TYPE_KEYS = ['运动', '电竞', '创意摄影设计', 'AI创作', '创业
 const LOCATION_KEYS = ['港岛', '九龙', '新界', '线上']
 const FEE_KEYS = ['免费', '付费', '有奖金']
 const STATUS_KEYS = ['报名中', '即将开始', '进行中', '已结束']
-const AGE_KEYS = ['儿童', '青少年', '成人/公开', '不限']
+const AGE_KEYS = ['儿童', '青少年', '成人公开', '不限']
 
 interface Props {
   filters: CompetitionFilters

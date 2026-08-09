@@ -354,7 +354,7 @@ const en: TranslationDict = {
   // Age
   'age.儿童': 'Children',
   'age.青少年': 'Youth',
-  'age.成人/公开': 'Adults / Open',
+  'age.成人公开': 'Adults / Open',
   'age.不限': 'All Ages',
 
   // Eligibility
@@ -684,7 +684,7 @@ const zhCN: TranslationDict = {
 
   'age.儿童': '👶 儿童',
   'age.青少年': '🧑 青少年',
-  'age.成人/公开': '👤 成人/公开',
+  'age.成人公开': '👤 成人公开',
   'age.不限': '🌐 不限年龄',
 
   // Eligibility
@@ -1010,7 +1010,7 @@ const zhHK: TranslationDict = {
 
   'age.儿童': '👶 兒童',
   'age.青少年': '🧑 青少年',
-  'age.成人/公开': '👤 成人/公開',
+  'age.成人公开': '👤 成人公開',
   'age.不限': '🌐 不限年齡',
 
   // Eligibility
