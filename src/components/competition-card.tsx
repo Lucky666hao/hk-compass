@@ -194,23 +194,9 @@ export function CompetitionCard({ competition }: Props) {
 
           {/* 操作按钮 */}
           <div className="mt-4 flex items-center gap-2">
-            {competition.status === '报名中' && competition.registration_link ? (
+            {(competition.registration_link || competition.source_url) && (
               <Button
                 size="sm"
-                className="gap-1"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  window.open(competition.registration_link!, '_blank')
-                }}
-              >
-                {t(locale, 'card.register')} <ExternalLink className="h-3 w-3" />
-              </Button>
-            ) : (competition.registration_link || competition.source_url) ? (
-              /* 已过期但有链接 → 显示"查看来源" */
-              <Button
-                size="sm"
-                variant="secondary"
                 className="gap-1"
                 onClick={(e) => {
                   e.preventDefault()
@@ -218,9 +204,9 @@ export function CompetitionCard({ competition }: Props) {
                   window.open((competition.registration_link || competition.source_url)!, '_blank')
                 }}
               >
-                {t(locale, 'card.view_source')} <ExternalLink className="h-3 w-3" />
+                {t(locale, 'card.learn_more')} <ExternalLink className="h-3 w-3" />
               </Button>
-            ) : null}
+            )}
             <Button
               variant="outline"
               size="sm"
