@@ -169,7 +169,7 @@ export function CompetitionCard({ competition }: Props) {
             </div>
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span>{t(locale, `location.${competition.location}`)} · {(locale === 'en' && competition.venue_en ? competition.venue_en : competition.venue) || t(locale, 'detail.deadline_tba')}</span>
+              <span>{t(locale, `location.${competition.location}`)} · {competition.venue || t(locale, 'detail.deadline_tba')}</span>
             </div>
             <div className="flex items-center gap-3">
               <span>{t(locale, `fee.${competition.fee_type}`)}</span>
@@ -178,9 +178,9 @@ export function CompetitionCard({ competition }: Props) {
                   {t(locale, `team_size.${competition.team_size}`)}
                 </span>
               )}
-              {(locale === 'en' && competition.prize_en ? competition.prize_en : competition.prize) && (
+              {(competition.prize) && (
                 <span className="text-amber-600 dark:text-amber-400">
-                  🏆 {locale === 'en' && competition.prize_en ? competition.prize_en : competition.prize}
+                  🏆 {competition.prize}
                 </span>
               )}
             </div>
