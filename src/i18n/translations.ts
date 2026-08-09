@@ -295,6 +295,7 @@ const en: TranslationDict = {
 
   // Sidebar
   'sidebar.discover': 'Discover',
+  'sidebar.uni': 'Universities',
   'sidebar.posts': 'Community',
   'sidebar.recruit': 'Team Up',
   'sidebar.chat': 'Chat',
@@ -631,6 +632,7 @@ const zhCN: TranslationDict = {
   'back': '返回',
 
   'sidebar.discover': '发现比赛',
+  'sidebar.uni': '大学比赛',
   'sidebar.posts': '社区帖子',
   'sidebar.recruit': '组队招募',
   'sidebar.chat': '聊天',
@@ -955,6 +957,7 @@ const zhHK: TranslationDict = {
   'back': '返回',
 
   'sidebar.discover': '發現比賽',
+  'sidebar.uni': '大學比賽',
   'sidebar.posts': '社區帖子',
   'sidebar.recruit': '組隊招募',
   'sidebar.chat': '聊天',
