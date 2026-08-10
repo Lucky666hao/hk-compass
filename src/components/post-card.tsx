@@ -109,6 +109,21 @@ export function PostCard({
               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                 {post.content}
               </p>
+              {/* 图片预览 */}
+              {post.image_urls && post.image_urls.length > 0 && (
+                <div className="flex gap-1.5 mt-2">
+                  {post.image_urls.slice(0, 3).map((url, i) => (
+                    <div key={i} className="w-16 h-16 rounded-lg overflow-hidden border bg-muted">
+                      <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  ))}
+                  {post.image_urls.length > 3 && (
+                    <div className="w-16 h-16 rounded-lg border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                      +{post.image_urls.length - 3}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 底部表情回应 + 收藏 */}
               <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/50">

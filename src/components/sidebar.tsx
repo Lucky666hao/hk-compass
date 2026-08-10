@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
 import {
   Compass,
@@ -23,6 +24,9 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
+  Moon,
+  Bell,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -288,6 +292,21 @@ function SidebarInner({
 
       {/* 底部 */}
       <div className="border-t border-sidebar-border p-2 space-y-1">
+        {/* 暗色模式切换 */}
+        <DarkModeToggle collapsed={collapsed} />
+        {/* 通知 */}
+        {user && (
+          <Link
+            href="/account/notifications"
+            className={cn(
+              'w-full flex items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+              collapsed ? 'justify-center' : 'gap-2.5'
+            )}
+          >
+            <NotificationBell />
+            {!collapsed && <span className="text-xs">Notifications</span>}
+          </Link>
+        )}
         {/* 语言切换 */}
         <LangSwitcher collapsed={collapsed} locale={locale} setLocale={setLocale} />
 
@@ -392,6 +411,51 @@ function NavItemLink({
   }
 
   return <div key={item.key}>{link}</div>
+}
+
+// ============================================
+// 暗色模式切换
+// ============================================
+function DarkModeToggle({ collapsed }: { collapsed: boolean }) {
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark')
+    setDark(isDark)
+  }, [])
+
+  const toggle = () => {
+    const next = !dark
+    setDark(next)
+    document.documentElement.classList.toggle('dark', next)
+    localStorage.setItem('hk-compass-theme', next ? 'dark' : 'light')
+  }
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <button
+            onClick={toggle}
+            className="w-full flex items-center justify-center rounded-md px-2 py-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{dark ? 'Light mode' : 'Dark mode'}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      className="w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+    >
+      {dark ? <Moon className="h-4 w-4 shrink-0" /> : <Sun className="h-4 w-4 shrink-0" />}
+      <span className="text-xs">{dark ? 'Light mode' : 'Dark mode'}</span>
+    </button>
+  )
 }
 
 // ============================================

@@ -184,6 +184,7 @@ export interface Post {
   author_email?: string
   author_university?: string | null
   user_vote?: number | null  // 当前用户的投票: 1 | -1 | null
+  image_urls?: string[]       // 帖子配图URL列表
 }
 
 // ============================================

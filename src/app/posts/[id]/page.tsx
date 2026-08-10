@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Trash2, Flag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { zhHK } from 'date-fns/locale'
@@ -91,6 +91,22 @@ export default function PostDetailPage() {
     })
   }, [id, userId])
 
+  const [reportOpen, setReportOpen] = useState(false)
+  const handleReport = async (reason: string) => {
+    if (!userId) {
+      toast.error(locale === 'en' ? 'Please log in first' : '请先登录')
+      return
+    }
+    const { error } = await supabase.from('post_reports').insert({ post_id: id, reporter_id: userId, reason })
+    if (error) {
+      if (error.code === '23505') toast.error(locale === 'en' ? 'Already reported' : locale === 'zh-HK' ? '已舉報過' : '已举报过')
+      else toast.error(locale === 'en' ? 'Report failed' : '举报失败')
+    } else {
+      toast.success(locale === 'en' ? 'Reported. Thank you.' : locale === 'zh-HK' ? '已舉報，謝謝。' : '已举报，谢谢。')
+    }
+    setReportOpen(false)
+  }
+
   const handleDelete = async () => {
     if (!post) return
     const { error } = await supabase.from('posts').delete().eq('id', post.id)
@@ -157,6 +173,39 @@ export default function PostDetailPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <SaveButton_post postId={post.id} userId={userId} />
+                  {/* 举报按钮 */}
+                  {userId && !isAuthor && (
+                    <div className="relative">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setReportOpen(!reportOpen)}
+                        className="text-muted-foreground hover:text-destructive"
+                        title={locale === 'en' ? 'Report' : '举报'}
+                      >
+                        <Flag className="h-4 w-4" />
+                      </Button>
+                      {reportOpen && (
+                        <div className="absolute right-0 top-full mt-1 z-10 bg-popover border rounded-lg shadow-lg p-2 w-40">
+                          {[
+                            { key: 'spam', en: 'Spam', zh: '垃圾信息' },
+                            { key: 'harassment', en: 'Harassment', zh: '骚扰' },
+                            { key: 'inappropriate', en: 'Inappropriate', zh: '不当内容' },
+                            { key: 'violence', en: 'Violence', zh: '暴力内容' },
+                            { key: 'other', en: 'Other', zh: '其他' },
+                          ].map(r => (
+                            <button
+                              key={r.key}
+                              onClick={() => handleReport(r.key)}
+                              className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors"
+                            >
+                              {locale === 'en' ? r.en : r.zh}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {isAuthor && (
                     <Button
                       variant="ghost"
@@ -187,6 +236,21 @@ export default function PostDetailPage() {
               <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
                 {post.content}
               </div>
+
+              {/* 图片展示 */}
+              {post.image_urls && post.image_urls.length > 0 && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {post.image_urls.map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt=""
+                      className="w-full rounded-lg border object-cover max-h-96"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* 表情回应 */}
               <div className="mt-6 pt-4 border-t">

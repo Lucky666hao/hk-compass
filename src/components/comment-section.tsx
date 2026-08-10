@@ -171,6 +171,25 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
       if (error) throw error
       setNewComment('')
       toast.success(t(locale, 'toast.comment_posted'))
+
+      // 通知帖子作者（非匿名、非自己回复自己）
+      if (!anonymous && targetType === 'post') {
+        const { data: post } = await supabase.from('posts').select('user_id, title').eq('id', targetId).single()
+        if (post && post.user_id !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: post.user_id,
+            type: 'comment',
+            message: locale === 'en'
+              ? `Someone commented on "${post.title?.slice(0, 30)}"`
+              : locale === 'zh-HK'
+              ? `有人評論了「${post.title?.slice(0, 30)}」`
+              : `有人评论了「${post.title?.slice(0, 30)}」`,
+            link: `/posts/${targetId}`,
+            related_post_id: targetId,
+          })
+        }
+      }
+
       loadComments()
     } catch (err: any) {
       toast.error(err.message || t(locale, 'toast.comment_failed'))
