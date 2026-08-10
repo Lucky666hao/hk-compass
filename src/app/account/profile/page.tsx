@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
@@ -8,18 +8,50 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, User, Search, UserPlus, X, Users, GraduationCap, Eye, EyeOff } from 'lucide-react'
+import {
+  ArrowLeft, User, Search, UserPlus, X, Users, GraduationCap, Eye, EyeOff,
+  Camera, Code2, Globe, AtSign, FileText, MessageSquare, ThumbsUp, XCircle, Plus,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { HK_UNIVERSITIES } from '@/lib/university-data'
 import { cn } from '@/lib/utils'
 
+const MAX_AVATAR_SIZE = 200 // px
+const AVATAR_QUALITY = 0.7
+
+/** Canvas 压缩图片到指定尺寸 */
+function resizeImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = MAX_AVATAR_SIZE
+      canvas.height = MAX_AVATAR_SIZE
+      const ctx = canvas.getContext('2d')!
+      // 取最小边做 crop
+      const size = Math.min(img.width, img.height)
+      const sx = (img.width - size) / 2
+      const sy = (img.height - size) / 2
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, MAX_AVATAR_SIZE, MAX_AVATAR_SIZE)
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('Canvas toBlob failed'))
+      }, 'image/jpeg', AVATAR_QUALITY)
+    }
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const { locale } = useLocale()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [userId, setUserId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -31,7 +63,16 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('')
   const [university, setUniversity] = useState<string>('')
   const [showUniversity, setShowUniversity] = useState(false)
+  const [skills, setSkills] = useState<string[]>([])
+  const [skillInput, setSkillInput] = useState('')
+  const [github, setGithub] = useState('')
+  const [website, setWebsite] = useState('')
+  const [instagram, setInstagram] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // 头像上传
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // 好友
   const [friends, setFriends] = useState<Profile[]>([])
@@ -40,30 +81,47 @@ export default function ProfilePage() {
   const [searchResults, setSearchResults] = useState<Profile[]>([])
   const [searching, setSearching] = useState(false)
 
+  // 统计
+  const [stats, setStats] = useState({ posts: 0, comments: 0, votes: 0, comps: 0 })
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null)
     })
   }, [])
 
-  // 加载自己的 profile
+  // 加载 profile + 统计
   useEffect(() => {
     if (!userId) { setLoading(false); return }
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setProfile(data as Profile)
-          setDisplayName(data.display_name)
-          setBio(data.bio || '')
-          setUniversity((data as any).university || '')
-          setShowUniversity((data as any).show_university || false)
-        }
-        setLoading(false)
+    Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', userId).single(),
+      // 统计
+      supabase.from('posts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('post_comments').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('post_votes').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('competitions').select('id', { count: 'exact', head: true }).eq('submitted_by', userId),
+    ]).then(([{ data }, postsRes, commentsRes, votesRes, compsRes]) => {
+      if (data) {
+        const p = data as any
+        setProfile(data as Profile)
+        setDisplayName(p.display_name || '')
+        setBio(p.bio || '')
+        setUniversity(p.university || '')
+        setShowUniversity(p.show_university || false)
+        setSkills(p.skills || [])
+        setGithub(p.github || '')
+        setWebsite(p.website || '')
+        setInstagram(p.instagram || '')
+        setAvatarUrl(p.avatar_url || null)
+      }
+      setStats({
+        posts: postsRes.count ?? 0,
+        comments: commentsRes.count ?? 0,
+        votes: votesRes.count ?? 0,
+        comps: compsRes.count ?? 0,
       })
+      setLoading(false)
+    })
   }, [userId])
 
   // 加载好友列表
@@ -94,6 +152,34 @@ export default function ProfilePage() {
       })
   }, [userId])
 
+  // 头像上传
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+
+    setUploadingAvatar(true)
+    try {
+      const resized = await resizeImage(file)
+      const path = `${userId}.jpg`
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, resized, { contentType: 'image/jpeg', upsert: true })
+
+      if (uploadErr) throw uploadErr
+
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+      const publicUrl = urlData.publicUrl
+
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('user_id', userId)
+      setAvatarUrl(publicUrl)
+      toast.success(locale === 'en' ? 'Avatar updated!' : locale === 'zh-HK' ? '頭像已更新！' : '头像已更新！')
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   const handleSave = async () => {
     if (!userId || !profile) return
     setSaving(true)
@@ -104,6 +190,10 @@ export default function ProfilePage() {
         bio: bio.trim(),
         university: university || null,
         show_university: showUniversity,
+        skills,
+        github: github.trim() || null,
+        website: website.trim() || null,
+        instagram: instagram.trim() || null,
       })
       .eq('user_id', userId)
 
@@ -131,7 +221,6 @@ export default function ProfilePage() {
     setSearching(false)
   }
 
-  // 添加好友
   const addFriend = async (friendUserId: string) => {
     if (!userId) return
     const { error } = await supabase.from('friendships').insert({
@@ -140,27 +229,18 @@ export default function ProfilePage() {
       status: 'accepted',
     })
     if (error) {
-      if (error.code === '23505') {
-        toast.error(t(locale, 'profile.already_friends'))
-      } else {
-        toast.error(locale === 'en' ? 'Failed' : '失败')
-      }
+      if (error.code === '23505') toast.error(t(locale, 'profile.already_friends'))
+      else toast.error(locale === 'en' ? 'Failed' : '失败')
     } else {
       toast.success(t(locale, 'profile.friend_added'))
       setFriendIds((prev) => new Set([...prev, friendUserId]))
-      // Refresh friend list
-      const { data: p } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', friendUserId)
-        .single()
+      const { data: p } = await supabase.from('profiles').select('*').eq('user_id', friendUserId).single()
       if (p) setFriends((prev) => [...prev, p as Profile])
       setSearchQuery('')
       setSearchResults([])
     }
   }
 
-  // 移除好友
   const removeFriend = async (friendUserId: string) => {
     if (!userId) return
     await supabase
@@ -168,14 +248,20 @@ export default function ProfilePage() {
       .delete()
       .or(`(user_id.eq.${userId},friend_id.eq.${friendUserId}),(user_id.eq.${friendUserId},friend_id.eq.${userId})`)
       .eq('status', 'accepted')
-    setFriendIds((prev) => {
-      const next = new Set(prev)
-      next.delete(friendUserId)
-      return next
-    })
+    setFriendIds((prev) => { const next = new Set(prev); next.delete(friendUserId); return next })
     setFriends((prev) => prev.filter((f) => f.user_id !== friendUserId))
   }
 
+  const addSkill = () => {
+    const s = skillInput.trim()
+    if (!s || skills.includes(s)) return
+    setSkills([...skills, s])
+    setSkillInput('')
+  }
+
+  const removeSkill = (s: string) => setSkills(skills.filter(x => x !== s))
+
+  // ====== RENDER ======
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
@@ -208,19 +294,64 @@ export default function ProfilePage() {
 
       <h1 className="text-2xl font-bold mb-6">{t(locale, 'profile.title')}</h1>
 
-      {/* 编辑资料 */}
+      {/* ====== 统计卡片 ====== */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {[
+          { icon: FileText, label: locale === 'en' ? 'Posts' : '帖子', value: stats.posts, color: 'text-blue-500' },
+          { icon: MessageSquare, label: locale === 'en' ? 'Comments' : '评论', value: stats.comments, color: 'text-emerald-500' },
+          { icon: ThumbsUp, label: locale === 'en' ? 'Votes' : '投票', value: stats.votes, color: 'text-amber-500' },
+          { icon: Globe, label: locale === 'en' ? 'Published' : '发布比赛', value: stats.comps, color: 'text-sky-500' },
+        ].map(s => (
+          <Card key={s.label} className="text-center">
+            <CardContent className="p-3">
+              <s.icon className={cn('h-5 w-5 mx-auto mb-1', s.color)} />
+              <p className="text-lg font-bold">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground">{s.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* ====== 编辑资料 ====== */}
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="flex items-center gap-4 mb-5">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="text-xl bg-primary/10 text-primary">
-                {profile?.display_name?.slice(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
+            {/* 可点击上传的头像 */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="relative group shrink-0"
+              title={locale === 'en' ? 'Change avatar' : locale === 'zh-HK' ? '更換頭像' : '更换头像'}
+            >
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={avatarUrl || undefined} />
+                <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                  {profile?.display_name?.slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+              {uploadingAvatar && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                  <span className="text-white text-xs">...</span>
+                </div>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+
             <div>
               <h2 className="font-semibold text-lg">{profile?.display_name}</h2>
               <p className="text-sm text-muted-foreground">
-                {editMode ? t(locale, 'profile.edit') : (
+                {editMode ? (
+                  <span className="text-primary">{locale === 'en' ? 'Editing...' : '编辑中...'}</span>
+                ) : (
                   <button onClick={() => setEditMode(true)} className="text-primary hover:underline">
                     {t(locale, 'profile.edit')}
                   </button>
@@ -240,6 +371,7 @@ export default function ProfilePage() {
                   maxLength={50}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">{t(locale, 'profile.bio')}</label>
                 <Textarea
@@ -250,6 +382,7 @@ export default function ProfilePage() {
                   maxLength={200}
                 />
               </div>
+
               {/* 大学选择 */}
               <div>
                 <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5">
@@ -269,7 +402,7 @@ export default function ProfilePage() {
                   ))}
                 </select>
               </div>
-              {/* 显示大学标签开关 */}
+
               {university && (
                 <div className="flex items-center justify-between py-1.5">
                   <span className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -285,14 +418,64 @@ export default function ProfilePage() {
                         : 'bg-muted text-muted-foreground border-border'
                     )}
                   >
-                    {showUniversity ? (
-                      <><Eye className="h-3 w-3" /> {locale === 'en' ? 'Showing' : '显示中'}</>
-                    ) : (
-                      <><EyeOff className="h-3 w-3" /> {locale === 'en' ? 'Hidden' : '已隐藏'}</>
-                    )}
+                    {showUniversity ? <><Eye className="h-3 w-3" /> {locale === 'en' ? 'Showing' : '显示中'}</>
+                      : <><EyeOff className="h-3 w-3" /> {locale === 'en' ? 'Hidden' : '已隐藏'}</>}
                   </button>
                 </div>
               )}
+
+              {/* 技能标签 */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  {locale === 'en' ? 'Skills' : locale === 'zh-HK' ? '技能標籤' : '技能标签'}
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {skills.map(s => (
+                    <Badge key={s} variant="secondary" className="gap-1 pr-1">
+                      {s}
+                      <button onClick={() => removeSkill(s)} className="hover:text-destructive">
+                        <XCircle className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={skillInput}
+                    onChange={e => setSkillInput(e.target.value)}
+                    placeholder={locale === 'en' ? 'e.g. Unity, React, AI...' : '例如：Unity, React, AI...'}
+                    className="h-8 text-sm"
+                    maxLength={30}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }}
+                  />
+                  <Button size="sm" variant="outline" className="h-8" onClick={addSkill}>
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* 社交链接 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  {locale === 'en' ? 'Social Links' : locale === 'zh-HK' ? '社交連結' : '社交链接'}
+                </label>
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Input value={github} onChange={e => setGithub(e.target.value)}
+                    placeholder="github.com/..." className="h-8 text-sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Input value={website} onChange={e => setWebsite(e.target.value)}
+                    placeholder="https://..." className="h-8 text-sm" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <AtSign className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Input value={instagram} onChange={e => setInstagram(e.target.value)}
+                    placeholder="instagram.com/..." className="h-8 text-sm" />
+                </div>
+              </div>
+
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>
                   {locale === 'en' ? 'Cancel' : locale === 'zh-HK' ? '取消' : '取消'}
@@ -303,19 +486,58 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{profile?.bio || (locale === 'en' ? 'No bio yet.' : locale === 'zh-HK' ? '未有簡介。' : '暂无简介。')}</p>
+            /* 查看模式 */
+            <div className="space-y-3">
+              {profile?.bio ? (
+                <p className="text-sm text-muted-foreground">{profile.bio}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  {locale === 'en' ? 'No bio yet.' : locale === 'zh-HK' ? '未有簡介。' : '暂无简介。'}
+                </p>
+              )}
+
+              {/* 技能标签 */}
+              {skills.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map(s => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}
+                </div>
+              )}
+
+              {/* 社交链接 */}
+              {(github || website || instagram) && (
+                <div className="flex items-center gap-3 pt-1">
+                  {github && (
+                    <a href={github.startsWith('http') ? github : `https://${github}`} target="_blank" rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors" title="GitHub">
+                      <Code2 className="h-4 w-4" />
+                    </a>
+                  )}
+                  {website && (
+                    <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors" title="Website">
+                      <Globe className="h-4 w-4" />
+                    </a>
+                  )}
+                  {instagram && (
+                    <a href={instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground transition-colors" title="Instagram">
+                      <AtSign className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 好友 / 搜索用户 */}
+      {/* ====== 好友 ====== */}
       <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
         <Users className="h-5 w-5" />
         {t(locale, 'profile.my_friends')}
         <span className="text-muted-foreground font-normal text-sm">({friends.length})</span>
       </h2>
 
-      {/* 搜索添加好友 */}
       <Card className="mb-4">
         <CardContent className="p-3">
           <div className="flex gap-2">
@@ -336,6 +558,7 @@ export default function ProfilePage() {
                 <div key={p.id} className="flex items-center justify-between p-2 rounded-md hover:bg-accent">
                   <div className="flex items-center gap-2.5">
                     <Avatar className="h-7 w-7">
+                      <AvatarImage src={p.avatar_url || undefined} />
                       <AvatarFallback className="text-[10px]">{p.display_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm">{p.display_name}</span>
@@ -355,7 +578,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* 好友列表 */}
       {friends.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t(locale, 'profile.no_friends')}</p>
       ) : (
@@ -364,6 +586,7 @@ export default function ProfilePage() {
             <div key={f.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50">
               <div className="flex items-center gap-2.5">
                 <Avatar className="h-8 w-8">
+                  <AvatarImage src={f.avatar_url || undefined} />
                   <AvatarFallback className="text-xs">{f.display_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
@@ -372,8 +595,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="ghost" size="sm"
                 className="h-7 text-xs text-muted-foreground hover:text-destructive"
                 onClick={() => removeFriend(f.user_id)}
               >

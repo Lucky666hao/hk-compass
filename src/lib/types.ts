@@ -283,18 +283,20 @@ export type RecruitmentStatus = 'open' | 'closed'
 export interface Recruitment {
   id: string
   user_id: string
-  competition_id: string | null  // 可关联具体比赛
+  competition_id: string | null
   title: string
   description: string
-  team_size: string | null  // 如 "3-5人"
+  team_size: string | null
+  current_count: number
   requirements: string | null
-  contact: string | null  // 联系方式
+  contact: string | null
   status: RecruitmentStatus
   created_at: string
   updated_at: string
-  // 虚拟字段
-  author_email?: string
-  competition_title?: string | null  // 关联的比赛标题
+  /** joined field from recruitments+competitions join */
+  competition_title?: string | null
+  /** joined field */
+  author_email?: string | null
 }
 
 export const RECRUITMENT_STATUS_LABELS: Record<RecruitmentStatus, string> = {
@@ -312,6 +314,12 @@ export interface Profile {
   display_name: string
   bio: string
   avatar_url: string | null
+  university?: string | null
+  show_university?: boolean
+  skills?: string[]
+  github?: string | null
+  website?: string | null
+  instagram?: string | null
   created_at: string
   updated_at: string
 }

@@ -38,7 +38,9 @@ export function RecruitmentCard({ recruitment }: { recruitment: Recruitment }) {
                   {t(locale, isOpen ? 'recruit.status_open' : 'recruit.status_closed') as string}
                 </Badge>
                 {recruitment.team_size && (
-                  <span className="text-xs text-muted-foreground">{recruitment.team_size}</span>
+                  <span className="text-xs text-muted-foreground">
+                    👥 {recruitment.current_count ?? 0}/{recruitment.team_size}
+                  </span>
                 )}
                 <span className="text-xs text-muted-foreground">{timeAgo}</span>
               </div>

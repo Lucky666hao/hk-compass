@@ -26,6 +26,8 @@ import {
   User,
   Bookmark,
   MessageSquare,
+  FileText,
+  PlusCircle,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
@@ -35,7 +37,7 @@ import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { useQuery } from '@tanstack/react-query'
 
-type Tab = 'saved' | 'reminders' | 'saved_posts'
+type Tab = 'saved' | 'reminders' | 'saved_posts' | 'my_posts' | 'my_comps'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -169,6 +171,28 @@ export default function AccountPage() {
           <Bookmark className="h-4 w-4" />
           {t(locale, 'account.saved_posts_tab')}
         </button>
+        <button
+          onClick={() => setActiveTab('my_posts')}
+          className={`flex items-center gap-2 rounded-md px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === 'my_posts'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          {locale === 'en' ? 'My Posts' : locale === 'zh-HK' ? '我的帖子' : '我的帖子'}
+        </button>
+        <button
+          onClick={() => setActiveTab('my_comps')}
+          className={`flex items-center gap-2 rounded-md px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === 'my_comps'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <PlusCircle className="h-4 w-4" />
+          {locale === 'en' ? 'My Competitions' : locale === 'zh-HK' ? '我發佈嘅比賽' : '我发布的比赛'}
+        </button>
       </div>
 
       {/* === 内容区 === */}
@@ -176,8 +200,12 @@ export default function AccountPage() {
         <SavedList userId={user.id} />
       ) : activeTab === 'reminders' ? (
         <RemindersList userId={user.id} />
-      ) : (
+      ) : activeTab === 'saved_posts' ? (
         <SavedPostsList userId={user.id} />
+      ) : activeTab === 'my_posts' ? (
+        <MyPostsList userId={user.id} />
+      ) : (
+        <MyCompetitionsList userId={user.id} />
       )}
     </div>
   )
@@ -351,6 +379,121 @@ function RemindersList({ userId }: { userId: string }) {
           </Card>
         )
       })}
+    </div>
+  )
+}
+
+// ===== 我的帖子列表 =====
+function MyPostsList({ userId }: { userId: string }) {
+  const router = useRouter()
+  const { locale } = useLocale()
+
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['my_posts', userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      return data || []
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  if (!posts?.length) {
+    return (
+      <div className="flex flex-col items-center py-16 text-muted-foreground">
+        <FileText className="mb-4 h-12 w-12" />
+        <p className="text-lg font-medium">{locale === 'en' ? 'No posts yet' : locale === 'zh-HK' ? '仲未有帖子' : '还没有帖子'}</p>
+        <Button variant="outline" className="mt-5" onClick={() => router.push('/posts')}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          {locale === 'en' ? 'Go to Community' : locale === 'zh-HK' ? '去社區' : '去社区'}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {posts.map((post: any) => (
+        <Link key={post.id} href={`/posts/${post.id}`}>
+          <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="secondary" className="text-xs">
+                  {t(locale, `posts.cat.${post.category}`)}
+                </Badge>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {post.vote_score ?? 0} 👍
+                </span>
+              </div>
+              <h3 className="font-medium line-clamp-1">{post.title}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{post.content}</p>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+// ===== 我发布的比赛列表 =====
+function MyCompetitionsList({ userId }: { userId: string }) {
+  const router = useRouter()
+  const { locale } = useLocale()
+
+  const { data: comps, isLoading } = useQuery({
+    queryKey: ['my_comps', userId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('competitions')
+        .select('*')
+        .eq('submitted_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      return (data || []) as Competition[]
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} className="h-48 rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  if (!comps?.length) {
+    return (
+      <div className="flex flex-col items-center py-16 text-muted-foreground">
+        <PlusCircle className="mb-4 h-12 w-12" />
+        <p className="text-lg font-medium">{locale === 'en' ? 'No competitions published' : locale === 'zh-HK' ? '仲未發佈過比賽' : '还没有发布过比赛'}</p>
+        <Button variant="outline" className="mt-5" onClick={() => router.push('/competition/new')}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          {locale === 'en' ? 'Publish One' : locale === 'zh-HK' ? '發佈比賽' : '发布比赛'}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {comps.map((comp) => (
+        <CompetitionCard key={comp.id} competition={comp} />
+      ))}
     </div>
   )
 }

@@ -8,10 +8,11 @@ import { SearchBar } from '@/components/search-bar'
 import { FilterBar } from '@/components/filter-bar'
 import { CompetitionCard } from '@/components/competition-card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Compass, SearchX, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
+import { Compass, SearchX, PanelLeftOpen, PanelLeftClose, PlusCircle } from 'lucide-react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { useSidebar } from '@/components/sidebar'
+import Link from 'next/link'
 
 const ITEMS_PER_PAGE = 20
 
@@ -137,6 +138,15 @@ export default function HomePage() {
         <p className="mt-2 text-muted-foreground">
           {t(locale, 'home.subtitle')}
         </p>
+        <div className="mt-4 flex justify-center gap-3">
+          <Link
+            href="/competition/new"
+            className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
+          >
+            <PlusCircle className="h-4 w-4" />
+            {t(locale, 'sidebar.publish_comp')}
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 space-y-4">

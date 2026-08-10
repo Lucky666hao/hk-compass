@@ -37,6 +37,7 @@ export default function NewRecruitmentPage() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [teamSize, setTeamSize] = useState<string>('')
+  const [currentCount, setCurrentCount] = useState(0)
   const [requirements, setRequirements] = useState('')
   const [contact, setContact] = useState('')
   const [competitionId, setCompetitionId] = useState<string | null>(null)
@@ -79,6 +80,7 @@ export default function NewRecruitmentPage() {
       title: title.trim(),
       description: description.trim(),
       team_size: (teamSize && teamSize !== '_any') ? teamSize : null,
+      current_count: currentCount,
       requirements: requirements.trim() || null,
       contact: contact.trim() || null,
       competition_id: competitionId,
@@ -204,8 +206,8 @@ export default function NewRecruitmentPage() {
             />
           </div>
 
-          {/* 队伍人数 — 下拉选择 + 联系方式 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* 队伍人数 — 下拉选择 + 当前人数 + 联系方式 */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">{t(locale, 'recruit.team_size')}</label>
               <Select value={teamSize || ''} onValueChange={(v) => setTeamSize(v ?? '')}>
@@ -223,6 +225,19 @@ export default function NewRecruitmentPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">
+                {locale === 'en' ? 'Current Members' : locale === 'zh-HK' ? '現有人數' : '现有人数'}
+              </label>
+              <Input
+                type="number"
+                min={0}
+                max={99}
+                value={currentCount}
+                onChange={(e) => setCurrentCount(Math.max(0, parseInt(e.target.value) || 0))}
+                placeholder="0"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5">{t(locale, 'recruit.contact')}</label>

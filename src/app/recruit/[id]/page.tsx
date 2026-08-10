@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, Trash2, Ban, Play, Users, Calendar, FileText, Phone } from 'lucide-react'
+import { ArrowLeft, Trash2, Ban, Play, Users, Calendar, FileText, Phone, Minus, Plus, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { zhHK } from 'date-fns/locale'
@@ -156,11 +156,21 @@ export default function RecruitmentDetailPage() {
             </span>
             {recruitment.team_size && (
               <span className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {recruitment.team_size}
+                <UserPlus className="h-3.5 w-3.5" />
+                {recruitment.current_count ?? 0}/{recruitment.team_size}
               </span>
             )}
           </div>
+
+          {/* 当前人数 — 作者可以调整 */}
+          {isAuthor && isOpen && recruitment.team_size && (
+            <CurrentCountEditor
+              recruitmentId={id}
+              currentCount={recruitment.current_count ?? 0}
+              onUpdate={() => queryClient.invalidateQueries({ queryKey: ['recruitment', id] })}
+              locale={locale}
+            />
+          )}
 
           {/* 关联比赛 */}
           {recruitment.competition_title && (
@@ -198,6 +208,64 @@ export default function RecruitmentDetailPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+// ====== 当前人数编辑器 ======
+function CurrentCountEditor({
+  recruitmentId,
+  currentCount,
+  onUpdate,
+  locale,
+}: {
+  recruitmentId: string
+  currentCount: number
+  onUpdate: () => void
+  locale: string
+}) {
+  const [saving, setSaving] = useState(false)
+
+  const update = async (delta: number) => {
+    const next = Math.max(0, currentCount + delta)
+    setSaving(true)
+    const { error } = await supabase
+      .from('recruitments')
+      .update({ current_count: next })
+      .eq('id', recruitmentId)
+    setSaving(false)
+    if (!error) onUpdate()
+  }
+
+  return (
+    <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+          {locale === 'en' ? 'Current team members' : locale === 'zh-HK' ? '現有隊員數' : '现有队员数'}:
+          <span className="ml-2 text-lg font-bold">{currentCount}</span>
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => update(-1)}
+            disabled={saving || currentCount <= 0}
+            className="p-1.5 rounded-md border hover:bg-muted disabled:opacity-30 transition-colors"
+            title={locale === 'en' ? 'Decrease' : '减少'}
+          >
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => update(1)}
+            disabled={saving}
+            className="p-1.5 rounded-md border hover:bg-muted transition-colors"
+            title={locale === 'en' ? 'Increase' : '增加'}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">
+        {locale === 'en' ? 'Update whenever someone joins or leaves your team.' : locale === 'zh-HK' ? '有人加入或離開時更新人數。' : '有人加入或离开时更新人数。'}
+      </p>
     </div>
   )
 }
