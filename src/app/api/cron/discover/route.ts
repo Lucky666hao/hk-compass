@@ -4,6 +4,9 @@
  * Vercel Dashboard → Settings → Cron Jobs:
  *   路径: /api/cron/discover
  *   调度: 0 8 * * * (每天早上8点 HKT)
+ *
+ * TODO: 重建 pipeline — 当前 4 个爬虫 (scrape-fitz/arts/real/saikr)
+ * 需要重构为可导入模块，然后在此路由中调用
  */
 
 import { NextResponse } from 'next/server'
@@ -11,19 +14,11 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 
 export async function GET() {
-  try {
-    // 动态导入 pipeline (相对路径，避免打包进每个路由)
-    const { discover } = await import('../../../../../scripts/pipeline')
-
-    const result = await discover(false) // 静默模式
-
-    return NextResponse.json({
-      ok: true,
-      ...result,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (err: any) {
-    console.error('Cron discover error:', err)
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
-  }
+  return NextResponse.json({
+    ok: true,
+    message: 'Cron discover paused — pipeline needs refactoring after cleanup',
+    scrapers_available: ['scrape-fitz', 'scrape-arts', 'scrape-real', 'scrape-saikr'],
+    plan: 'Refactor scrapers to export discover(), then re-enable cron',
+    timestamp: new Date().toISOString(),
+  })
 }

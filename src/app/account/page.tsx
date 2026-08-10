@@ -24,6 +24,8 @@ import {
   ExternalLink,
   Settings,
   User,
+  Bookmark,
+  MessageSquare,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
@@ -31,8 +33,9 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
+import { useQuery } from '@tanstack/react-query'
 
-type Tab = 'saved' | 'reminders'
+type Tab = 'saved' | 'reminders' | 'saved_posts'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -155,13 +158,26 @@ export default function AccountPage() {
           <Bell className="h-4 w-4" />
           {t(locale, 'account.reminders_tab')}
         </button>
+        <button
+          onClick={() => setActiveTab('saved_posts')}
+          className={`flex items-center gap-2 rounded-md px-5 py-2 text-sm font-medium transition-all ${
+            activeTab === 'saved_posts'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Bookmark className="h-4 w-4" />
+          {t(locale, 'account.saved_posts_tab')}
+        </button>
       </div>
 
       {/* === 内容区 === */}
       {activeTab === 'saved' ? (
         <SavedList userId={user.id} />
-      ) : (
+      ) : activeTab === 'reminders' ? (
         <RemindersList userId={user.id} />
+      ) : (
+        <SavedPostsList userId={user.id} />
       )}
     </div>
   )
@@ -335,6 +351,79 @@ function RemindersList({ userId }: { userId: string }) {
           </Card>
         )
       })}
+    </div>
+  )
+}
+
+// ===== 已收藏帖子列表 =====
+function SavedPostsList({ userId }: { userId: string }) {
+  const router = useRouter()
+  const { locale } = useLocale()
+
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['saved_posts', userId],
+    queryFn: async () => {
+      const { data: saved } = await supabase
+        .from('saved_posts')
+        .select('post_id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (!saved?.length) return []
+
+      const ids = saved.map(s => s.post_id)
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('*')
+        .in('id', ids)
+
+      // Keep save order
+      const map = new Map((postData || []).map((p: any) => [p.id, p]))
+      return ids.map(id => map.get(id)).filter(Boolean) as any[]
+    },
+  })
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    )
+  }
+
+  if (!posts?.length) {
+    return (
+      <div className="flex flex-col items-center py-16 text-muted-foreground">
+        <Bookmark className="mb-4 h-12 w-12" />
+        <p className="text-lg font-medium">{t(locale, 'account.empty_saved_posts')}</p>
+        <p className="text-sm mt-1">{t(locale, 'account.empty_saved_posts_hint')}</p>
+        <Button variant="outline" className="mt-5" onClick={() => router.push('/posts')}>
+          <MessageSquare className="mr-2 h-4 w-4" />
+          {t(locale, 'account.go_posts')}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {posts.map((post: any) => (
+        <Link key={post.id} href={`/posts/${post.id}`}>
+          <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="secondary" className="text-xs">
+                  {t(locale, `posts.cat.${post.category}`)}
+                </Badge>
+              </div>
+              <h3 className="font-medium line-clamp-1">{post.title}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{post.content}</p>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
     </div>
   )
 }

@@ -12,8 +12,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, User, Search, UserPlus, X, Users } from 'lucide-react'
+import { ArrowLeft, User, Search, UserPlus, X, Users, GraduationCap, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { HK_UNIVERSITIES } from '@/lib/university-data'
+import { cn } from '@/lib/utils'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -27,6 +29,8 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
+  const [university, setUniversity] = useState<string>('')
+  const [showUniversity, setShowUniversity] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // 好友
@@ -55,6 +59,8 @@ export default function ProfilePage() {
           setProfile(data as Profile)
           setDisplayName(data.display_name)
           setBio(data.bio || '')
+          setUniversity((data as any).university || '')
+          setShowUniversity((data as any).show_university || false)
         }
         setLoading(false)
       })
@@ -93,7 +99,12 @@ export default function ProfilePage() {
     setSaving(true)
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name: displayName.trim(), bio: bio.trim() })
+      .update({
+        display_name: displayName.trim(),
+        bio: bio.trim(),
+        university: university || null,
+        show_university: showUniversity,
+      })
       .eq('user_id', userId)
 
     setSaving(false)
@@ -239,6 +250,49 @@ export default function ProfilePage() {
                   maxLength={200}
                 />
               </div>
+              {/* 大学选择 */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5">
+                  <GraduationCap className="h-4 w-4" />
+                  {t(locale, 'profile.university')}
+                </label>
+                <select
+                  value={university}
+                  onChange={(e) => setUniversity(e.target.value)}
+                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">{t(locale, 'profile.university_none')}</option>
+                  {HK_UNIVERSITIES.map((uni) => (
+                    <option key={uni.slug} value={uni.slug}>
+                      {uni.logo} {uni.shortName} ({uni.enName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* 显示大学标签开关 */}
+              {university && (
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    {t(locale, 'profile.show_university_label')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowUniversity(!showUniversity)}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs border transition-all',
+                      showUniversity
+                        ? 'bg-primary/10 text-primary border-primary/30'
+                        : 'bg-muted text-muted-foreground border-border'
+                    )}
+                  >
+                    {showUniversity ? (
+                      <><Eye className="h-3 w-3" /> {locale === 'en' ? 'Showing' : '显示中'}</>
+                    ) : (
+                      <><EyeOff className="h-3 w-3" /> {locale === 'en' ? 'Hidden' : '已隐藏'}</>
+                    )}
+                  </button>
+                </div>
+              )}
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>
                   {locale === 'en' ? 'Cancel' : locale === 'zh-HK' ? '取消' : '取消'}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PostCategory } from '@/lib/types'
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { ArrowLeft, Send } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function NewPostPage() {
@@ -22,6 +23,26 @@ export default function NewPostPage() {
   const [content, setContent] = useState('')
   const [category, setCategory] = useState<PostCategory>(POST_CATEGORIES[0])
   const [submitting, setSubmitting] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [authorUni, setAuthorUni] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null)
+      // Load profile for university preview
+      if (session?.user) {
+        supabase.from('profiles')
+          .select('university, show_university')
+          .eq('user_id', session.user.id)
+          .single()
+          .then(({ data }) => {
+            if (data?.show_university && data?.university) {
+              setAuthorUni(data.university)
+            }
+          })
+      }
+    })
+  }, [])
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -71,21 +92,30 @@ export default function NewPostPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          {/* 分类选择 */}
+          {/* 身份预览 */}
+          {authorUni && (
+            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span>{locale === 'en' ? 'Posting as' : '发布身份'}:</span>
+              <span className="text-foreground font-medium">🎓 {t(locale, 'profile.university')} {locale === 'en' ? 'Student' : '学生'}</span>
+            </div>
+          )}
+
+          {/* 分类选择 Chip */}
           <div>
             <label className="block text-sm font-medium mb-2">{t(locale, 'posts.category')}</label>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap">
               {POST_CATEGORIES.map((cat) => {
-                const label = t(locale, `posts.cat.${cat}`)
+                const label = POST_CATEGORY_LABELS[cat]
                 return (
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}
-                    className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                    className={cn(
+                      'px-3 py-1.5 text-xs rounded-full border whitespace-nowrap transition-all',
                       category === cat
                         ? 'bg-primary text-primary-foreground border-primary'
                         : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
-                    }`}
+                    )}
                   >
                     {label}
                   </button>

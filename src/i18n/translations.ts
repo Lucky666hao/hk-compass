@@ -158,6 +158,7 @@ const en: TranslationDict = {
   'account.signout': 'Sign Out',
   'account.saved_tab': 'Saved',
   'account.reminders_tab': 'Reminders',
+  'account.saved_posts_tab': 'Saved Posts',
   'account.empty_saved': 'No saved competitions yet',
   'account.empty_saved_hint': 'Click the heart icon to save competitions',
   'account.empty_reminders': 'No reminders set',
@@ -166,6 +167,9 @@ const en: TranslationDict = {
   'account.no_login_title': 'Your Account',
   'account.no_login_desc': 'Log in to manage saved competitions, reminders and comments. Free registration, no phone verification needed.',
   'account.go_register': 'Register',
+  'account.empty_saved_posts': 'No saved posts yet',
+  'account.empty_saved_posts_hint': 'Click the bookmark icon to save posts',
+  'account.go_posts': 'Browse Posts',
 
   // Saved (standalone)
   'saved.title': 'Saved Competitions',
@@ -215,9 +219,38 @@ const en: TranslationDict = {
   'posts.all_categories': 'All',
   // 分类标签
   'posts.cat.赛事讨论': 'Event Talk',
-  'posts.cat.经验分享': 'Experience',
-  'posts.cat.求组队': 'Recruiting',
+  'posts.cat.赛后复盘': '📊 Review',
+  'posts.cat.赛前热身': '🎯 Prep',
+  'posts.cat.经验分享': '💡 Experience',
+  'posts.cat.备赛攻略': '📚 Guide',
+  'posts.cat.求组队': '🤝 Recruiting',
+  'posts.cat.闲聊': '💬 Chat',
+  'posts.cat.求助': '❓ Help',
+  'posts.cat.大学专区': '🎓 Uni',
   'posts.cat.其他': 'General',
+  // 匿名板块分类
+  'anon.cat.吐槽': '🤫 Vent',
+  'anon.cat.八卦': '🍵 Gossip',
+  'anon.cat.争议': '💣 Debate',
+  'anon.cat.深夜': '🌙 Late Night',
+  // 投票
+  'posts.vote.upvote': 'Upvote',
+  'posts.vote.downvote': 'Downvote',
+  'posts.vote.login_required': 'Log in to vote',
+  // 收藏
+  'posts.save': 'Save',
+  'posts.saved': 'Saved',
+  'posts.save_login': 'Log in to save',
+  // 匿名板块
+  'anon.title': '🕶️ Anonymous Zone',
+  'anon.subtitle': 'Speak freely, no identity attached',
+  'anon.new': 'Anonymous Post',
+  'anon.back': 'Back to Posts',
+  'anon.empty': 'No whispers yet...',
+  'anon.be_first': 'Be the first',
+  'anon.publish_success': 'Whisper sent.',
+  'anon.publish_error': 'Failed to send.',
+  'anon.category': 'Category',
 
   // -- 组队招募 --
   'recruit.title': 'Team Recruitment',
@@ -303,6 +336,9 @@ const en: TranslationDict = {
   'profile.remove_friend': 'Remove',
   'profile.no_friends': 'No friends yet. Search and add some!',
   'profile.avatar': 'Avatar',
+  'profile.university': 'University',
+  'profile.university_none': 'Not selected',
+  'profile.show_university_label': 'Show on posts',
 
   // -- Team size --
   'team_size.个人赛': '🧑 Solo',
@@ -518,8 +554,9 @@ const zhCN: TranslationDict = {
   'account.back': '返回首页',
   'account.joined': '注册于 {date}',
   'account.signout': '退出',
-  'account.saved_tab': '已收藏',
+  'account.saved_tab': '已收藏比赛',
   'account.reminders_tab': '我的提醒',
+  'account.saved_posts_tab': '已收藏帖子',
   'account.empty_saved': '还没有收藏任何比赛',
   'account.empty_saved_hint': '浏览比赛时点击 ❤️ 即可收藏',
   'account.empty_reminders': '暂无提醒',
@@ -528,6 +565,9 @@ const zhCN: TranslationDict = {
   'account.no_login_title': '你的个人中心',
   'account.no_login_desc': '登录后管理收藏、提醒和评论。免费注册，无需手机验证。',
   'account.go_register': '去报名',
+  'account.empty_saved_posts': '还没有收藏任何帖子',
+  'account.empty_saved_posts_hint': '点击帖子上的书签图标即可收藏',
+  'account.go_posts': '看看社区帖子',
 
   'saved.title': '已收藏的比赛',
   'saved.login_prompt': '收藏你感兴趣的比赛',
@@ -573,9 +613,38 @@ const zhCN: TranslationDict = {
   'posts.all_categories': '全部',
   // 分类标签
   'posts.cat.赛事讨论': '🏆 赛事讨论',
+  'posts.cat.赛后复盘': '📊 赛后复盘',
+  'posts.cat.赛前热身': '🎯 赛前热身',
   'posts.cat.经验分享': '💡 经验分享',
+  'posts.cat.备赛攻略': '📚 备赛攻略',
   'posts.cat.求组队': '🤝 求组队',
+  'posts.cat.闲聊': '💬 闲聊',
+  'posts.cat.求助': '❓ 求助',
+  'posts.cat.大学专区': '🎓 大学专区',
   'posts.cat.其他': '💬 其他',
+  // 匿名板块分类
+  'anon.cat.吐槽': '🤫 吐槽',
+  'anon.cat.八卦': '🍵 八卦',
+  'anon.cat.争议': '💣 争议',
+  'anon.cat.深夜': '🌙 深夜',
+  // 投票
+  'posts.vote.upvote': '赞',
+  'posts.vote.downvote': '踩',
+  'posts.vote.login_required': '请登录后投票',
+  // 收藏
+  'posts.save': '收藏',
+  'posts.saved': '已收藏',
+  'posts.save_login': '登录后收藏',
+  // 匿名板块
+  'anon.title': '🕶️ 地下板块',
+  'anon.subtitle': '匿名发言 · 畅所欲言',
+  'anon.new': '匿名发言',
+  'anon.back': '返回帖子',
+  'anon.empty': '还没有人说话...',
+  'anon.be_first': '成为第一个',
+  'anon.publish_success': '匿名发言已发送。',
+  'anon.publish_error': '发送失败，请重试。',
+  'anon.category': '分类',
 
   // -- 组队招募 --
   'recruit.title': '组队招募',
@@ -661,6 +730,9 @@ const zhCN: TranslationDict = {
   'profile.remove_friend': '移除好友',
   'profile.no_friends': '还没有好友，搜索并添加吧！',
   'profile.avatar': '头像',
+  'profile.university': '所属大学',
+  'profile.university_none': '不选择',
+  'profile.show_university_label': '在帖子上显示学校标签',
 
   // -- 团队规模 --
   'team_size.个人赛': '🧑 个人赛',
@@ -918,9 +990,14 @@ const zhHK: TranslationDict = {
   'posts.all_categories': '全部',
   // 分類標籤
   'posts.cat.賽事討論': '🏆 賽事討論',
+  'posts.cat.賽後復盤': '📊 賽後復盤',
+  'posts.cat.賽前熱身': '🎯 賽前熱身',
   'posts.cat.經驗分享': '💡 經驗分享',
+  'posts.cat.備賽攻略': '📚 備賽攻略',
   'posts.cat.求組隊': '🤝 求組隊',
-  'posts.cat.其他': '💬 其他',
+  'posts.cat.閒聊': '💬 閒聊',
+  'posts.cat.求助': '❓ 求助',
+  'posts.cat.大學專區': '🎓 大學專區',
 
   // -- 組隊招募 --
   'recruit.title': '組隊招募',
@@ -989,6 +1066,30 @@ const zhHK: TranslationDict = {
   'chat.no_conv_selected': '選擇一個對話或者開始新嘅',
   'chat.about': '同其他參賽者即時傾偈。',
 
+  // 投票
+  'posts.vote.upvote': '讚',
+  'posts.vote.downvote': '踩',
+  'posts.vote.login_required': '請登入後投票',
+  // 收藏
+  'posts.save': '收藏',
+  'posts.saved': '已收藏',
+  'posts.save_login': '登入後收藏',
+  // 匿名板塊
+  'anon.title': '🕶️ 地下板塊',
+  'anon.subtitle': '匿名發言 · 暢所欲言',
+  'anon.new': '匿名發言',
+  'anon.back': '返回帖子',
+  'anon.empty': '仲未有人出聲...',
+  'anon.be_first': '做第一個',
+  'anon.publish_success': '匿名發言已送出。',
+  'anon.publish_error': '發送失敗，請重試。',
+  'anon.category': '分類',
+  // 帳號
+  'account.saved_posts_tab': '已收藏帖子',
+  'account.empty_saved_posts': '仲未收藏任何帖子',
+  'account.empty_saved_posts_hint': '點擊帖子上的書籤圖示即可收藏',
+  'account.go_posts': '睇下社區帖子',
+
   // -- 用戶資料 --
   'profile.title': '個人資料',
   'profile.edit': '編輯資料',
@@ -1006,6 +1107,9 @@ const zhHK: TranslationDict = {
   'profile.remove_friend': '移除朋友',
   'profile.no_friends': '仲未有朋友，搜尋添加啦！',
   'profile.avatar': '頭像',
+  'profile.university': '所屬大學',
+  'profile.university_none': '唔選擇',
+  'profile.show_university_label': '喺帖子上顯示學校標籤',
 
   // -- 團隊規模 --
   'team_size.個人賽': '🧑 個人賽',

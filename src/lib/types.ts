@@ -149,15 +149,26 @@ export const AGE_LABELS: Record<AgeGroup, string> = {
 // 社区帖子
 // ============================================
 
-export type PostCategory = '赛事讨论' | '经验分享' | '求组队' | '其他'
+export type PostCategory = '赛事讨论' | '赛后复盘' | '赛前热身' | '经验分享' | '备赛攻略' | '求组队' | '闲聊' | '求助' | '大学专区'
 
-export const POST_CATEGORIES: PostCategory[] = ['赛事讨论', '经验分享', '求组队', '其他']
+export const POST_CATEGORIES: PostCategory[] = [
+  '赛事讨论', '赛后复盘', '赛前热身',
+  '经验分享', '备赛攻略',
+  '求组队',
+  '闲聊', '求助',
+  '大学专区',
+]
 
 export const POST_CATEGORY_LABELS: Record<PostCategory, string> = {
   '赛事讨论': '🏆 赛事讨论',
+  '赛后复盘': '📊 赛后复盘',
+  '赛前热身': '🎯 赛前热身',
   '经验分享': '💡 经验分享',
+  '备赛攻略': '📚 备赛攻略',
   '求组队': '🤝 求组队',
-  '其他': '💬 其他',
+  '闲聊': '💬 闲聊',
+  '求助': '❓ 求助',
+  '大学专区': '🎓 大学专区',
 }
 
 export interface Post {
@@ -166,10 +177,85 @@ export interface Post {
   title: string
   content: string
   category: PostCategory
+  vote_score: number
   created_at: string
   updated_at: string
   // 虚拟字段（JOIN）
   author_email?: string
+  author_university?: string | null
+  user_vote?: number | null  // 当前用户的投票: 1 | -1 | null
+}
+
+// ============================================
+// 投票 / 表情 / 收藏（社区帖子升级）
+// ============================================
+
+export interface PostVote {
+  id: string
+  post_id: string
+  user_id: string
+  vote: number  // 1 or -1
+  created_at: string
+}
+
+export type ReactionEmoji = '👍' | '👏' | '🔥' | '💡' | '🤔'
+
+export const REACTION_EMOJIS: ReactionEmoji[] = ['👍', '👏', '🔥', '💡', '🤔']
+
+export interface PostReaction {
+  id: string
+  post_id: string
+  user_id: string
+  emoji: ReactionEmoji
+  created_at: string
+}
+
+export interface ReactionCounts {
+  '👍': number
+  '👏': number
+  '🔥': number
+  '💡': number
+  '🤔': number
+}
+
+export interface SavedPost {
+  user_id: string
+  post_id: string
+  created_at: string
+}
+
+// ============================================
+// 匿名地下板块
+// ============================================
+
+export type AnonymousCategory = '吐槽' | '八卦' | '争议' | '深夜'
+
+export const ANONYMOUS_CATEGORIES: AnonymousCategory[] = ['吐槽', '八卦', '争议', '深夜']
+
+export const ANONYMOUS_CATEGORY_LABELS: Record<AnonymousCategory, string> = {
+  '吐槽': '🤫 吐槽',
+  '八卦': '🍵 八卦',
+  '争议': '💣 争议',
+  '深夜': '🌙 深夜',
+}
+
+export interface AnonymousPost {
+  id: string
+  user_id: string  // 后台存储，前端不展示
+  display_name: string
+  title: string
+  content: string
+  category: AnonymousCategory
+  vote_score: number
+  created_at: string
+  updated_at: string
+  // 虚拟字段
+  user_vote?: number | null
+}
+
+export const ANONYMOUS_DISPLAY_NAMES = {
+  adjectives: ['匿名', '地下', '隐藏', '神秘', '无声', '暗影', '夜行', '流浪', '孤独', '沉默', '深潜', '隐世'],
+  nouns: ['犀牛', '猫', '狐狸', '乌鸦', '蝙蝠', '章鱼', '狼', '鲨鱼', '鹰', '蛇', '兔子', '熊猫', '企鹅', '龙', '凤凰', '独角兽'],
 }
 
 // ============================================

@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CompetitionCard } from '@/components/competition-card'
@@ -393,16 +394,19 @@ export default function CompetitionDetailPage() {
 
           {/* === 外部链接 CTA === */}
           {(competition.registration_link || competition.source_url) && (
-            <Button
-              size="lg"
-              className="w-full gap-2"
-              onClick={() => window.open((competition.registration_link || competition.source_url)!, '_blank')}
+            <a
+              href={(competition.status === '报名中' && competition.registration_link
+                ? competition.registration_link
+                : competition.source_url)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ size: 'lg' }), 'w-full gap-2')}
             >
               <ExternalLink className="h-5 w-5" />
               {competition.status === '报名中' && competition.registration_link
                 ? t(locale, 'detail.register_btn')
                 : t(locale, 'detail.view_source_btn')}
-            </Button>
+            </a>
           )}
 
           {/* === 评论区 === */}
@@ -451,23 +455,25 @@ export default function CompetitionDetailPage() {
             <CardContent className="p-4 space-y-3">
               {/* 只有报名中 + deadline未过才显示报名按钮 */}
               {competition.status === '报名中' && competition.registration_link && (
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={() => window.open(competition.registration_link!, '_blank')}
+                <a
+                  href={competition.registration_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ size: 'lg' }), 'w-full gap-2')}
                 >
                   {t(locale, 'detail.register_btn')} <ExternalLink className="h-4 w-4" />
-                </Button>
+                </a>
               )}
               {/* 其他状态显示来源链接 */}
               {(!competition.registration_link || competition.status !== '报名中') && competition.source_url ? (
-                <Button
-                  className="w-full gap-2"
-                  variant="secondary"
-                  onClick={() => window.open(competition.source_url!, '_blank')}
+                <a
+                  href={competition.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), 'w-full gap-2')}
                 >
                   {t(locale, 'detail.view_source_btn')} <ExternalLink className="h-4 w-4" />
-                </Button>
+                </a>
               ) : null}
 
               <Button
