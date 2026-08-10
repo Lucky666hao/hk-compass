@@ -10,14 +10,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useLocale } from '@/i18n/LanguageContext'
-import { ArrowLeft, Send, Skull, Shuffle } from 'lucide-react'
+import { ArrowLeft, Send, Shuffle, EyeOff } from 'lucide-react'
+import { ForceDark } from '@/components/force-dark'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // 随机代号生成
 function generateName(): string {
-  const adjectives = ['匿名', '地下', '隐藏', '神秘', '无声', '暗影', '夜行', '流浪', '孤独', '沉默', '深潜', '隐世']
-  const nouns = ['犀牛', '猫', '狐狸', '乌鸦', '蝙蝠', '章鱼', '狼', '鲨鱼', '鹰', '蛇', '兔子', '熊猫', '企鹅', '龙', '凤凰', '独角兽']
+  const adjectives = ['暗影', '深夜', '迷霧', '隱世', '流浪', '沉默', '孤獨', '深潛', '月光', '幽谷', '靜默', '隱形']
+  const nouns = ['貓', '狐狸', '烏鴉', '蝙蝠', '章魚', '狼', '鯊魚', '鷹', '蛇', '兔子', '熊貓', '企鵝', '龍', '鳳凰', '貓頭鷹', '蝴蝶']
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
   const noun = nouns[Math.floor(Math.random() * nouns.length)]
   const num = Math.floor(Math.random() * 9000) + 1000
@@ -35,13 +36,13 @@ export default function NewAnonymousPostPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
-    if (!title.trim()) { toast.error(locale === 'en' ? 'Please enter a title.' : '请输入标题。'); return }
-    if (!content.trim()) { toast.error(locale === 'en' ? 'Please enter some content.' : '请输入内容。'); return }
+    if (!title.trim()) { toast.error(locale === 'en' ? 'Please enter a title.' : '請輸入標題。'); return }
+    if (!content.trim()) { toast.error(locale === 'en' ? 'Please enter some content.' : '請輸入內容。'); return }
 
     setSubmitting(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) {
-      toast.error(locale === 'en' ? 'Please log in first' : '请先登录')
+      toast.error(locale === 'en' ? 'Please log in first' : '請先登錄')
       setSubmitting(false)
       return
     }
@@ -56,48 +57,52 @@ export default function NewAnonymousPostPage() {
 
     setSubmitting(false)
     if (error) {
-      toast.error(locale === 'en' ? 'Failed to publish.' : '发布失败，请重试。')
+      toast.error(locale === 'en' ? 'Failed to publish.' : '發布失敗，請重試。')
     } else {
-      toast.success(locale === 'en' ? 'Whisper sent.' : '匿名发言已发送。')
+      toast.success(locale === 'en' ? 'Whisper sent.' : '匿名發言已發送。')
       router.push('/posts/anonymous')
     }
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+    <ForceDark>
+    <div className="min-h-screen bg-background text-gray-200">
+      {/* 微妙发光背景 */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(124,58,237,0.05),transparent_50%)]" />
+
+      <div className="relative mx-auto max-w-3xl px-4 py-8">
         <button
           onClick={() => router.back()}
-          className="mb-6 flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-400 font-mono"
+          className="mb-6 flex items-center gap-1 text-sm text-gray-600 hover:text-gray-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> {locale === 'en' ? 'Back' : '返回'}
         </button>
 
-        <h1 className="text-2xl font-bold mb-6 font-mono text-emerald-400">
-          🕶️ {locale === 'en' ? 'Anonymous Post' : '匿名发言'}
+        <h1 className="text-2xl font-bold mb-6 text-purple-300">
+          🕶️ {locale === 'en' ? 'Anonymous Whisper' : '匿名發言'}
         </h1>
 
-        <Card className="bg-zinc-900/80 border-zinc-800">
+        <Card className="bg-[#1a1a2e] border-purple-500/10 shadow-[0_0_15px_rgba(124,58,237,0.04)]">
           <CardContent className="p-6 space-y-4">
             {/* 匿名身份 */}
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-950 border border-zinc-800">
-              <Skull className="h-4 w-4 text-emerald-600" />
-              <span className="text-xs text-zinc-500 font-mono">{locale === 'en' ? 'Posting as:' : '发言身份:'}</span>
-              <span className="text-sm text-emerald-400 font-mono font-bold">{displayName}</span>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#111113] border border-purple-500/10">
+              <EyeOff className="h-4 w-4 text-purple-400/60" />
+              <span className="text-xs text-gray-500">{locale === 'en' ? 'Posting as:' : '發言身份:'}</span>
+              <span className="text-sm text-purple-400 font-bold">{displayName}</span>
               <button
                 type="button"
                 onClick={() => setDisplayName(generateName())}
-                className="ml-auto p-1 rounded hover:bg-zinc-800 transition-colors"
-                title={locale === 'en' ? 'Random name' : '换一个名字'}
+                className="ml-auto p-1.5 rounded-md hover:bg-purple-500/10 transition-colors"
+                title={locale === 'en' ? 'Random name' : '換一個名字'}
               >
-                <Shuffle className="h-3.5 w-3.5 text-zinc-600" />
+                <Shuffle className="h-3.5 w-3.5 text-gray-600 hover:text-purple-400 transition-colors" />
               </button>
             </div>
 
             {/* 分类选择 */}
             <div>
-              <label className="block text-sm font-medium mb-2 font-mono text-zinc-500">
-                {locale === 'en' ? 'CATEGORY' : '分类'}
+              <label className="block text-sm font-medium mb-2 text-gray-500">
+                {locale === 'en' ? 'Category' : '分類'}
               </label>
               <div className="flex gap-1.5 flex-wrap">
                 {ANONYMOUS_CATEGORIES.map(cat => (
@@ -106,10 +111,10 @@ export default function NewAnonymousPostPage() {
                     type="button"
                     onClick={() => setCategory(cat)}
                     className={cn(
-                      'px-3 py-1.5 text-xs rounded-full border border-zinc-800 whitespace-nowrap transition-all font-mono',
+                      'px-3 py-1.5 text-xs rounded-full border whitespace-nowrap transition-all',
                       category === cat
-                        ? 'bg-emerald-600/20 text-emerald-400 border-emerald-600/30'
-                        : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                        : 'bg-[#111113] text-gray-500 hover:text-gray-300 border-purple-500/10'
                     )}
                   >
                     {ANONYMOUS_CATEGORY_LABELS[cat]}
@@ -123,9 +128,9 @@ export default function NewAnonymousPostPage() {
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={locale === 'en' ? 'Title of your whisper...' : '给匿名贴起个标题...'}
+                placeholder={locale === 'en' ? 'Title of your whisper...' : '給匿名貼起個標題...'}
                 maxLength={200}
-                className="bg-zinc-950 border-zinc-800 text-zinc-200 placeholder:text-zinc-700 font-mono"
+                className="bg-[#111113] border-purple-500/10 text-gray-200 placeholder:text-gray-700 focus:border-purple-500/50 focus:ring-purple-500/20 rounded-lg"
               />
             </div>
 
@@ -134,28 +139,33 @@ export default function NewAnonymousPostPage() {
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder={locale === 'en' ? 'Speak your mind anonymously...' : '放心说，这里没人知道你是谁...'}
+                placeholder={locale === 'en' ? 'Speak your mind anonymously...' : '放心說，這裡沒人知道你是誰...'}
                 rows={8}
-                className="resize-y min-h-[160px] bg-zinc-950 border-zinc-800 text-zinc-200 placeholder:text-zinc-700 font-mono"
+                className="resize-y min-h-[160px] bg-[#111113] border-purple-500/10 text-gray-200 placeholder:text-gray-700 focus:border-purple-500/50 focus:ring-purple-500/20 rounded-lg"
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="ghost" onClick={() => router.back()} className="text-zinc-500 hover:text-zinc-300 font-mono">
-                {locale === 'en' ? 'CANCEL' : '取消'}
+              <Button
+                variant="ghost"
+                onClick={() => router.back()}
+                className="text-gray-500 hover:text-gray-300 hover:bg-purple-500/5"
+              >
+                {locale === 'en' ? 'Cancel' : '取消'}
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white border-0 font-mono"
+                className="bg-purple-600 hover:bg-purple-500 text-white border-0 shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all"
               >
                 <Send className="h-4 w-4 mr-1.5" />
-                {submitting ? '...' : locale === 'en' ? 'SEND' : '匿名发送'}
+                {submitting ? '...' : locale === 'en' ? 'Send' : '匿名發送'}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
+    </ForceDark>
   )
 }

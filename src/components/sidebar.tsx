@@ -23,6 +23,7 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
+  Skull,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -97,6 +98,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'sidebar.discover', href: '/', icon: Compass, colorClass: 'text-blue-500' },
   { key: 'sidebar.uni', href: '/uni', icon: GraduationCap, colorClass: 'text-rose-500' },
   { key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500' },
+  { key: 'sidebar.anon', href: '/posts/anonymous', icon: Skull, colorClass: 'text-purple-400' },
   { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-500' },
   { key: 'sidebar.chat', href: '/chat', icon: MessageCircle, colorClass: 'text-violet-500' },
 ]
