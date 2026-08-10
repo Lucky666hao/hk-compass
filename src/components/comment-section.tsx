@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { MessageCircle, Send, Crown, Lock, Trash2 } from 'lucide-react'
+import { MessageCircle, Send, Crown, Lock, Trash2, EyeOff } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -17,7 +17,7 @@ import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 
 // ============================================
-// 通用评论组件 — 支持 competition / post
+// 通用评论组件 — 支持 competition / post / anonymous_post
 // ============================================
 
 interface CommentData {
@@ -27,21 +27,34 @@ interface CommentData {
   created_at: string
   author_name?: string
   is_member?: boolean
+  /** 匿名评论的显示名 */
+  display_name?: string
 }
 
 interface CommentSectionProps {
-  /** 'competition' → comments 表 / 'post' → post_comments 表 */
-  targetType: 'competition' | 'post'
-  /** competition.id 或 post.id */
+  targetType: 'competition' | 'post' | 'anonymous_post'
   targetId: string
 }
 
-/** 根据 targetType 推断表名和 FK 列名 */
+/** 随机匿名名 */
+function randomAnonName(): string {
+  const adjectives = ['暗影', '深夜', '迷霧', '隱世', '流浪', '沉默', '孤獨', '深潛', '月光', '幽谷']
+  const nouns = ['貓', '狐狸', '烏鴉', '蝙蝠', '狼', '兔', '鷹', '蛇', '熊貓', '蝴蝶']
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
+  const noun = nouns[Math.floor(Math.random() * nouns.length)]
+  const num = Math.floor(Math.random() * 9000) + 1000
+  return `${adj}${noun}#${num}`
+}
+
 function tableInfo(type: CommentSectionProps['targetType']) {
-  if (type === 'post') {
-    return { table: 'post_comments' as const, fk: 'post_id' as const }
+  switch (type) {
+    case 'post':
+      return { table: 'post_comments' as const, fk: 'post_id' as const, anonymous: false }
+    case 'anonymous_post':
+      return { table: 'anonymous_post_comments' as const, fk: 'post_id' as const, anonymous: true }
+    default:
+      return { table: 'comments' as const, fk: 'competition_id' as const, anonymous: false }
   }
-  return { table: 'comments' as const, fk: 'competition_id' as const }
 }
 
 export function CommentSection({ targetType, targetId }: CommentSectionProps) {
@@ -54,15 +67,17 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const { table, fk } = tableInfo(targetType)
+  const { table, fk, anonymous } = tableInfo(targetType)
   const dateLocale = locale === 'en' ? enUS : zhHK
   const dateFormat = locale === 'en' ? 'MMM d, HH:mm' : 'M月d日 HH:mm'
 
-  // 加载用户状态和评论
+  // 匿名评论者的显示名（当前用户在当前帖子下的身份）
+  const myAnonName = useMemo(() => randomAnonName(), [targetId])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) checkMembership(session.user.id)
+      if (session?.user && !anonymous) checkMembership(session.user.id)
     })
     loadComments()
   }, [targetType, targetId])
@@ -86,30 +101,43 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
       .limit(50)
 
     if (data) {
-      // 获取所有评论者的 profile
-      const userIds = [...new Set(data.map((c: any) => c.user_id))]
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, is_member, display_name')
-        .in('user_id', userIds)
-
-      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]))
-
-      const enriched: CommentData[] = data.map((c: any) => {
-        const p = profileMap.get(c.user_id)
-        return {
+      if (anonymous) {
+        // 匿名评论：不查 profiles，直接用存储的 display_name
+        const enriched: CommentData[] = data.map((c: any) => ({
           id: c.id,
           user_id: c.user_id,
           content: c.content,
           created_at: c.created_at,
-          author_name: p?.display_name || c.user_id.slice(0, 6) + '...',
-          is_member: p?.is_member ?? false,
-        }
-      })
-      setComments(enriched)
+          display_name: c.display_name || '???',
+          author_name: c.display_name || '???',
+        }))
+        setComments(enriched)
+      } else {
+        // 公开评论：查 profiles 补全显示名
+        const userIds = [...new Set(data.map((c: any) => c.user_id))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, is_member, display_name')
+          .in('user_id', userIds)
+
+        const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]))
+
+        const enriched: CommentData[] = data.map((c: any) => {
+          const p = profileMap.get(c.user_id)
+          return {
+            id: c.id,
+            user_id: c.user_id,
+            content: c.content,
+            created_at: c.created_at,
+            author_name: p?.display_name || c.user_id.slice(0, 6) + '...',
+            is_member: p?.is_member ?? false,
+          }
+        })
+        setComments(enriched)
+      }
     }
     setLoading(false)
-  }, [table, fk, targetId])
+  }, [table, fk, targetId, anonymous])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,7 +149,9 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
           ? '請先登入再評論'
           : '请先登录再评论'
       )
-      const redirectPath = targetType === 'post' ? `/posts/${targetId}` : `/competition/${targetId}`
+      const redirectPath = targetType === 'post' ? `/posts/${targetId}`
+        : targetType === 'anonymous_post' ? `/posts/anonymous/${targetId}`
+        : `/competition/${targetId}`
       router.push(`/auth/login?redirect=${redirectPath}`)
       return
     }
@@ -129,11 +159,15 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
 
     setSubmitting(true)
     try {
-      const { error } = await supabase.from(table).insert({
+      const insertData: any = {
         [fk]: targetId,
         user_id: user.id,
         content: newComment.trim(),
-      })
+      }
+      if (anonymous) {
+        insertData.display_name = myAnonName
+      }
+      const { error } = await supabase.from(table).insert(insertData)
       if (error) throw error
       setNewComment('')
       toast.success(t(locale, 'toast.comment_posted'))
@@ -156,8 +190,8 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   }
 
   const userFallback = locale === 'en' ? 'User' : locale === 'zh-HK' ? '用戶' : '用户'
-  const redirectPath = targetType === 'post'
-    ? `/posts/${targetId}`
+  const redirectPath = targetType === 'post' ? `/posts/${targetId}`
+    : targetType === 'anonymous_post' ? `/posts/anonymous/${targetId}`
     : `/competition/${targetId}`
 
   return (
@@ -175,16 +209,27 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
         {user ? (
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="flex gap-3">
-              <Avatar className="h-9 w-9 shrink-0">
-                <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                  {user.email?.slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
+              {/* 匿名评论用神秘头像 */}
+              {anonymous ? (
+                <div className="h-9 w-9 shrink-0 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                  <EyeOff className="h-4 w-4 text-purple-400/60" />
+                </div>
+              ) : (
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                    {user.email?.slice(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div className="flex-1 space-y-2">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={t(locale, isMember ? 'comments.member_placeholder' : 'comments.placeholder') as string}
+                  placeholder={
+                    anonymous
+                      ? locale === 'en' ? 'Whisper anonymously...' : locale === 'zh-HK' ? '匿名留言...' : '匿名留言...'
+                      : t(locale, isMember ? 'comments.member_placeholder' : 'comments.placeholder') as string
+                  }
                   rows={2}
                   className="w-full rounded-lg border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
                   maxLength={500}
@@ -194,7 +239,12 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
                     {newComment.length}/500
                   </span>
                   <div className="flex items-center gap-2">
-                    {isMember && (
+                    {anonymous && (
+                      <span className="text-xs text-purple-400/70 font-medium">
+                        {myAnonName}
+                      </span>
+                    )}
+                    {!anonymous && isMember && (
                       <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300">
                         <Crown className="h-3 w-3" /> {t(locale, 'comments.member_badge')}
                       </Badge>
@@ -250,17 +300,23 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
           <div className="space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3 group/comment">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="text-xs bg-muted">
-                    {comment.author_name?.slice(0, 2).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+                {anonymous ? (
+                  <div className="h-8 w-8 shrink-0 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                    <EyeOff className="h-3.5 w-3.5 text-purple-400/60" />
+                  </div>
+                ) : (
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback className="text-xs bg-muted">
+                      {comment.author_name?.slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
+                    <span className={`text-sm font-medium ${anonymous ? 'text-purple-400' : ''}`}>
                       {comment.author_name || userFallback}
                     </span>
-                    {comment.is_member && (
+                    {!anonymous && comment.is_member && (
                       <Crown className="h-3 w-3 text-amber-500" />
                     )}
                     <span className="text-xs text-muted-foreground">
@@ -269,7 +325,6 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
                   </div>
                   <p className="mt-1 text-sm leading-relaxed">{comment.content}</p>
                 </div>
-                {/* 删除按钮 — 仅评论作者可见 */}
                 {user && user.id === comment.user_id && (
                   <button
                     onClick={() => handleDelete(comment.id)}

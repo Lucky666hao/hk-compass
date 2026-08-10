@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { VoteButtons } from '@/components/vote-buttons'
 import { PostReactions } from '@/components/post-reactions'
 import { ForceDark } from '@/components/force-dark'
+import { CommentSection } from '@/components/comment-section'
 
 export default function AnonymousPostDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -183,6 +184,11 @@ export default function AnonymousPostDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 匿名评论区 */}
+      <div className="mt-6">
+        <CommentSection targetType="anonymous_post" targetId={id} />
       </div>
     </div>
     </ForceDark>
