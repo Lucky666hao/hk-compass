@@ -92,13 +92,19 @@ interface NavItem {
   href: string
   icon: React.ElementType
   colorClass: string
+  /** 子导航项（缩进显示在主项下方） */
+  children?: { key: string; href: string; icon: React.ElementType; label: string }[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'sidebar.discover', href: '/', icon: Compass, colorClass: 'text-blue-500' },
   { key: 'sidebar.uni', href: '/uni', icon: GraduationCap, colorClass: 'text-rose-500' },
-  { key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500' },
-  { key: 'sidebar.anon', href: '/posts/anonymous', icon: Skull, colorClass: 'text-purple-400' },
+  {
+    key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500',
+    children: [
+      { key: 'sidebar.anon', href: '/posts/anonymous', icon: Skull, label: 'anon' },
+    ],
+  },
   { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-500' },
   { key: 'sidebar.chat', href: '/chat', icon: MessageCircle, colorClass: 'text-violet-500' },
 ]
@@ -193,9 +199,11 @@ function SidebarInner({
     router.push('/')
   }
 
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/'
-    return pathname.startsWith(href)
+  const isActive = (href: string, children?: NavItem['children']) => {
+    if (pathname === href) return true
+    if (pathname.startsWith(href + '/')) return true
+    if (children) return children.some(c => pathname.startsWith(c.href))
+    return false
   }
 
   return (
@@ -240,17 +248,42 @@ function SidebarInner({
       {/* 导航 */}
       <nav className="flex-1 py-3 px-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
-          const active = isActive(item.href)
+          const active = isActive(item.href, item.children)
           const Icon = item.icon
           return (
-            <NavItemLink
-              key={item.key}
-              collapsed={collapsed}
-              item={item}
-              active={active}
-              Icon={Icon}
-              locale={locale}
-            />
+            <div key={item.key}>
+              <NavItemLink
+                collapsed={collapsed}
+                item={item}
+                active={active}
+                Icon={Icon}
+                locale={locale}
+              />
+              {/* 子导航项 */}
+              {!collapsed && item.children && (
+                <div className="ml-6 space-y-0.5 border-l border-sidebar-border/60 pl-2 mt-0.5">
+                  {item.children.map(child => {
+                    const childActive = pathname.startsWith(child.href)
+                    const ChildIcon = child.icon
+                    return (
+                      <Link
+                        key={child.key}
+                        href={child.href}
+                        className={cn(
+                          'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
+                          childActive
+                            ? 'text-purple-400 font-medium'
+                            : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
+                        )}
+                      >
+                        <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{t(locale, child.key)}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
       </nav>
