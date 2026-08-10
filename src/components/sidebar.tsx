@@ -23,7 +23,6 @@ import {
   User,
   PanelLeftClose,
   PanelLeftOpen,
-  Skull,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -93,7 +92,7 @@ interface NavItem {
   icon: React.ElementType
   colorClass: string
   /** 子导航项（缩进显示在主项下方） */
-  children?: { key: string; href: string; icon: React.ElementType; label: string }[]
+  children?: { key: string; href: string; icon?: React.ElementType; label: string }[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -102,7 +101,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500',
     children: [
-      { key: 'sidebar.anon', href: '/posts/anonymous', icon: Skull, label: 'anon' },
+      { key: 'sidebar.anon', href: '/posts/anonymous', label: 'anon' },
     ],
   },
   { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-500' },
@@ -264,19 +263,18 @@ function SidebarInner({
                 <div className="ml-6 space-y-0.5 border-l border-sidebar-border/60 pl-2 mt-0.5">
                   {item.children.map(child => {
                     const childActive = pathname.startsWith(child.href)
-                    const ChildIcon = child.icon
                     return (
                       <Link
                         key={child.key}
                         href={child.href}
                         className={cn(
-                          'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
+                          'flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors',
                           childActive
                             ? 'text-purple-400 font-medium'
                             : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
                         )}
                       >
-                        <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-xs shrink-0">🕶️</span>
                         <span className="truncate">{t(locale, child.key)}</span>
                       </Link>
                     )

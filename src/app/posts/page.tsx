@@ -171,26 +171,6 @@ export default function PostsPage() {
         </div>
       )}
 
-      {/* 🕶️ 地下頻道入口 */}
-      <div className="mt-12">
-        <button
-          onClick={() => router.push('/posts/anonymous')}
-          className="w-full group flex items-center gap-4 rounded-xl border border-purple-500/10 bg-[#1a1a2e]/50 p-4 text-left transition-all hover:border-purple-500/30 hover:bg-[#1a1a2e] hover:shadow-[0_0_20px_rgba(124,58,237,0.08)]"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-2xl">
-            🕶️
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-purple-300">
-              {locale === 'en' ? 'Underground Channel' : '地下頻道'}
-            </div>
-            <div className="text-xs text-gray-600 mt-0.5">
-              {locale === 'en' ? 'Anonymous whispers · Speak freely' : '匿名發言 · 暢所欲言 · 不代表本站立場'}
-            </div>
-          </div>
-          <div className="text-gray-700 group-hover:text-purple-400 transition-colors text-lg">→</div>
-        </button>
-      </div>
     </div>
   )
 }
