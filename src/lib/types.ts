@@ -187,7 +187,7 @@ export interface Post {
 }
 
 // ============================================
-// 投票 / 表情 / 收藏（社区帖子升级）
+// 投票 / 表情 / 收藏 / 评论（社区帖子升级）
 // ============================================
 
 export interface PostVote {
@@ -196,6 +196,21 @@ export interface PostVote {
   user_id: string
   vote: number  // 1 or -1
   created_at: string
+}
+
+export interface PostComment {
+  id: string
+  post_id: string
+  user_id: string
+  content: string
+  created_at: string
+  updated_at: string
+  /** 评论者显示名（enriched from profiles） */
+  author_name?: string
+  /** 评论者是否会员（enriched from profiles） */
+  is_member?: boolean
+  /** 当前用户是否为该评论作者 */
+  is_author?: boolean
 }
 
 export type ReactionEmoji = '👍' | '👏' | '🔥' | '💡' | '🤔'

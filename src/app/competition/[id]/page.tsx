@@ -410,7 +410,7 @@ export default function CompetitionDetailPage() {
           )}
 
           {/* === 评论区 === */}
-          <CommentSection competitionId={id} />
+          <CommentSection targetType="competition" targetId={id} />
 
           {/* 数据来源 */}
           {(competition.source || competition.source_url) && (

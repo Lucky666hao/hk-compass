@@ -20,6 +20,7 @@ import { VoteButtons } from '@/components/vote-buttons'
 import { PostReactions } from '@/components/post-reactions'
 import { UniversityBadge } from '@/components/university-badge'
 import { SaveButton } from '@/components/save-button'
+import { CommentSection } from '@/components/comment-section'
 
 export default function PostDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -200,6 +201,11 @@ export default function PostDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 评论区 */}
+      <div className="mt-6">
+        <CommentSection targetType="post" targetId={id} />
+      </div>
     </div>
   )
 }
