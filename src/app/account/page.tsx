@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -40,6 +40,14 @@ import { useQuery } from '@tanstack/react-query'
 type Tab = 'saved' | 'reminders' | 'saved_posts' | 'my_posts' | 'my_comps'
 
 export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[80vh] items-center justify-center"><Skeleton className="h-10 w-40" /></div>}>
+      <AccountPageInner />
+    </Suspense>
+  )
+}
+
+function AccountPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const showReset = searchParams.get('reset') === 'true'
