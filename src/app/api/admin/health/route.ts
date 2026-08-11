@@ -67,7 +67,7 @@ export async function GET(req: Request) {
     },
     noDates: {
       count: noDatesCount || 0,
-      status: 'warn', // 17条无日期，始终 warn（体育赛事天然无截止日）
+      status: statusLabel(noDatesCount || 0),
       samples: (noDatesData || []).slice(0, 5),
     },
     checkedAt: now,

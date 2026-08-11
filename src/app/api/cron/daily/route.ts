@@ -59,6 +59,50 @@ async function updateStatuses(supabase: ReturnType<typeof getAdminClient>) {
   return { byDeadline, byEventEnd, total: byDeadline + byEventEnd }
 }
 
+// ─── Push 通知 ──────────────────────────────────────────────
+async function sendPushNotification(
+  supabase: ReturnType<typeof getAdminClient>,
+  userId: string,
+  notification: { title: string; body: string; url: string; tag: string },
+): Promise<void> {
+  const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@hk-compass.vercel.app'
+
+  if (!VAPID_PRIVATE_KEY || !VAPID_PUBLIC_KEY) return
+
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('user_id', userId)
+
+  if (!subs || subs.length === 0) return
+
+  const webpush = await import('web-push')
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        JSON.stringify({
+          title: notification.title,
+          body: notification.body,
+          icon: '/icon-192.png',
+          badge: '/icon-192.png',
+          tag: notification.tag,
+          url: notification.url,
+          requireInteraction: true,
+        }),
+      )
+    } catch (err: any) {
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+      }
+    }
+  }
+}
+
 // ─── 2. 发送提醒 ────────────────────────────────────────────
 async function sendReminders(supabase: ReturnType<typeof getAdminClient>) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY
@@ -66,7 +110,7 @@ async function sendReminders(supabase: ReturnType<typeof getAdminClient>) {
 
   const { data: reminders } = await supabase
     .from('reminders')
-    .select('id, remind_before, user_id, notified, competitions!inner(title, registration_deadline)')
+    .select('id, remind_before, user_id, notified, competitions!inner(id, title, registration_deadline)')
     .eq('notified', false)
 
   if (!reminders || reminders.length === 0) {
@@ -125,6 +169,13 @@ async function sendReminders(supabase: ReturnType<typeof getAdminClient>) {
         })
         if (res.ok) {
           await supabase.from('reminders').update({ notified: true }).eq('id', reminder.id)
+          // 同时发送 Push 通知（best-effort）
+          await sendPushNotification(supabase, reminder.user_id, {
+            title: '⏰ 报名即将截止',
+            body: `「${comp.title}」截止日期: ${deadlineDate}`,
+            url: `https://hk-compass.vercel.app/competition/${(comp as any).id || ''}`,
+            tag: `reminder-${reminder.id}`,
+          })
           sent++
         } else {
           skipped++

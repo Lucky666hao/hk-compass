@@ -4,11 +4,11 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
-import { HK_UNIVERSITIES, getUniBySlug, matchUniversity } from '@/lib/university-data'
+import { getUniBySlug, matchUniversity } from '@/lib/university-data'
 import { CompetitionCard } from '@/components/competition-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
-import { ArrowLeft, GraduationCap, ExternalLink } from 'lucide-react'
+import { ArrowLeft, GraduationCap } from 'lucide-react'
 
 export default function SingleUniPage() {
   const { slug } = useParams<{ slug: string }>()
