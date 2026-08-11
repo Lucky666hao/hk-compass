@@ -1,13 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
-
-function getServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
-  return createClient(url, key)
-}
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -42,17 +34,13 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    try {
-      const adminClient = getServiceClient()
-      const { data: profile } = await adminClient
-        .from('profiles')
-        .select('is_admin')
-        .eq('user_id', user.id)
-        .single()
-      if (!profile?.is_admin) {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
-    } catch {
+    // 用同一个 anon-key 客户端查 profiles（RLS 允许用户读自己的行）
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .single()
+    if (error || !profile?.is_admin) {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }

@@ -28,7 +28,6 @@ import {
   Moon,
   Bell,
   PlusCircle,
-  Shield,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -178,37 +177,22 @@ function SidebarInner({
 }) {
   const [user, setUser] = useState<any>(undefined)
   const [displayName, setDisplayName] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        supabase.from('profiles').select('display_name, is_admin').eq('user_id', session.user.id).single()
-          .then(({ data }) => {
-            if (data) {
-              setDisplayName(data.display_name)
-              if (data.is_admin) setIsAdmin(true)
-            }
-          })
+        supabase.from('profiles').select('display_name').eq('user_id', session.user.id).single()
+          .then(({ data }) => { if (data) setDisplayName(data.display_name) })
       }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setUser(s?.user ?? null)
       if (s?.user) {
-        supabase.from('profiles').select('display_name, is_admin').eq('user_id', s.user.id).single()
-          .then(({ data }) => {
-            if (data) {
-              setDisplayName(data?.display_name ?? null)
-              if (data?.is_admin) setIsAdmin(true)
-            } else {
-              setDisplayName(null)
-              setIsAdmin(false)
-            }
-          })
+        supabase.from('profiles').select('display_name').eq('user_id', s.user.id).single()
+          .then(({ data }) => { if (data) setDisplayName(data?.display_name ?? null) })
       } else {
         setDisplayName(null)
-        setIsAdmin(false)
       }
     })
     return () => subscription.unsubscribe()
@@ -323,19 +307,6 @@ function SidebarInner({
           >
             <NotificationBell />
             {!collapsed && <span className="text-xs">Notifications</span>}
-          </Link>
-        )}
-        {/* 管理员入口 — 仅 admin 可见 */}
-        {user && isAdmin && (
-          <Link
-            href="/admin"
-            className={cn(
-              'w-full flex items-center rounded-md px-2 py-1.5 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-sidebar-accent transition-colors',
-              collapsed ? 'justify-center' : 'gap-2.5'
-            )}
-          >
-            <Shield className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="text-xs">Admin</span>}
           </Link>
         )}
         {/* 语言切换 */}
