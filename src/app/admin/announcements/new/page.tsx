@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import type { Announcement } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,40 +12,15 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
-export default function AnnouncementFormPage() {
+export default function NewAnnouncementPage() {
   const { locale } = useLocale()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const editId = searchParams.get('id')
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [type, setType] = useState<string>('info')
   const [isPublished, setIsPublished] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [loadingEdit, setLoadingEdit] = useState(!!editId)
-
-  // 编辑模式：加载现有公告
-  useEffect(() => {
-    if (!editId) return
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
-      fetch(`/api/admin/announcements/${editId}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.announcement) {
-            const a = data.announcement as Announcement
-            setTitle(a.title)
-            setContent(a.content)
-            setType(a.type)
-            setIsPublished(a.is_published)
-          }
-        })
-        .finally(() => setLoadingEdit(false))
-    })
-  }, [editId])
 
   const handleSubmit = async (publish: boolean) => {
     if (!title.trim() || !content.trim()) {
@@ -62,45 +36,28 @@ export default function AnnouncementFormPage() {
       return
     }
 
-    const payload = {
-      title: title.trim(),
-      content: content.trim(),
-      type,
-      is_published: publish,
-    }
-
-    const url = editId
-      ? `/api/admin/announcements/${editId}`
-      : '/api/admin/announcements'
-    const method = editId ? 'PATCH' : 'POST'
-
-    const res = await fetch(url, {
-      method,
+    const res = await fetch('/api/admin/announcements', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        is_published: publish,
+      }),
     })
 
     setSaving(false)
 
     if (res.ok) {
-      toast.success(editId
-        ? t(locale, 'admin.announce.updated')
-        : t(locale, 'admin.announce.created'))
+      toast.success(t(locale, 'admin.announce.created'))
       router.push('/admin/announcements')
     } else {
       toast.error(t(locale, 'admin.announce.save_failed'))
     }
-  }
-
-  if (loadingEdit) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
   }
 
   return (
@@ -115,9 +72,7 @@ export default function AnnouncementFormPage() {
 
       <Card>
         <CardContent className="p-6 space-y-5">
-          <h2 className="font-semibold text-lg">
-            {editId ? t(locale, 'admin.announce.edit') : t(locale, 'admin.announce.new')}
-          </h2>
+          <h2 className="font-semibold text-lg">{t(locale, 'admin.announce.new')}</h2>
 
           {/* Title */}
           <div className="space-y-1.5">
@@ -169,23 +124,13 @@ export default function AnnouncementFormPage() {
 
           {/* Buttons */}
           <div className="flex items-center gap-3 pt-2">
-            <Button
-              onClick={() => handleSubmit(true)}
-              disabled={saving}
-            >
+            <Button onClick={() => handleSubmit(true)} disabled={saving}>
               {saving ? '...' : t(locale, 'admin.announce.publish')}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSubmit(false)}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={() => handleSubmit(false)} disabled={saving}>
               {t(locale, 'admin.announce.save_draft')}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/admin/announcements')}
-            >
+            <Button variant="ghost" onClick={() => router.push('/admin/announcements')}>
               {t(locale, 'admin.announce.cancel')}
             </Button>
           </div>
