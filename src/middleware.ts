@@ -29,13 +29,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Admin 路由：未登录 → 跳转登录；已登录 → 放行（admin/layout.tsx 做二次检查）
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
-  }
-
   // 免登录模式 — 不强制跳转，页面内部自行处理
   if (user) {
     supabaseResponse.headers.set('x-user-id', user.id)
