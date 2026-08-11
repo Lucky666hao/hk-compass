@@ -42,10 +42,14 @@ export function LoginForm() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) {
+          // 显示具体错误原因，方便用户排查
+          if (error.message.includes('Email not confirmed')) {
+            throw new Error('邮箱未验证，请先检查邮箱点击确认链接')
+          }
           if (error.message.includes('Invalid login credentials')) {
             throw new Error('邮箱或密码错误')
           }
-          throw error
+          throw new Error(error.message)
         }
         toast.success('登录成功')
         router.push(redirectTo)
