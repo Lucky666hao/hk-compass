@@ -335,7 +335,11 @@ function SidebarInner({
             {collapsed && <TooltipContent side="right">{t(locale, 'sidebar.login')}</TooltipContent>}
           </Tooltip>
         ) : (
-          <div className={cn('flex items-center rounded-md px-2 py-1.5', collapsed && 'justify-center')}>
+          <div
+            className={cn('flex items-center rounded-md px-2 py-1.5 cursor-pointer hover:bg-sidebar-accent transition-colors', collapsed && 'justify-center')}
+            onClick={() => router.push('/account/profile')}
+            title={t(locale, 'profile.title') as string}
+          >
             <Avatar className="h-7 w-7 shrink-0">
               <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">
                 {displayName?.slice(0, 2).toUpperCase() || user.email?.slice(0, 2).toUpperCase() || 'U'}
@@ -347,14 +351,7 @@ function SidebarInner({
                   {displayName || user.email?.split('@')[0]}
                 </span>
                 <button
-                  onClick={() => router.push('/account/profile')}
-                  className="shrink-0 p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
-                  title={t(locale, 'profile.title') as string}
-                >
-                  <User className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={handleSignOut}
+                  onClick={(e) => { e.stopPropagation(); handleSignOut() }}
                   className="shrink-0 p-1 rounded hover:bg-sidebar-accent text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors"
                   title={t(locale, 'nav.signout')}
                 >
