@@ -357,3 +357,36 @@ export const REMIND_LABELS: Record<RemindBefore, string> = {
   '3天前': '3天前提醒',
   '1周前': '1周前提醒',
 }
+
+// ============================================
+// 管理员后台
+// ============================================
+
+export type AnnouncementType = 'info' | 'warning' | 'success'
+
+export interface Announcement {
+  id: string
+  title: string
+  content: string
+  type: AnnouncementType
+  is_published: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PageView {
+  id: string
+  path: string
+  timestamp: string
+  user_agent: string | null
+  session_id: string | null
+}
+
+export interface AnalyticsSummary {
+  totalViews: number
+  todayViews: number
+  dailyViews: { date: string; count: number }[]
+  hourlyHeatmap: { hour: number; count: number }[]
+  topPaths: { path: string; count: number }[]
+}

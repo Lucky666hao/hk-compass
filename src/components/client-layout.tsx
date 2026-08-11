@@ -3,6 +3,8 @@
 import { LanguageProvider } from '@/i18n/LanguageContext'
 import { Providers } from '@/components/providers'
 import { Sidebar, SidebarProvider, SidebarInset } from '@/components/sidebar'
+import { PageViewTracker } from '@/components/page-view-tracker'
+import { AnnouncementBanner } from '@/components/announcement-banner'
 import { useLocale } from '@/i18n/LanguageContext'
 
 function FooterWithLocale() {
@@ -29,7 +31,11 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <div className="flex min-h-screen">
             <Sidebar />
             <SidebarInset>
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                <PageViewTracker />
+                <AnnouncementBanner />
+                {children}
+              </main>
               <FooterWithLocale />
             </SidebarInset>
           </div>
