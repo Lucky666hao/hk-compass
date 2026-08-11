@@ -8,9 +8,6 @@ import { HK_UNIVERSITIES, matchUniversity } from '@/lib/university-data'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
 import { GraduationCap, ChevronRight, ArrowLeft } from 'lucide-react'
-import { format } from 'date-fns'
-import { zhHK } from 'date-fns/locale'
-import { Badge } from '@/components/ui/badge'
 
 export default function UniOverviewPage() {
   const router = useRouter()
@@ -46,9 +43,6 @@ export default function UniOverviewPage() {
       return grouped
     },
   })
-
-  const dateFormat = locale === 'en' ? 'MMM d' : 'M月d日'
-  const dateLocale = locale === 'en' ? undefined : zhHK
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">

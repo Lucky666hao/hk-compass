@@ -104,13 +104,13 @@ async function sendReminders(supabase: ReturnType<typeof getAdminClient>) {
     const email = authUser?.user?.email
     if (!email) { skipped++; continue }
 
-    // 发送邮件
+    // 发送邮件（只有发送成功才标记已通知）
     if (RESEND_API_KEY) {
       try {
         const deadlineDate = new Date(deadline).toLocaleDateString('zh-HK', {
           year: 'numeric', month: 'long', day: 'numeric', weekday: 'short',
         })
-        await fetch('https://api.resend.com/emails', {
+        const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -120,15 +120,19 @@ async function sendReminders(supabase: ReturnType<typeof getAdminClient>) {
             from: 'HK Compass <notifications@hk-compass.vercel.app>',
             to: [email],
             subject: `⏰ 【HK Compass】「${comp.title}」报名即将截止 — ${deadlineDate}`,
-            html: `<p>你关注的比赛 <strong>「${comp.title}」</strong> 报名截止日期为 <strong>${deadlineDate}</strong>，请尽快完成报名！</p>`,
+            html: `<p>你关注的比赛 <strong>「${comp.title}」</strong> 报名截止日期为 <strong>${deadlineDate}</strong>，请尽快完成报名！<br><a href="https://hk-compass.vercel.app/competition/${(comp as any).id || ''}">查看比赛详情 →</a></p>`,
           }),
         })
-        sent++
+        if (res.ok) {
+          await supabase.from('reminders').update({ notified: true }).eq('id', reminder.id)
+          sent++
+        } else {
+          skipped++
+        }
       } catch { skipped++ }
+    } else {
+      skipped++
     }
-
-    // 标记已通知
-    await supabase.from('reminders').update({ notified: true }).eq('id', reminder.id)
   }
 
   return { sent, skipped, total: reminders.length }
@@ -150,8 +154,7 @@ async function runHealthCheck(supabase: ReturnType<typeof getAdminClient>) {
     .is('registration_deadline', null)
     .is('date_end', null)
 
-  // 大学关联缺失（简化版：有 HK 大学标题但无 target_universities）
-  const hkUniPattern = '香港大學|香港大学|港大|HKU|香港中文|中大|CUHK|香港科技|港科大|HKUST|香港城市|城大|CityU|香港理工|理大|PolyU|香港浸會|浸大|HKBU|嶺南|岭南|Lingnan|香港教育|教大|EdUHK|香港恒生|恒生|HSUHK|香港都會|都大|HKMU|香港珠海|珠海學院'
+  // 大学关联缺失（有 HK 大学标题但无 target_universities）
   const { count: uniMissing } = await supabase
     .from('competitions')
     .select('*', { count: 'exact', head: true })
@@ -205,12 +208,14 @@ export async function GET() {
     errors.push('health: ' + e.message)
   }
 
-  // 写入 cron_logs
-  await supabase.from('cron_logs').insert({
-    job_name: 'daily',
-    status: errors.length > 0 ? 'warn' : 'ok',
-    result: { ...results, errors },
-  })
+  // 写入 cron_logs（失败不影响主流程）
+  try {
+    await supabase.from('cron_logs').insert({
+      job_name: 'daily',
+      status: errors.length > 0 ? 'warn' : 'ok',
+      result: { ...results, errors },
+    })
+  } catch { /* 日志写入失败不中断 cron */ }
 
   return NextResponse.json({
     ok: errors.length === 0,

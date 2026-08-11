@@ -21,11 +21,11 @@ export async function GET() {
 
   let updatedDeadline = 0
   if (expired && expired.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from('competitions')
       .update({ status: '已结束' })
       .in('id', expired.map((e) => e.id))
-    updatedDeadline = expired.length
+    if (!error) updatedDeadline = expired.length
   }
 
   // 2. 比赛日期已过 + 状态仍是「报名中」或「即将开始」→ 标记为已结束
@@ -38,11 +38,11 @@ export async function GET() {
 
   let updatedEvent = 0
   if (pastEvent && pastEvent.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from('competitions')
       .update({ status: '已结束' })
       .in('id', pastEvent.map((e) => e.id))
-    updatedEvent = pastEvent.length
+    if (!error) updatedEvent = pastEvent.length
   }
 
   return NextResponse.json({

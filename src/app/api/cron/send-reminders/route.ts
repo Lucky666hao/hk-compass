@@ -153,6 +153,7 @@ export async function GET() {
       user_id,
       notified,
       competitions!inner (
+        id,
         title,
         registration_deadline
       )
@@ -229,7 +230,7 @@ export async function GET() {
 
     const success = await sendEmail(email, subject, html)
 
-    // 同时发送 Push 通知
+    // 同时发送 Push 通知（best-effort，失败不影响）
     await sendPushNotification(supabase, reminder.user_id, {
       title: '⏰ 报名即将截止',
       body: `「${comp.title}」截止日期: ${deadlineDate}`,
@@ -237,10 +238,13 @@ export async function GET() {
       tag: `reminder-${reminder.id}`,
     })
 
-    // 标记为已通知
-    await supabase.from('reminders').update({ notified: true }).eq('id', reminder.id)
-
-    if (success) sent++
+    // 只有邮件发送成功才标记已通知（避免静默丢失提醒）
+    if (success) {
+      await supabase.from('reminders').update({ notified: true }).eq('id', reminder.id)
+      sent++
+    } else {
+      skipped++
+    }
   }
 
   return NextResponse.json({

@@ -141,12 +141,12 @@ export default function AdminDashboardPage() {
       setStatusChecking(false)
       fetchHealth() // 刷新健康状态
     }
-  }, [])
+  }, [fetchHealth])
 
   useEffect(() => {
     setLoading(true)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
+      if (!session) { setLoading(false); return }
       fetch(`/api/admin/stats?days=${days}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
