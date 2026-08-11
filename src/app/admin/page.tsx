@@ -108,10 +108,18 @@ export default function AdminDashboardPage() {
       fetch(`/api/admin/stats?days=${days}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
-        .then(res => res.json())
-        .then((data: AnalyticsSummary) => {
-          setAnalytics(data)
+        .then(res => {
+          if (!res.ok) throw new Error(`API ${res.status}`)
+          return res.json()
         })
+        .then((data) => {
+          if (data && typeof data.totalViews === 'number') {
+            setAnalytics(data)
+          } else if (data?.error) {
+            console.error('[admin] API error:', data.error)
+          }
+        })
+        .catch(err => console.error('[admin] fetch error:', err))
         .finally(() => setLoading(false))
     })
   }, [days])
