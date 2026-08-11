@@ -29,24 +29,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // === Admin 路由保护 ===
+  // Admin 路由：未登录 → 跳转登录；已登录 → 放行（admin/layout.tsx 做二次检查）
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
-    // 用同一个 anon-key 客户端查 profiles（RLS 允许用户读自己的行）
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('user_id', user.id)
-      .single()
-    if (error || !profile?.is_admin) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
   }
 
   // 免登录模式 — 不强制跳转，页面内部自行处理
-  // 将 user 信息通过 header 传递给服务端组件（可选）
   if (user) {
     supabaseResponse.headers.set('x-user-id', user.id)
   }
