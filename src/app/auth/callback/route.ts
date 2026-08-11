@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      // 密码重置后跳转账号页
+      // 密码重置后跳转账号页，带上 reset 参数触发设置新密码
       if (type === 'recovery') {
-        return NextResponse.redirect(`${origin}/account`)
+        return NextResponse.redirect(`${origin}/account?reset=true`)
       }
       return NextResponse.redirect(`${origin}${next}`)
     }
