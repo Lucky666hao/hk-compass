@@ -90,7 +90,7 @@ export default function HomePage() {
         query = query.eq('status', filters.status)
       } else {
         query = query.neq('status', '已结束')
-        // 同时过滤掉报名截止日期已过且没有截止日期的（按比赛日期判断）
+        // 过滤掉过期报名截止日期的比赛
         query = query.or(`registration_deadline.is.null,registration_deadline.gte.${now}`)
       }
 
@@ -112,7 +112,11 @@ export default function HomePage() {
     setPage(0)
   }, [])
 
-  const competitions = data?.competitions ?? []
+  // 过滤掉仅限大陆院校的比赛（香港学生无法参加）
+  const rawCompetitions = data?.competitions ?? []
+  const competitions = filters.status && filters.status !== '全部'
+    ? rawCompetitions
+    : rawCompetitions.filter(c => !(c.description || '').includes('仅限中国内地院校学生参加'))
   const total = data?.total ?? 0
 
   return (
