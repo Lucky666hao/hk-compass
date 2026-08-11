@@ -16,16 +16,32 @@ export async function GET(req: Request) {
   const sinceDate = new Date()
   sinceDate.setDate(sinceDate.getDate() - days)
 
-  // 总访问量
+  // —— 页面访问指标 ——
   const { count: totalViews } = await supabase
     .from('page_views')
     .select('*', { count: 'exact', head: true })
 
-  // 今日访问
   const { count: todayViews } = await supabase
     .from('page_views')
     .select('*', { count: 'exact', head: true })
     .gte('timestamp', new Date().toISOString().slice(0, 10))
+
+  // —— 业务指标（service_role 直接 COUNT） ——
+  const { count: totalUsers } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: totalCompetitions } = await supabase
+    .from('competitions')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: totalPosts } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: totalReminders } = await supabase
+    .from('reminders')
+    .select('*', { count: 'exact', head: true })
 
   // 每日访问（柱状图数据）
   const { data: dailyRaw } = await supabase
@@ -85,6 +101,10 @@ export async function GET(req: Request) {
   return NextResponse.json({
     totalViews: totalViews || 0,
     todayViews: todayViews || 0,
+    totalUsers: totalUsers || 0,
+    totalCompetitions: totalCompetitions || 0,
+    totalPosts: totalPosts || 0,
+    totalReminders: totalReminders || 0,
     dailyViews,
     hourlyHeatmap,
     topPaths,

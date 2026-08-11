@@ -386,6 +386,10 @@ export interface PageView {
 export interface AnalyticsSummary {
   totalViews: number
   todayViews: number
+  totalUsers: number
+  totalCompetitions: number
+  totalPosts: number
+  totalReminders: number
   dailyViews: { date: string; count: number }[]
   hourlyHeatmap: { hour: number; count: number }[]
   topPaths: { path: string; count: number }[]

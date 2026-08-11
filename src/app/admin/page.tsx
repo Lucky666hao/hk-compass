@@ -134,24 +134,52 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* 统计卡片行 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 统计卡片行 — 流量 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
-            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total')}</div>
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total_views')}</div>
             <div className="text-3xl font-bold mt-1">{analytics.totalViews.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.today')}</div>
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.today_views')}</div>
             <div className="text-3xl font-bold mt-1">{analytics.todayViews.toLocaleString()}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.top_paths_count')}</div>
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.paths')}</div>
             <div className="text-3xl font-bold mt-1">{analytics.topPaths.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total_users')}</div>
+            <div className="text-3xl font-bold mt-1">{analytics.totalUsers.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 统计卡片行 — 内容 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total_comps')}</div>
+            <div className="text-3xl font-bold mt-1">{analytics.totalCompetitions.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total_posts')}</div>
+            <div className="text-3xl font-bold mt-1">{analytics.totalPosts.toLocaleString()}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-sm text-muted-foreground">{t(locale, 'admin.stats.total_reminders')}</div>
+            <div className="text-3xl font-bold mt-1">{analytics.totalReminders.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
