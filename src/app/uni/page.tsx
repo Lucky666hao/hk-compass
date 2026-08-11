@@ -19,11 +19,13 @@ export default function UniOverviewPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['uni-overview'],
     queryFn: async () => {
+      // 只拉取有 target_universities 的比赛（减少无关数据），按截止日期排序
       const { data: comps } = await supabase
         .from('competitions')
         .select('*')
         .neq('status', '已结束')
-        .order('fee_type', { ascending: false })
+        .not('target_universities', 'is', null)
+        .order('registration_deadline', { ascending: true, nullsFirst: false })
         .order('date_start', { ascending: true })
 
       // 按大学归类

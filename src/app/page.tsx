@@ -37,9 +37,9 @@ export default function HomePage() {
       let query = supabase
         .from('competitions')
         .select('*', { count: 'exact' })
-        // 有奖金优先 → 报名中/即将开始/进行中 → 已结束排最后 → 日期最近的在前
+        // 即将截止优先 → 有奖金次之 → 日期最近的在前（无截止日期的排最后）
+        .order('registration_deadline', { ascending: true, nullsFirst: false })
         .order('fee_type', { ascending: false })
-        .order('status', { ascending: true })
         .order('date_start', { ascending: true })
 
       if (filters.keyword) {

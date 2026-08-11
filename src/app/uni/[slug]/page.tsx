@@ -20,26 +20,37 @@ export default function SingleUniPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['uni', slug],
     queryFn: async () => {
-      const { data: comps } = await supabase
+      // 优先用 target_universities 数组做服务端精确筛选
+      const { data: tagged } = await supabase
         .from('competitions')
         .select('*')
         .neq('status', '已结束')
-        .order('fee_type', { ascending: false })
+        .contains('target_universities', [slug.toUpperCase()])
+        .order('registration_deadline', { ascending: true, nullsFirst: false })
         .order('date_start', { ascending: true })
 
-      // 筛选属于该大学的比赛
-      const uniComps = (comps || []).filter((c) => {
-        if (c.target_universities && Array.isArray(c.target_universities)) {
-          return c.target_universities.includes(slug.toUpperCase())
-        }
+      // 兜底：文本匹配（target_universities 为空的比赛）
+      const { data: untagged } = await supabase
+        .from('competitions')
+        .select('*')
+        .neq('status', '已结束')
+        .is('target_universities', null)
+        .order('registration_deadline', { ascending: true, nullsFirst: false })
+        .order('date_start', { ascending: true })
+
+      const textMatched = (untagged || []).filter((c) => {
         if (!uni) return false
         return matchUniversity(c.title, c.organizer, uni)
       })
 
+      // 去重合并
+      const taggedIds = new Set((tagged || []).map(c => c.id))
+      const merged = [...(tagged || []), ...textMatched.filter(c => !taggedIds.has(c.id))]
+
       return {
-        competitions: uniComps as Competition[],
-        total: uniComps.length,
-        prizeCount: uniComps.filter((c) => c.fee_type === '有奖金').length,
+        competitions: merged as Competition[],
+        total: merged.length,
+        prizeCount: merged.filter((c) => c.fee_type === '有奖金').length,
       }
     },
     enabled: !!slug,

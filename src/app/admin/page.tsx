@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { supabase } from '@/lib/supabase'
 import type { AnalyticsSummary } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
+import { RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 // ---- SVG 柱状图 ----
 function DailyBarChart({ data }: { data: { date: string; count: number }[] }) {
@@ -100,6 +101,27 @@ export default function AdminDashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [days, setDays] = useState(7)
+  const [statusCheckResult, setStatusCheckResult] = useState<{ ok?: boolean; updated?: { total: number }; details?: string[]; error?: string } | null>(null)
+  const [statusChecking, setStatusChecking] = useState(false)
+
+  const runStatusCheck = useCallback(async () => {
+    setStatusChecking(true)
+    setStatusCheckResult(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch('/api/admin/update-status', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await res.json()
+      setStatusCheckResult(json)
+    } catch (e: any) {
+      setStatusCheckResult({ error: e.message })
+    } finally {
+      setStatusChecking(false)
+    }
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -191,6 +213,53 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 状态刷新工具 */}
+      <Card className="border-dashed">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <RefreshCw className={`h-4 w-4 shrink-0 ${statusChecking ? 'animate-spin' : 'text-muted-foreground'}`} />
+              <div>
+                <p className="text-sm font-medium">
+                  {locale === 'en' ? 'Competition Status Check' : locale === 'zh-HK' ? '比賽狀態檢查' : '比赛状态检查'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {locale === 'en'
+                    ? 'Manually close competitions with expired deadlines'
+                    : locale === 'zh-HK'
+                    ? '手動關閉已過期的比賽（後備方案）'
+                    : '手动关闭已过期的比赛（后备方案）'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={runStatusCheck}
+              disabled={statusChecking}
+              className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0"
+            >
+              {statusChecking
+                ? (locale === 'en' ? 'Checking...' : locale === 'zh-HK' ? '檢查中...' : '检查中...')
+                : locale === 'en' ? 'Run Check' : locale === 'zh-HK' ? '執行檢查' : '执行检查'}
+            </button>
+          </div>
+          {statusCheckResult && (
+            <div className={`mt-3 text-sm flex items-start gap-2 ${statusCheckResult.error ? 'text-red-600' : 'text-emerald-600'}`}>
+              {statusCheckResult.error ? (
+                <><AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" /> {statusCheckResult.error}</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                  {locale === 'en'
+                    ? `Done — ${statusCheckResult.updated?.total ?? 0} competition(s) closed.`
+                    : locale === 'zh-HK'
+                    ? `完成 — 已關閉 ${statusCheckResult.updated?.total ?? 0} 個比賽。`
+                    : `完成 — 已关闭 ${statusCheckResult.updated?.total ?? 0} 个比赛。`}
+                </>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 时间段切换 */}
       <div className="flex items-center gap-2">
