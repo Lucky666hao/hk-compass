@@ -6,7 +6,7 @@ import { t } from '@/i18n/translations'
 import { supabase } from '@/lib/supabase'
 import type { AnalyticsSummary } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, ShieldAlert, ShieldOff } from 'lucide-react'
 
 // ---- SVG 柱状图 ----
 function DailyBarChart({ data }: { data: { date: string; count: number }[] }) {
@@ -104,6 +104,25 @@ export default function AdminDashboardPage() {
   const [statusCheckResult, setStatusCheckResult] = useState<{ ok?: boolean; updated?: { total: number }; details?: string[]; error?: string } | null>(null)
   const [statusChecking, setStatusChecking] = useState(false)
 
+  // 数据健康检查
+  const [health, setHealth] = useState<Record<string, { count: number; status: string; samples?: any[] }> | null>(null)
+  const [healthLoading, setHealthLoading] = useState(true)
+
+  const fetchHealth = useCallback(async () => {
+    setHealthLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch('/api/admin/health', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      if (res.ok) setHealth(await res.json())
+    } catch { /* silent */ }
+    finally { setHealthLoading(false) }
+  }, [])
+
+  useEffect(() => { fetchHealth() }, [fetchHealth])
+
   const runStatusCheck = useCallback(async () => {
     setStatusChecking(true)
     setStatusCheckResult(null)
@@ -120,6 +139,7 @@ export default function AdminDashboardPage() {
       setStatusCheckResult({ error: e.message })
     } finally {
       setStatusChecking(false)
+      fetchHealth() // 刷新健康状态
     }
   }, [])
 
@@ -213,6 +233,70 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 数据健康检查卡片 */}
+      <Card className={health && Object.values(health).every(h => h.status === 'ok') ? 'border-emerald-500/30' : 'border-amber-500/30'}>
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold flex items-center gap-2">
+              {health && Object.values(health).every(h => h.status === 'ok') ? (
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              ) : health && Object.values(health).some(h => h.status === 'error') ? (
+                <ShieldOff className="h-4 w-4 text-red-500" />
+              ) : (
+                <ShieldAlert className="h-4 w-4 text-amber-500" />
+              )}
+              {locale === 'en' ? 'Data Health' : locale === 'zh-HK' ? '數據健康' : '数据健康'}
+            </h2>
+            <button
+              onClick={fetchHealth}
+              disabled={healthLoading}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+            >
+              <RefreshCw className={`h-3 w-3 ${healthLoading ? 'animate-spin' : ''}`} />
+              {locale === 'en' ? 'Refresh' : locale === 'zh-HK' ? '刷新' : '刷新'}
+            </button>
+          </div>
+
+          {healthLoading && !health ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[1,2,3,4].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />)}
+            </div>
+          ) : health ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { key: 'expired', label: locale === 'en' ? 'Expired Active' : locale === 'zh-HK' ? '過期未標記' : '过期未标记' },
+                { key: 'mainland', label: locale === 'en' ? 'Mainland-Only' : locale === 'zh-HK' ? '大陸限制' : '大陆限制' },
+                { key: 'uniMissing', label: locale === 'en' ? 'Missing Uni Tag' : locale === 'zh-HK' ? '大學關聯缺失' : '大学关联缺失' },
+                { key: 'noDates', label: locale === 'en' ? 'No Dates' : locale === 'zh-HK' ? '無日期' : '无日期' },
+              ].map(({ key, label }) => {
+                const h = health[key]
+                const icon = h?.status === 'ok' ? '✓' : h?.status === 'warn' ? '⚠' : '✗'
+                const colorClass = h?.status === 'ok'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+                  : h?.status === 'warn'
+                  ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+                  : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+
+                return (
+                  <div key={key} className={`rounded-lg border px-3 py-2.5 ${colorClass}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium opacity-80">{label}</span>
+                      <span className="text-xs font-bold">{icon}</span>
+                    </div>
+                    <div className="text-2xl font-bold mt-1">{h?.count ?? '—'}</div>
+                    {h?.samples && h.samples.length > 0 && (
+                      <div className="mt-1 text-[10px] opacity-70 truncate" title={h.samples.map((s: any) => s.title).join(' / ')}>
+                        {h.samples[0].title?.slice(0, 25)}{h.samples.length > 1 ? ` +${h.samples.length - 1}` : ''}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       {/* 状态刷新工具 */}
       <Card className="border-dashed">
