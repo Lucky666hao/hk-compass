@@ -18,7 +18,13 @@ let _client: SupabaseClient | null = null
 
 function getClient(): SupabaseClient {
   if (!_client) {
-    _client = createClient(getSupabaseUrl(), getSupabaseAnonKey())
+    _client = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+      auth: {
+        // 显式启用 PKCE：与 Supabase 项目默认一致，确保邮件链接带 code、
+        // verifier 存 localStorage，callback 的 exchangeCodeForSession 才能成功。
+        flowType: 'pkce',
+      },
+    })
   }
   return _client
 }
