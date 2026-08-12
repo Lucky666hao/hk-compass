@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { Competition } from '@/lib/types'
@@ -49,31 +49,10 @@ export default function AccountPage() {
 
 function AccountPageInner() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const showReset = searchParams.get('reset') === 'true'
   const { locale } = useLocale()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('saved')
-
-  // 密码重置表单
-  const [newPassword, setNewPassword] = useState('')
-  const [resetSaving, setResetSaving] = useState(false)
-  const [resetDone, setResetDone] = useState(false)
-
-  const handleSetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newPassword.length < 6) { toast.error('密码至少6位字符'); return }
-    setResetSaving(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    setResetSaving(false)
-    if (error) {
-      toast.error(error.message)
-    } else {
-      setResetDone(true)
-      toast.success('密码已更新')
-    }
-  }
 
   const dateLocale = locale === 'en' ? enUS : zhHK
   const dateFormat = locale === 'en' ? 'MMM d, yyyy' : 'yyyy年M月d日'
@@ -164,39 +143,6 @@ function AccountPageInner() {
           </div>
         </CardContent>
       </Card>
-
-      {/* === 密码重置弹窗（邮件恢复后）=== */}
-      {showReset && !resetDone && (
-        <Card className="mb-8 border-amber-400/60 dark:border-amber-500/40">
-          <CardContent className="p-6">
-            <h3 className="font-semibold mb-1">🔑 设置新密码</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              你已通过重置链接登录。请设置一个新密码以完成密码重置。
-            </p>
-            <form onSubmit={handleSetPassword} className="flex gap-2 max-w-sm">
-              <input
-                type="password"
-                placeholder="新密码（至少6位）"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                minLength={6}
-                required
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-              <Button type="submit" disabled={resetSaving} size="sm">
-                {resetSaving ? '...' : '确认'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-      {showReset && resetDone && (
-        <Card className="mb-8 border-green-400/60 dark:border-green-500/40">
-          <CardContent className="p-6 text-center">
-            <p className="text-green-600 dark:text-green-400 font-medium">✅ 密码已更新成功</p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* === Tab 切换 === */}
       <div className="flex rounded-lg bg-muted p-1 mb-6 w-fit">
