@@ -61,38 +61,52 @@ function DailyBarChart({ data }: { data: { date: string; count: number }[] }) {
   )
 }
 
-// ---- 时段热力表 ----
-function HourlyHeatmap({ data }: { data: { hour: number; count: number }[] }) {
+// ---- 小时柱状图 ----
+function HourlyBarChart({ data }: { data: { hour: number; count: number }[] }) {
   const max = Math.max(...data.map(d => d.count), 1)
+  const chartH = 160
+  const barW = 18
+  const gap = 8
+  const totalW = data.length * (barW + gap)
 
   return (
-    <div className="grid grid-cols-24 gap-0.5">
+    <svg viewBox={`0 0 ${totalW} ${chartH + 44}`} className="w-full h-auto" role="img">
       {data.map((d) => {
-        const intensity = d.count / max
-        let bgClass = 'bg-muted'
-        if (intensity > 0.66) bgClass = 'bg-primary/80'
-        else if (intensity > 0.33) bgClass = 'bg-primary/50'
-        else if (intensity > 0) bgClass = 'bg-primary/25'
-
+        const barH = Math.max((d.count / max) * chartH, d.count > 0 ? 4 : 0)
+        const x = d.hour * (barW + gap) + gap / 2
+        const y = chartH - barH
         return (
-          <div
-            key={d.hour}
-            className={`h-8 rounded-sm ${bgClass} flex items-end justify-center pb-0.5`}
-            title={`${d.hour}:00 — ${d.count} views`}
-          >
-            <span className="text-[9px] text-foreground/60">
-              {d.count > 0 && d.hour % 3 === 0 ? d.hour : ''}
-            </span>
-          </div>
+          <g key={d.hour}>
+            <rect x={x} y={y} width={barW} height={barH} rx={3} className="fill-primary">
+              <title>{d.hour}:00 — {d.count} 次浏览</title>
+            </rect>
+            {d.hour % 3 === 0 && (
+              <text
+                x={x + barW / 2}
+                y={chartH + 18}
+                textAnchor="middle"
+                className="fill-muted-foreground"
+                fontSize={10}
+              >
+                {d.hour}时
+              </text>
+            )}
+            {d.count > 0 && (
+              <text
+                x={x + barW / 2}
+                y={y - 5}
+                textAnchor="middle"
+                className="fill-foreground"
+                fontSize={9}
+                fontWeight={500}
+              >
+                {d.count}
+              </text>
+            )}
+          </g>
         )
       })}
-      {/* 底部时间标签 */}
-      {[0, 6, 12, 18].map(h => (
-        <div key={`lbl-${h}`} className="text-[9px] text-muted-foreground text-center col-span-1 -mt-0.5">
-          {h}h
-        </div>
-      ))}
-    </div>
+    </svg>
   )
 }
 
@@ -101,6 +115,7 @@ export default function AdminDashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [days, setDays] = useState(7)
+  const [granularity, setGranularity] = useState<'day' | 'hour'>('day')
   const [statusCheckResult, setStatusCheckResult] = useState<{ ok?: boolean; updated?: { total: number }; details?: string[]; error?: string } | null>(null)
   const [statusChecking, setStatusChecking] = useState(false)
 
@@ -365,21 +380,43 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* 每日访问柱状图 */}
+      {/* 浏览趋势（按天 / 按小时切换） */}
       <Card>
         <CardContent className="p-5">
-          <h2 className="font-semibold mb-4">{t(locale, 'admin.stats.daily')}</h2>
-          <div className="overflow-x-auto">
-            <DailyBarChart data={analytics.dailyViews} />
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="font-semibold">
+              {locale === 'en' ? 'Traffic Trend' : locale === 'zh-HK' ? '瀏覽趨勢' : '浏览趋势'}
+            </h2>
+            <div className="inline-flex rounded-md bg-muted p-0.5 gap-0.5">
+              <button
+                onClick={() => setGranularity('day')}
+                className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
+                  granularity === 'day'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {locale === 'en' ? 'By day' : locale === 'zh-HK' ? '按日' : '按天'}
+              </button>
+              <button
+                onClick={() => setGranularity('hour')}
+                className={`px-3 py-1 text-xs rounded font-medium transition-colors ${
+                  granularity === 'hour'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {locale === 'en' ? 'By hour' : locale === 'zh-HK' ? '按小時' : '按小时'}
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* 时段热力表 */}
-      <Card>
-        <CardContent className="p-5">
-          <h2 className="font-semibold mb-4">{t(locale, 'admin.stats.hourly')}</h2>
-          <HourlyHeatmap data={analytics.hourlyHeatmap} />
+          <div className="overflow-x-auto">
+            {granularity === 'day' ? (
+              <DailyBarChart data={analytics.dailyViews} />
+            ) : (
+              <HourlyBarChart data={analytics.hourlyHeatmap} />
+            )}
+          </div>
         </CardContent>
       </Card>
 

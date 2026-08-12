@@ -20,10 +20,12 @@ export async function GET(req: Request) {
   const { count: totalViews } = await supabase
     .from('page_views')
     .select('*', { count: 'exact', head: true })
+    .not('path', 'like', '/admin%')
 
   const { count: todayViews } = await supabase
     .from('page_views')
     .select('*', { count: 'exact', head: true })
+    .not('path', 'like', '/admin%')
     .gte('timestamp', new Date().toISOString().slice(0, 10))
 
   // —— 业务指标（service_role 直接 COUNT） ——
@@ -47,6 +49,7 @@ export async function GET(req: Request) {
   const { data: dailyRaw } = await supabase
     .from('page_views')
     .select('timestamp')
+    .not('path', 'like', '/admin%')
     .gte('timestamp', sinceDate.toISOString())
     .order('timestamp', { ascending: true })
 
@@ -70,6 +73,7 @@ export async function GET(req: Request) {
   const { data: hourlyRaw } = await supabase
     .from('page_views')
     .select('timestamp')
+    .not('path', 'like', '/admin%')
     .gte('timestamp', sinceDate.toISOString())
 
   const hourCounts = new Array(24).fill(0)
@@ -85,6 +89,7 @@ export async function GET(req: Request) {
   const { data: pathData } = await supabase
     .from('page_views')
     .select('path')
+    .not('path', 'like', '/admin%')
     .gte('timestamp', sinceDate.toISOString())
 
   const pathCounts: Record<string, number> = {}

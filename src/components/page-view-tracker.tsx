@@ -8,7 +8,10 @@ export function PageViewTracker() {
   const lastTracked = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!pathname || pathname === lastTracked.current) return
+    if (!pathname) return
+    // 后台管理页不计入前台浏览统计
+    if (pathname.startsWith('/admin')) return
+    if (pathname === lastTracked.current) return
     lastTracked.current = pathname
 
     // 生成本次会话的 session_id（同一 tab 内不变）
