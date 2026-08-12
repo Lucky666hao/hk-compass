@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Megaphone, Flag } from 'lucide-react'
+import { LayoutDashboard, Megaphone, Flag, Mail } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { locale } = useLocale()
@@ -58,6 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { key: 'dashboard', href: '/admin', icon: LayoutDashboard, label: t(locale, 'admin.dashboard') },
     { key: 'announcements', href: '/admin/announcements', icon: Megaphone, label: t(locale, 'admin.announcements') },
     { key: 'reports', href: '/admin/reports', icon: Flag, label: t(locale, 'admin.reports') },
+    { key: 'feedback', href: '/admin/feedback', icon: Mail, label: locale === 'en' ? 'Feedback' : locale === 'zh-HK' ? '反饋' : '反馈' },
   ]
 
   return (
