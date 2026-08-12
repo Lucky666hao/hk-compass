@@ -20,9 +20,12 @@ function getClient(): SupabaseClient {
   if (!_client) {
     _client = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
       auth: {
-        // 显式启用 PKCE：与 Supabase 项目默认一致，确保邮件链接带 code、
-        // verifier 存 localStorage，callback 的 exchangeCodeForSession 才能成功。
-        flowType: 'pkce',
+        // 用 implicit flow：重置密码/魔法链接的 token 直接放进 URL 的 #fragment，
+        // 不依赖发起端 localStorage 里的 code verifier，客户跨浏览器/手机点链接也能完成重置。
+        // （PKCE 的 verifier 只存在发起端，跨设备会报 "code verifier not found"，是邮件重置的已知缺陷）
+        flowType: 'implicit',
+        // fragment/code 统一由 /auth/callback 页面手动解析，避免与内置检测双重处理。
+        detectSessionInUrl: false,
       },
     })
   }
