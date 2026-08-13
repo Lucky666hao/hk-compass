@@ -214,26 +214,6 @@ export interface PostComment {
   is_author?: boolean
 }
 
-export type ReactionEmoji = '👍' | '👏' | '🔥' | '💡' | '🤔'
-
-export const REACTION_EMOJIS: ReactionEmoji[] = ['👍', '👏', '🔥', '💡', '🤔']
-
-export interface PostReaction {
-  id: string
-  post_id: string
-  user_id: string
-  emoji: ReactionEmoji
-  created_at: string
-}
-
-export interface ReactionCounts {
-  '👍': number
-  '👏': number
-  '🔥': number
-  '💡': number
-  '🤔': number
-}
-
 export interface SavedPost {
   user_id: string
   post_id: string

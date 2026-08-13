@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { Post, ReactionCounts, ReactionEmoji } from '@/lib/types'
+import type { Post } from '@/lib/types'
 import { POST_CATEGORY_LABELS } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,7 +17,6 @@ import { format } from 'date-fns'
 import { zhHK } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { VoteButtons } from '@/components/vote-buttons'
-import { PostReactions } from '@/components/post-reactions'
 import { UniversityBadge } from '@/components/university-badge'
 import { SaveButton } from '@/components/save-button'
 import { CommentSection } from '@/components/comment-section'
@@ -65,31 +64,6 @@ export default function PostDetailPage() {
         }
       })
   }, [post])
-
-  // Load reactions
-  const [reactionCounts, setReactionCounts] = useState<Partial<ReactionCounts>>({})
-  const [userReactions, setUserReactions] = useState<Set<ReactionEmoji>>(new Set())
-  const [userVote, setUserVote] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!id || !userId) return
-    // Load vote
-    supabase.from('post_votes').select('vote').eq('post_id', id).eq('user_id', userId).maybeSingle()
-      .then(({ data }) => { if (data) setUserVote(data.vote) })
-    // Load reactions
-    supabase.from('post_reactions').select('emoji, user_id').eq('post_id', id).then(({ data }) => {
-      if (data) {
-        const counts: Partial<ReactionCounts> = {}
-        const uSet = new Set<ReactionEmoji>()
-        for (const r of data) {
-          counts[r.emoji as ReactionEmoji] = (counts[r.emoji as ReactionEmoji] || 0) + 1
-          if (r.user_id === userId) uSet.add(r.emoji as ReactionEmoji)
-        }
-        setReactionCounts(counts)
-        setUserReactions(uSet)
-      }
-    })
-  }, [id, userId])
 
   const [reportOpen, setReportOpen] = useState(false)
   const handleReport = async (reason: string) => {
@@ -152,116 +126,95 @@ export default function PostDetailPage() {
 
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            {/* 左侧投票区 */}
-            <div className="shrink-0 pt-1">
-              <VoteButtons
-                postId={post.id}
-                voteScore={post.vote_score ?? 0}
-                userVote={userVote}
-                userId={userId}
-                size="lg"
-              />
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="secondary">{catLabel}</Badge>
+              {authorUni && <UniversityBadge slug={authorUni} size="sm" />}
             </div>
-
-            {/* 主内容 */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary">{catLabel}</Badge>
-                  {authorUni && <UniversityBadge slug={authorUni} size="sm" />}
-                </div>
-                <div className="flex items-center gap-1">
-                  <SaveButton_post postId={post.id} userId={userId} />
-                  {/* 举报按钮 */}
-                  {userId && !isAuthor && (
-                    <div className="relative">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setReportOpen(!reportOpen)}
-                        className="text-muted-foreground hover:text-destructive"
-                        title={locale === 'en' ? 'Report' : '举报'}
-                      >
-                        <Flag className="h-4 w-4" />
-                      </Button>
-                      {reportOpen && (
-                        <div className="absolute right-0 top-full mt-1 z-10 bg-popover border rounded-lg shadow-lg p-2 w-40">
-                          {[
-                            { key: 'spam', en: 'Spam', zh: '垃圾信息' },
-                            { key: 'harassment', en: 'Harassment', zh: '骚扰' },
-                            { key: 'inappropriate', en: 'Inappropriate', zh: '不当内容' },
-                            { key: 'violence', en: 'Violence', zh: '暴力内容' },
-                            { key: 'other', en: 'Other', zh: '其他' },
-                          ].map(r => (
-                            <button
-                              key={r.key}
-                              onClick={() => handleReport(r.key)}
-                              className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors"
-                            >
-                              {locale === 'en' ? r.en : r.zh}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+            <div className="flex items-center gap-1">
+              <SaveButton postId={post.id} userId={userId} />
+              {/* 举报按钮 */}
+              {userId && !isAuthor && (
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setReportOpen(!reportOpen)}
+                    className="text-muted-foreground hover:text-destructive"
+                    title={locale === 'en' ? 'Report' : '举报'}
+                  >
+                    <Flag className="h-4 w-4" />
+                  </Button>
+                  {reportOpen && (
+                    <div className="absolute right-0 top-full mt-1 z-10 bg-popover border rounded-lg shadow-lg p-2 w-40">
+                      {[
+                        { key: 'spam', en: 'Spam', zh: '垃圾信息' },
+                        { key: 'harassment', en: 'Harassment', zh: '骚扰' },
+                        { key: 'inappropriate', en: 'Inappropriate', zh: '不当内容' },
+                        { key: 'violence', en: 'Violence', zh: '暴力内容' },
+                        { key: 'other', en: 'Other', zh: '其他' },
+                      ].map(r => (
+                        <button
+                          key={r.key}
+                          onClick={() => handleReport(r.key)}
+                          className="w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted transition-colors"
+                        >
+                          {locale === 'en' ? r.en : r.zh}
+                        </button>
+                      ))}
                     </div>
                   )}
-                  {isAuthor && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleDelete}
-                      className="text-muted-foreground hover:text-destructive"
-                      title={t(locale, 'posts.delete_confirm') as string}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-
-              <div className="text-sm text-muted-foreground mb-6">
-                {post.author_email && (
-                  <span>{post.author_email.split('@')[0]} · </span>
-                )}
-                <span>
-                  {format(new Date(post.created_at), dateFormat, {
-                    locale: dateLocale,
-                  })}
-                </span>
-              </div>
-
-              <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
-                {post.content}
-              </div>
-
-              {/* 图片展示 */}
-              {post.image_urls && post.image_urls.length > 0 && (
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {post.image_urls.map((url, i) => (
-                    <img
-                      key={i}
-                      src={url}
-                      alt=""
-                      className="w-full rounded-lg border object-cover max-h-96"
-                      loading="lazy"
-                    />
-                  ))}
                 </div>
               )}
-
-              {/* 表情回应 */}
-              <div className="mt-6 pt-4 border-t">
-                <PostReactions
-                  postId={post.id}
-                  counts={reactionCounts}
-                  userReactions={userReactions}
-                  userId={userId}
-                />
-              </div>
+              {isAuthor && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDelete}
+                  className="text-muted-foreground hover:text-destructive"
+                  title={t(locale, 'posts.delete_confirm') as string}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+          </div>
+
+          <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+
+          <div className="text-sm text-muted-foreground mb-6">
+            {post.author_email && (
+              <span>{post.author_email.split('@')[0]} · </span>
+            )}
+            <span>
+              {format(new Date(post.created_at), dateFormat, {
+                locale: dateLocale,
+              })}
+            </span>
+          </div>
+
+          <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
+            {post.content}
+          </div>
+
+          {/* 图片展示 */}
+          {post.image_urls && post.image_urls.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {post.image_urls.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="w-full rounded-lg border object-cover max-h-96"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
+
+          {/* 赞/踩 */}
+          <div className="mt-6 pt-4 border-t">
+            <VoteButtons postId={post.id} userId={userId} size="lg" />
           </div>
         </CardContent>
       </Card>
@@ -271,51 +224,5 @@ export default function PostDetailPage() {
         <CommentSection targetType="post" targetId={id} />
       </div>
     </div>
-  )
-}
-
-/** Inline save button for detail page */
-function SaveButton_post({ postId, userId }: { postId: string; userId?: string | null }) {
-  const [saved, setSaved] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!userId) return
-    supabase
-      .from('saved_posts')
-      .select('post_id')
-      .eq('user_id', userId)
-      .eq('post_id', postId)
-      .maybeSingle()
-      .then(({ data }) => setSaved(!!data))
-  }, [postId, userId])
-
-  const toggle = async () => {
-    if (!userId) { toast.error('请先登录'); return }
-    if (loading) return
-    setLoading(true)
-    if (saved) {
-      await supabase.from('saved_posts').delete().match({ user_id: userId, post_id: postId })
-      setSaved(false)
-    } else {
-      await supabase.from('saved_posts').insert({ user_id: userId, post_id: postId })
-      setSaved(true)
-    }
-    setLoading(false)
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggle}
-      disabled={loading}
-      className={saved ? 'text-yellow-500' : 'text-muted-foreground'}
-      title={saved ? '已收藏' : '收藏'}
-    >
-      <svg className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-      </svg>
-    </Button>
   )
 }

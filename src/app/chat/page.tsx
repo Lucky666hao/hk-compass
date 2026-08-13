@@ -47,6 +47,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Profile[]>([])
   const [searching, setSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState<Profile[]>([])
   const [groupName, setGroupName] = useState('')
   const [creating, setCreating] = useState(false)
@@ -161,14 +162,20 @@ export default function ChatPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim() || !userId) return
     setSearching(true)
-    const { data } = await supabase
+    setHasSearched(true)
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .neq('user_id', userId)
       .ilike('display_name', `%${searchQuery.trim()}%`)
       .limit(10)
-    setSearchResults((data as Profile[]) ?? [])
     setSearching(false)
+    if (error) {
+      toast.error((locale === 'en' ? 'Search failed: ' : '搜索失败：') + error.message)
+      setSearchResults([])
+      return
+    }
+    setSearchResults((data as Profile[]) ?? [])
   }
 
   // 开始一对一聊天
@@ -211,22 +218,32 @@ export default function ChatPage() {
     }
 
     // 新建 DM
-    const { data: newConv } = await supabase
+    const { data: newConv, error: convErr } = await supabase
       .from('conversations')
       .insert({ type: 'direct' })
       .select()
       .single()
 
+    if (convErr) {
+      toast.error((locale === 'en' ? 'Failed to create chat: ' : '创建会话失败：') + convErr.message)
+      return
+    }
+
     if (newConv) {
-      await supabase.from('conversation_participants').insert([
+      const { error: partErr } = await supabase.from('conversation_participants').insert([
         { conversation_id: newConv.id, user_id: userId },
         { conversation_id: newConv.id, user_id: targetProfile.user_id },
       ])
+      if (partErr) {
+        toast.error((locale === 'en' ? 'Failed to add member: ' : '添加成员失败：') + partErr.message)
+        return
+      }
       loadConversations()
       setActiveConvId(newConv.id)
       setShowNewChat(false)
       setSearchQuery('')
       setSearchResults([])
+      setHasSearched(false)
       setView('chat')
     }
   }
@@ -237,18 +254,29 @@ export default function ChatPage() {
     setCreating(true)
 
     const gName = groupName.trim() || selectedMembers.slice(0, 3).map((m) => m.display_name).join(', ')
-    const { data: newConv } = await supabase
+    const { data: newConv, error: convErr } = await supabase
       .from('conversations')
       .insert({ type: 'group', name: gName })
       .select()
       .single()
+
+    if (convErr) {
+      toast.error((locale === 'en' ? 'Failed to create group: ' : '创建群组失败：') + convErr.message)
+      setCreating(false)
+      return
+    }
 
     if (newConv) {
       const participantRows = [
         { conversation_id: newConv.id, user_id: userId },
         ...selectedMembers.map((m) => ({ conversation_id: newConv.id, user_id: m.user_id })),
       ]
-      await supabase.from('conversation_participants').insert(participantRows)
+      const { error: partErr } = await supabase.from('conversation_participants').insert(participantRows)
+      if (partErr) {
+        toast.error((locale === 'en' ? 'Failed to add members: ' : '添加群成员失败：') + partErr.message)
+        setCreating(false)
+        return
+      }
       toast.success(t(locale, 'chat.group_created'))
       loadConversations()
       setActiveConvId(newConv.id)
@@ -257,6 +285,7 @@ export default function ChatPage() {
       setSelectedMembers([])
       setSearchQuery('')
       setSearchResults([])
+      setHasSearched(false)
       setView('chat')
     }
     setCreating(false)
@@ -318,6 +347,7 @@ export default function ChatPage() {
                 setGroupName('')
                 setSearchQuery('')
                 setSearchResults([])
+                setHasSearched(false)
               }}
             >
               <Plus className="h-4 w-4" />
@@ -386,7 +416,7 @@ export default function ChatPage() {
               </div>
 
               {/* 搜索结果 */}
-              {searchResults.length > 0 && (
+              {searchResults.length > 0 ? (
                 <div className="max-h-40 overflow-y-auto space-y-0.5">
                   {searchResults.map((p) => (
                     <button
@@ -414,7 +444,11 @@ export default function ChatPage() {
                     </button>
                   ))}
                 </div>
-              )}
+              ) : hasSearched && !searching ? (
+                <p className="text-xs text-muted-foreground px-1 py-2">
+                  {locale === 'en' ? 'No users found. Check the name and try again.' : '未找到用户，请确认对方已注册并检查名称'}
+                </p>
+              ) : null}
 
               {/* 创建群组按钮 */}
               {newChatMode === 'group' && selectedMembers.length > 0 && (

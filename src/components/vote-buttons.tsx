@@ -1,42 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ArrowBigUp, ArrowBigDown } from 'lucide-react'
+import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 interface VoteButtonsProps {
   postId: string
   table?: 'posts' | 'anonymous_posts'
-  voteScore: number
-  userVote?: number | null  // 1 | -1 | null
   userId?: string | null
   size?: 'sm' | 'md' | 'lg'
 }
 
+/**
+ * 赞/踩按钮（取代原来的上下箭头投票）
+ * 自加载赞/踩计数，两个并排按钮：👍 赞 / 👎 踩
+ */
 export function VoteButtons({
   postId,
   table = 'posts',
-  voteScore: initialScore,
-  userVote: initialVote,
   userId,
   size = 'md',
 }: VoteButtonsProps) {
-  const [score, setScore] = useState(initialScore)
-  const [userVote, setUserVote] = useState<number | null>(initialVote ?? null)
+  const [upCount, setUpCount] = useState(0)
+  const [downCount, setDownCount] = useState(0)
+  const [userVote, setUserVote] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
 
   const voteTable = table === 'anonymous_posts' ? 'anonymous_post_votes' : 'post_votes'
   const scoreTable = table
 
   const sizeClasses = {
-    sm: { btn: 'h-6 w-6', icon: 'h-3.5 w-3.5', text: 'text-xs' },
-    md: { btn: 'h-8 w-8', icon: 'h-4 w-4', text: 'text-sm' },
-    lg: { btn: 'h-10 w-10', icon: 'h-5 w-5', text: 'text-base' },
+    sm: { btn: 'px-2.5 py-1 text-xs', icon: 'h-3.5 w-3.5' },
+    md: { btn: 'px-3 py-1.5 text-sm', icon: 'h-4 w-4' },
+    lg: { btn: 'px-4 py-2 text-sm', icon: 'h-5 w-5' },
   }[size]
 
-  const handleVote = async (vote: number) => {
+  // 加载赞/踩计数 + 当前用户投票
+  useEffect(() => {
+    let cancelled = false
+    supabase
+      .from(voteTable)
+      .select('vote, user_id')
+      .eq('post_id', postId)
+      .then(({ data }) => {
+        if (cancelled) return
+        let up = 0
+        let down = 0
+        let mine: number | null = null
+        for (const v of data ?? []) {
+          if (v.vote === 1) up++
+          else if (v.vote === -1) down++
+          if (userId && v.user_id === userId) mine = v.vote
+        }
+        setUpCount(up)
+        setDownCount(down)
+        setUserVote(mine)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [postId, userId, voteTable])
+
+  // 分数同步（best-effort：即使 RPC 未部署也不阻塞投票本身）
+  const bumpScore = async (delta: number) => {
+    try {
+      await supabase.rpc('increment_score', { table_name: scoreTable, row_id: postId, delta })
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const handleVote = async (vote: 1 | -1) => {
     if (!userId) {
       toast.error('请先登录')
       return
@@ -45,107 +81,82 @@ export function VoteButtons({
     setLoading(true)
 
     try {
-      // If same vote, remove it (toggle off)
       if (userVote === vote) {
-        await supabase.from(voteTable).delete().match({ post_id: postId, user_id: userId })
-        const delta = vote === 1 ? -1 : 1
-        setScore(s => s + delta)
+        // 取消投票
+        const { error } = await supabase
+          .from(voteTable)
+          .delete()
+          .match({ post_id: postId, user_id: userId })
+        if (error) throw error
+        if (vote === 1) setUpCount((c) => Math.max(0, c - 1))
+        else setDownCount((c) => Math.max(0, c - 1))
         setUserVote(null)
-        // Update score in DB
-        await supabase.rpc('increment_score', { table_name: scoreTable, row_id: postId, delta })
+        await bumpScore(vote === 1 ? -1 : 1)
       } else {
-        // Upsert the vote
+        // 新增或改变投票：先撤销旧投票对计数/分数的影响
         if (userVote !== null) {
-          // Changing vote: delete old, insert new
-          await supabase.from(voteTable).delete().match({ post_id: postId, user_id: userId })
-          let delta = vote === 1 ? 1 : -1
-          if (userVote === 1) delta += -1  // removed upvote
-          else delta -= -1  // removed downvote
-          setScore(s => s + delta)
-          // Update DB
-          await supabase.rpc('increment_score', { table_name: scoreTable, row_id: postId, delta })
-        } else {
-          // Fresh vote
-          const delta = vote === 1 ? 1 : -1
-          setScore(s => s + delta)
-          setUserVote(vote)
-          await supabase.rpc('increment_score', { table_name: scoreTable, row_id: postId, delta })
+          if (userVote === 1) setUpCount((c) => Math.max(0, c - 1))
+          else setDownCount((c) => Math.max(0, c - 1))
+          await bumpScore(userVote === 1 ? -1 : 1)
         }
-
-        // Insert new vote
-        const { error } = await supabase.from(voteTable).upsert({
-          post_id: postId,
-          user_id: userId,
-          vote,
-        }, { onConflict: 'post_id,user_id' })
-
-        if (!error) {
-          setUserVote(vote)
-        }
+        const { error } = await supabase
+          .from(voteTable)
+          .upsert({ post_id: postId, user_id: userId, vote }, { onConflict: 'post_id,user_id' })
+        if (error) throw error
+        if (vote === 1) setUpCount((c) => c + 1)
+        else setDownCount((c) => c + 1)
+        setUserVote(vote)
+        await bumpScore(vote === 1 ? 1 : -1)
       }
-    } catch (e) {
-      // Fallback: direct update
-      if (userVote === vote) {
-        // Toggle off
-        const { error } = await supabase.from(voteTable).delete().match({ post_id: postId, user_id: userId })
-        if (!error) {
-          const delta = vote === 1 ? -1 : 1
-          setScore(s => s + delta)
-          setUserVote(null)
-        }
-      } else {
-        const { error } = await supabase.from(voteTable).upsert({
-          post_id: postId,
-          user_id: userId,
-          vote,
-        }, { onConflict: 'post_id,user_id' })
-        if (!error) {
-          const delta = userVote ? (vote === 1 ? 2 : -2) : (vote === 1 ? 1 : -1)
-          setScore(s => s + delta)
-          setUserVote(vote)
-        }
-      }
+    } catch {
+      toast.error('操作失败，请重试')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex items-center gap-2">
       <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(1) }}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleVote(1)
+        }}
         disabled={loading}
+        title="赞"
         className={cn(
-          'flex items-center justify-center rounded-md transition-colors',
+          'inline-flex items-center gap-1.5 rounded-full border transition-all',
           sizeClasses.btn,
           userVote === 1
-            ? 'text-orange-500 bg-orange-500/10'
-            : 'text-muted-foreground hover:text-orange-500 hover:bg-orange-500/5'
+            ? 'bg-primary/10 text-primary border-primary/30'
+            : 'text-muted-foreground border-transparent hover:border-border hover:bg-muted',
+          loading && 'opacity-50',
         )}
-        title="赞同"
       >
-        <ArrowBigUp className={sizeClasses.icon} />
+        <ThumbsUp className={sizeClasses.icon} />
+        <span className="tabular-nums font-medium">{upCount}</span>
       </button>
-      <span className={cn('font-semibold tabular-nums', sizeClasses.text, {
-        'text-orange-500': userVote === 1,
-        'text-blue-500': userVote === -1,
-        'text-muted-foreground': userVote === null || userVote === 0,
-      })}>
-        {score}
-      </span>
+
       <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(-1) }}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleVote(-1)
+        }}
         disabled={loading}
+        title="踩"
         className={cn(
-          'flex items-center justify-center rounded-md transition-colors',
+          'inline-flex items-center gap-1.5 rounded-full border transition-all',
           sizeClasses.btn,
           userVote === -1
-            ? 'text-blue-500 bg-blue-500/10'
-            : 'text-muted-foreground hover:text-blue-500 hover:bg-blue-500/5'
+            ? 'bg-destructive/10 text-destructive border-destructive/30'
+            : 'text-muted-foreground border-transparent hover:border-border hover:bg-muted',
+          loading && 'opacity-50',
         )}
-        title="不赞同"
       >
-        <ArrowBigDown className={sizeClasses.icon} />
+        <ThumbsDown className={sizeClasses.icon} />
+        <span className="tabular-nums font-medium">{downCount}</span>
       </button>
     </div>
   )
