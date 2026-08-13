@@ -182,39 +182,18 @@ export default function ChatPage() {
   const startDM = async (targetProfile: Profile) => {
     if (!userId) return
 
-    // 检查是否已有 DM
-    const { data: myConvs } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', userId)
+    // 检查是否已有 DM（用 SECURITY DEFINER RPC，绕过 RLS 看不到对方参与记录的问题）
+    const { data: existingConvId } = await supabase
+      .rpc('find_direct_conversation', { target: targetProfile.user_id })
 
-    if (myConvs) {
-      for (const mc of myConvs) {
-        const { data: other } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('conversation_id', mc.conversation_id)
-          .eq('user_id', targetProfile.user_id)
-          .limit(1)
-
-        if (other?.length) {
-          const { data: conv } = await supabase
-            .from('conversations')
-            .select('*')
-            .eq('id', mc.conversation_id)
-            .eq('type', 'direct')
-            .single()
-
-          if (conv) {
-            setActiveConvId(conv.id)
-            setShowNewChat(false)
-            setSearchQuery('')
-            setSearchResults([])
-            setView('chat')
-            return
-          }
-        }
-      }
+    if (existingConvId) {
+      setActiveConvId(existingConvId)
+      setShowNewChat(false)
+      setSearchQuery('')
+      setSearchResults([])
+      setHasSearched(false)
+      setView('chat')
+      return
     }
 
     // 新建 DM
