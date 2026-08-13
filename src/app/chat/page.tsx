@@ -196,29 +196,26 @@ export default function ChatPage() {
       return
     }
 
-    // 新建 DM
-    const { data: newConv, error: convErr } = await supabase
-      .from('conversations')
-      .insert({ type: 'direct' })
-      .select()
-      .single()
+    // 新建 DM（用 SECURITY DEFINER RPC 创建，绕过 RLS 拦截）
+    const { data: newConvId, error: convErr } = await supabase
+      .rpc('create_conversation', { conv_type: 'direct' })
 
     if (convErr) {
       toast.error((locale === 'en' ? 'Failed to create chat: ' : '创建会话失败：') + convErr.message)
       return
     }
 
-    if (newConv) {
+    if (newConvId) {
       const { error: partErr } = await supabase.from('conversation_participants').insert([
-        { conversation_id: newConv.id, user_id: userId },
-        { conversation_id: newConv.id, user_id: targetProfile.user_id },
+        { conversation_id: newConvId, user_id: userId },
+        { conversation_id: newConvId, user_id: targetProfile.user_id },
       ])
       if (partErr) {
         toast.error((locale === 'en' ? 'Failed to add member: ' : '添加成员失败：') + partErr.message)
         return
       }
       loadConversations()
-      setActiveConvId(newConv.id)
+      setActiveConvId(newConvId)
       setShowNewChat(false)
       setSearchQuery('')
       setSearchResults([])
@@ -233,11 +230,8 @@ export default function ChatPage() {
     setCreating(true)
 
     const gName = groupName.trim() || selectedMembers.slice(0, 3).map((m) => m.display_name).join(', ')
-    const { data: newConv, error: convErr } = await supabase
-      .from('conversations')
-      .insert({ type: 'group', name: gName })
-      .select()
-      .single()
+    const { data: newConvId, error: convErr } = await supabase
+      .rpc('create_conversation', { conv_type: 'group', conv_name: gName })
 
     if (convErr) {
       toast.error((locale === 'en' ? 'Failed to create group: ' : '创建群组失败：') + convErr.message)
@@ -245,10 +239,10 @@ export default function ChatPage() {
       return
     }
 
-    if (newConv) {
+    if (newConvId) {
       const participantRows = [
-        { conversation_id: newConv.id, user_id: userId },
-        ...selectedMembers.map((m) => ({ conversation_id: newConv.id, user_id: m.user_id })),
+        { conversation_id: newConvId, user_id: userId },
+        ...selectedMembers.map((m) => ({ conversation_id: newConvId, user_id: m.user_id })),
       ]
       const { error: partErr } = await supabase.from('conversation_participants').insert(participantRows)
       if (partErr) {
@@ -258,7 +252,7 @@ export default function ChatPage() {
       }
       toast.success(t(locale, 'chat.group_created'))
       loadConversations()
-      setActiveConvId(newConv.id)
+      setActiveConvId(newConvId)
       setShowNewChat(false)
       setGroupName('')
       setSelectedMembers([])
