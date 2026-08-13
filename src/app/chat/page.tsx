@@ -90,32 +90,26 @@ export default function ChatPage() {
     if (!userId) return
     if (!silent) setConvLoading(true)
 
-    const { data: parts } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', userId)
+    // 用 SECURITY DEFINER RPC 一次拿全「我所有会话」的参与者（避免自引用 RLS 递归）
+    const { data: allParts } = await supabase
+      .rpc('get_my_conversation_participants')
 
-    if (!parts?.length) {
+    const rows = (allParts ?? []) as { conversation_id: string; user_id: string }[]
+    const convIds = [...new Set(rows.map((p) => p.conversation_id))]
+
+    if (!convIds.length) {
       setConversations([])
       if (!silent) setConvLoading(false)
       return
     }
-
-    const convIds = parts.map((p) => p.conversation_id)
 
     const { data: convs } = await supabase
       .from('conversations')
       .select('*')
       .in('id', convIds)
 
-    // 一次拉取所有会话的参与者（修复后可见对方）
-    const { data: allParts } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id, user_id')
-      .in('conversation_id', convIds)
-
     // 一次拉取所有参与者的资料（名字 + 头像）
-    const allUserIds = [...new Set((allParts ?? []).map((p) => p.user_id))]
+    const allUserIds = [...new Set(rows.map((p) => p.user_id))]
     const { data: profiles } = await supabase
       .from('profiles')
       .select('user_id, display_name, avatar_url')
@@ -128,7 +122,7 @@ export default function ChatPage() {
 
     const enriched = await Promise.all(
       (convs ?? []).map(async (conv) => {
-        const members = (allParts ?? []).filter((p) => p.conversation_id === conv.id)
+        const members = rows.filter((p) => p.conversation_id === conv.id)
         const otherMembers = members.filter((m) => m.user_id !== userId)
 
         let displayName: string
@@ -587,7 +581,10 @@ function ChatWindow({
     })
     setSending(false)
     if (!error) setInput('')
-    else toast.error(t(locale, 'chat.send_failed'))
+    else {
+      console.error('send message error:', error)
+      toast.error((locale === 'en' ? 'Send failed: ' : '发送失败：') + (error.message || error.code || ''))
+    }
   }
 
   return (
