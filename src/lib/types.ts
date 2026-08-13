@@ -315,10 +315,14 @@ export interface Conversation {
   type: ConversationType
   name: string | null
   created_at: string
-  // 虚拟字段
+  // 虚拟字段（前端 JOIN 填充）
   last_message?: string | null
   last_message_at?: string | null
-  other_user_email?: string | null
+  other_user_id?: string | null
+  other_user_name?: string | null
+  other_user_avatar?: string | null
+  member_count?: number
+  member_avatars?: string[]
 }
 
 export interface Message {
