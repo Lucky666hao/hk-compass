@@ -199,7 +199,8 @@ export default function ProfilePage() {
 
     setSaving(false)
     if (error) {
-      toast.error(locale === 'en' ? 'Update failed' : '更新失败')
+      console.error('profile update error:', error)
+      toast.error((locale === 'en' ? 'Update failed: ' : '更新失败：') + (error.message || error.code || ''))
     } else {
       setProfile({ ...profile, display_name: displayName.trim(), bio: bio.trim() })
       setEditMode(false)
