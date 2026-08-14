@@ -78,12 +78,25 @@ export interface Competition {
   review_note?: string | null
   submitted_at?: string | null
   submitted_by?: string | null
+  // 权威/含金量标签（管理员标注）
+  authority?: string | null
   // 虚拟字段（JOIN）
   is_saved?: boolean
   is_reminded?: boolean
 }
 
 export type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'needs_changes'
+
+// 权威/含金量标签（管理员人工标注，可空）
+export const AUTHORITY_TAGS = ['官方主办', '高含金量', '国际赛事', '校级认证'] as const
+export type AuthorityTag = (typeof AUTHORITY_TAGS)[number]
+
+export const AUTHORITY_LABELS: Record<AuthorityTag, string> = {
+  '官方主办': '🏛️ 官方主办',
+  '高含金量': '💎 高含金量',
+  '国际赛事': '🌍 国际赛事',
+  '校级认证': '🎓 校级认证',
+}
 
 export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
   pending: '审核中',

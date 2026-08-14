@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Competition } from '@/lib/types'
+import type { Competition, AuthorityTag } from '@/lib/types'
+import { AUTHORITY_LABELS } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -130,6 +131,11 @@ export function CompetitionCard({ competition }: Props) {
                 <Badge variant="outline" className="shrink-0">
                   {t(locale, `type.${competition.type}`)}
                 </Badge>
+                {competition.authority && (
+                  <Badge className="shrink-0 bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border-amber-400/40">
+                    {AUTHORITY_LABELS[competition.authority as AuthorityTag] || competition.authority}
+                  </Badge>
+                )}
                 {daysLeft !== null && daysLeft <= 14 && (
                   <Badge
                     variant={daysLeft <= 7 ? 'destructive' : 'outline'}

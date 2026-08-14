@@ -108,6 +108,8 @@ const en: TranslationDict = {
   'detail.published': 'Posted {time}',
   'detail.add_calendar': 'Add to Calendar',
   'detail.calendar_done': 'Calendar file downloaded!',
+  'detail.share_to': 'Share to',
+  'detail.share_more': 'More',
 
   // Comments
   'comments.title': 'Comments',
@@ -623,6 +625,8 @@ const zhCN: TranslationDict = {
   'detail.published': '{time}发布',
   'detail.add_calendar': '添加到日历',
   'detail.calendar_done': '日历文件已下载！',
+  'detail.share_to': '分享到',
+  'detail.share_more': '更多',
 
   'comments.title': '评论',
   'comments.placeholder': '写下你的想法...',
@@ -1473,6 +1477,8 @@ const zhHK: TranslationDict = {
   'card.closed': '已截止',
   'detail.add_calendar': '加入日曆',
   'detail.calendar_done': '日曆檔案已下載！',
+  'detail.share_to': '分享到',
+  'detail.share_more': '更多',
 
   // -- 管理員後台 --
   'admin.title': '管理後台',

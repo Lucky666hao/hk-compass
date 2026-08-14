@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { supabase } from '@/lib/supabase'
 import type { Competition } from '@/lib/types'
+import { AUTHORITY_TAGS, AUTHORITY_LABELS } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
 import { Clock, CheckCircle2, XCircle, AlertCircle, Inbox, Check, X, Loader2, ExternalLink } from 'lucide-react'
@@ -38,6 +39,20 @@ function ReviewCard({
   const [busy, setBusy] = useState(false)
 
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
+
+  const setAuthority = async (tag: string | null) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const res = await fetch('/api/admin/authority', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ id: c.id, authority: tag }),
+    })
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}))
+      toast.error(j.error || L('Failed', '操作失敗', '操作失败'))
+    }
+  }
 
   const doAction = async (act: 'approve' | 'reject' | 'needs_changes', reason?: string) => {
     setBusy(true)
@@ -155,6 +170,31 @@ function ReviewCard({
           </div>
         </div>
       )}
+
+      {/* 权威/含金量标签（点击切换，再点取消） */}
+      <div className="mt-3 pt-3 border-t">
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">
+          {L('Authority tag', '權威/含金量標籤', '权威/含金量标签')}:
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {AUTHORITY_TAGS.map((tag) => {
+            const active = c.authority === tag
+            return (
+              <button
+                key={tag}
+                onClick={() => setAuthority(active ? null : tag)}
+                className={`px-2 py-1 rounded-full text-xs border transition-colors ${
+                  active
+                    ? 'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-500/15 dark:text-amber-300'
+                    : 'border-border text-muted-foreground hover:border-foreground/30'
+                }`}
+              >
+                {AUTHORITY_LABELS[tag]}
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

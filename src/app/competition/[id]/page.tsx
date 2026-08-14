@@ -3,7 +3,8 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { Competition } from '@/lib/types'
+import type { Competition, AuthorityTag } from '@/lib/types'
+import { AUTHORITY_LABELS } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -11,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CompetitionCard } from '@/components/competition-card'
 import { CommentSection } from '@/components/comment-section'
+import { ShareButtons } from '@/components/share-buttons'
 import { downloadCompetitionICS } from '@/lib/ics'
 import {
   Calendar,
@@ -26,7 +28,6 @@ import {
   ArrowLeft,
   Eye,
   Users,
-  Share2,
   AlertCircle,
   CheckCircle2,
   Sparkles,
@@ -138,22 +139,6 @@ export default function CompetitionDetailPage() {
     }
   }
 
-  const handleShare = async () => {
-    const url = window.location.href
-    try {
-      await navigator.clipboard.writeText(url)
-      toast.success(t(locale, 'detail.share_done'))
-    } catch {
-      const input = document.createElement('input')
-      input.value = url
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      document.body.removeChild(input)
-      toast.success(t(locale, 'detail.share_done'))
-    }
-  }
-
   const handleAddToCalendar = () => {
     if (!competition) return
     downloadCompetitionICS(competition)
@@ -251,6 +236,11 @@ export default function CompetitionDetailPage() {
           <Badge variant="outline" className="text-sm">
             {typeStr}
           </Badge>
+          {competition.authority && (
+            <Badge className="text-sm bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300 border-amber-400/40">
+              {AUTHORITY_LABELS[competition.authority as AuthorityTag] || competition.authority}
+            </Badge>
+          )}
           <Badge
             variant={competition.status === '报名中' ? 'default' : 'secondary'}
             className="text-sm"
@@ -509,21 +499,21 @@ export default function CompetitionDetailPage() {
                 variant="ghost"
                 size="sm"
                 className="w-full gap-2"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                {t(locale, 'detail.share')}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full gap-2"
                 onClick={handleAddToCalendar}
               >
                 <CalendarPlus className="h-3.5 w-3.5" />
                 {t(locale, 'detail.add_calendar')}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* 分享 */}
+          <Card>
+            <CardContent className="p-4">
+              <ShareButtons
+                url={typeof window !== 'undefined' ? window.location.href : ''}
+                title={locale === 'en' && competition.title_en ? competition.title_en : competition.title}
+              />
             </CardContent>
           </Card>
 
