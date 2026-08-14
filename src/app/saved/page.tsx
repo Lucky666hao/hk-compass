@@ -47,6 +47,7 @@ export default function SavedPage() {
         .from('competitions')
         .select('*')
         .in('id', ids)
+        .eq('review_status', 'approved')
 
       return (data as Competition[]) ?? []
     },

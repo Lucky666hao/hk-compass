@@ -73,9 +73,23 @@ export interface Competition {
   view_count: number
   created_at: string
   updated_at: string
+  // 审核状态（community 提交）
+  review_status?: ReviewStatus
+  review_note?: string | null
+  submitted_at?: string | null
+  submitted_by?: string | null
   // 虚拟字段（JOIN）
   is_saved?: boolean
   is_reminded?: boolean
+}
+
+export type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'needs_changes'
+
+export const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
+  pending: '审核中',
+  approved: '已通过',
+  rejected: '已驳回',
+  needs_changes: '需补充材料',
 }
 
 export interface SavedCompetition {

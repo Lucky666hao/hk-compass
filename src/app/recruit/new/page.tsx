@@ -50,6 +50,7 @@ export default function NewRecruitmentPage() {
     supabase
       .from('competitions')
       .select('id, title, title_en')
+      .eq('review_status', 'approved')
       .order('title')
       .then(({ data }) => {
         setCompetitions((data as Competition[]) ?? [])

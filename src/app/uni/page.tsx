@@ -20,6 +20,7 @@ export default function UniOverviewPage() {
       const { data: comps } = await supabase
         .from('competitions')
         .select('*')
+        .eq('review_status', 'approved')
         .neq('status', '已结束')
         .not('target_universities', 'is', null)
         .order('registration_deadline', { ascending: true, nullsFirst: false })

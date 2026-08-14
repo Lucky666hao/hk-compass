@@ -37,6 +37,8 @@ export default function HomePage() {
       let query = supabase
         .from('competitions')
         .select('*', { count: 'exact' })
+        // 只展示审核通过的比赛
+        .eq('review_status', 'approved')
         // 即将截止优先 → 有奖金次之 → 日期最近的在前（无截止日期的排最后）
         .order('registration_deadline', { ascending: true, nullsFirst: false })
         .order('fee_type', { ascending: false })
@@ -144,7 +146,7 @@ export default function HomePage() {
         </p>
         <div className="mt-4 flex justify-center gap-3">
           <Link
-            href="/competition/new"
+            href="/competition/rules"
             className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10 transition-colors"
           >
             <PlusCircle className="h-4 w-4" />

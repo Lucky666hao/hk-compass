@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Megaphone, Flag, Mail } from 'lucide-react'
+import { LayoutDashboard, Megaphone, Flag, Mail, ClipboardCheck } from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { locale } = useLocale()
@@ -56,6 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const tabs = [
     { key: 'dashboard', href: '/admin', icon: LayoutDashboard, label: t(locale, 'admin.dashboard') },
+    { key: 'review', href: '/admin/review', icon: ClipboardCheck, label: locale === 'en' ? 'Review' : locale === 'zh-HK' ? '審核' : '审核' },
     { key: 'announcements', href: '/admin/announcements', icon: Megaphone, label: t(locale, 'admin.announcements') },
     { key: 'reports', href: '/admin/reports', icon: Flag, label: t(locale, 'admin.reports') },
     { key: 'feedback', href: '/admin/feedback', icon: Mail, label: locale === 'en' ? 'Feedback' : locale === 'zh-HK' ? '反饋' : '反馈' },

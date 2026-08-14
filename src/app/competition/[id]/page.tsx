@@ -57,6 +57,7 @@ export default function CompetitionDetailPage() {
         .from('competitions')
         .select('*')
         .eq('id', id)
+        .eq('review_status', 'approved')
         .single()
 
       if (error) throw error
@@ -73,6 +74,7 @@ export default function CompetitionDetailPage() {
         .from('competitions')
         .select('*')
         .eq('type', competition.type)
+        .eq('review_status', 'approved')
         .neq('id', id)
         .neq('status', '已结束')
         .order('date_start', { ascending: true })

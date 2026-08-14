@@ -241,6 +241,7 @@ function SavedList({ userId }: { userId: string }) {
         .from('competitions')
         .select('*')
         .in('id', ids)
+        .eq('review_status', 'approved')
 
       // 保持收藏顺序
       const map = new Map((data || []).map((c: any) => [c.id, c]))
@@ -489,7 +490,7 @@ function MyCompetitionsList({ userId }: { userId: string }) {
       <div className="flex flex-col items-center py-16 text-muted-foreground">
         <PlusCircle className="mb-4 h-12 w-12" />
         <p className="text-lg font-medium">{locale === 'en' ? 'No competitions published' : locale === 'zh-HK' ? '仲未發佈過比賽' : '还没有发布过比赛'}</p>
-        <Button variant="outline" className="mt-5" onClick={() => router.push('/competition/new')}>
+        <Button variant="outline" className="mt-5" onClick={() => router.push('/competition/rules')}>
           <PlusCircle className="mr-2 h-4 w-4" />
           {locale === 'en' ? 'Publish One' : locale === 'zh-HK' ? '發佈比賽' : '发布比赛'}
         </Button>

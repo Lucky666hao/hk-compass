@@ -24,6 +24,7 @@ export default function SingleUniPage() {
       const { data: tagged } = await supabase
         .from('competitions')
         .select('*')
+        .eq('review_status', 'approved')
         .neq('status', '已结束')
         .contains('target_universities', [slug.toUpperCase()])
         .order('registration_deadline', { ascending: true, nullsFirst: false })
@@ -33,6 +34,7 @@ export default function SingleUniPage() {
       const { data: untagged } = await supabase
         .from('competitions')
         .select('*')
+        .eq('review_status', 'approved')
         .neq('status', '已结束')
         .is('target_universities', null)
         .order('registration_deadline', { ascending: true, nullsFirst: false })
