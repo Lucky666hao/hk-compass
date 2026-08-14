@@ -315,6 +315,8 @@ export interface Conversation {
   type: ConversationType
   name: string | null
   created_at: string
+  owner_id?: string | null
+  avatar_url?: string | null
   // 虚拟字段（前端 JOIN 填充）
   last_message?: string | null
   last_message_at?: string | null
@@ -323,6 +325,7 @@ export interface Conversation {
   other_user_avatar?: string | null
   member_count?: number
   member_avatars?: string[]
+  unread_count?: number
 }
 
 export interface Message {
@@ -331,8 +334,16 @@ export interface Message {
   user_id: string
   content: string
   created_at: string
+  image_url?: string | null
   // 虚拟字段
   user_email?: string
+}
+
+/** 表情回应（按 message_id 聚合） */
+export interface MessageReaction {
+  message_id: string
+  emoji: string
+  user_ids: string[]
 }
 
 export const REMIND_LABELS: Record<RemindBefore, string> = {
