@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
-import { ArrowLeft, Bell, MessageCircle, ThumbsUp, Flag, Heart } from 'lucide-react'
+import { ArrowLeft, Bell, MessageCircle, ThumbsUp, Flag, Heart, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { zhHK } from 'date-fns/locale'
@@ -28,6 +28,7 @@ const typeIcons: Record<string, React.ElementType> = {
   vote: ThumbsUp,
   reaction: Heart,
   report_resolved: Flag,
+  competition_match: Trophy,
 }
 
 export default function NotificationsPage() {

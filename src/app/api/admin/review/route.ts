@@ -37,6 +37,14 @@ export async function POST(req: Request) {
       .update({ review_status: 'approved', review_note: null, reviewed_at: now, reviewed_by: userId })
       .eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // 个性化推送：审核通过后，通知偏好匹配的用户（类型/地点命中）
+    try {
+      await notifyMatchingUsers(supabase, id)
+    } catch {
+      /* 推送失败不影响审核结果 */
+    }
+
     return NextResponse.json({ ok: true, review_status: 'approved' })
   }
 
@@ -53,4 +61,38 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+}
+
+/** 审核通过后：通知偏好匹配的用户（类型或地点命中） */
+async function notifyMatchingUsers(
+  supabase: ReturnType<typeof getAdminClient>,
+  competitionId: string
+) {
+  const { data: comp } = await supabase
+    .from('competitions')
+    .select('type, location, title')
+    .eq('id', competitionId)
+    .single()
+  if (!comp) return
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, preferences')
+    .not('preferences', 'is', null)
+
+  const matches = (profiles || []).filter((p) => {
+    const prefs = p.preferences as { types?: string[]; locations?: string[] } | null
+    if (!prefs) return false
+    return (prefs.types || []).includes(comp.type) || (prefs.locations || []).includes(comp.location)
+  })
+
+  if (!matches.length) return
+
+  const rows = matches.map((p) => ({
+    user_id: p.user_id,
+    type: 'competition_match',
+    message: `新比赛上线：${comp.title}`,
+    link: `/competition/${competitionId}`,
+  }))
+  await supabase.from('notifications').insert(rows)
 }

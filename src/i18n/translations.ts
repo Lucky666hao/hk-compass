@@ -385,6 +385,8 @@ const en: TranslationDict = {
   'sidebar.login': 'Log In',
   'sidebar.language': 'Language',
   'sidebar.publish_comp': 'Publish Comp',
+  'sidebar.map': 'Map',
+  'sidebar.dashboard': 'My Dashboard',
 
   // Publish Competition
   'comp.publish.title': '📢 Publish Competition',
@@ -485,6 +487,24 @@ const en: TranslationDict = {
   'pref.skip': 'Skip',
   'pref.done': 'Start Exploring',
   'pref.adjust': 'Adjust Preferences',
+
+  // -- 地图 / 看板 --
+  'map.title': 'Competition Map',
+  'map.subtitle': 'Browse competitions by region (Hong Kong Island / Kowloon / New Territories / Online)',
+  'map.all_active': 'All Active Competitions',
+  'map.in_region': 'In {region}',
+  'map.empty': 'No competitions in this region',
+  'dashboard.title': 'My Dashboard',
+  'dashboard.saved': 'Saved',
+  'dashboard.closing': 'Closing Soon',
+  'dashboard.reminders': 'Reminders',
+  'dashboard.closing_soon': 'Closing within 7 days',
+  'dashboard.all_saved': 'All Saved',
+  'dashboard.today': 'Closes today',
+  'dashboard.login_prompt': 'Track your competitions',
+  'dashboard.login_desc': 'Log in to see your saved competitions, deadlines and reminders at a glance.',
+  'dashboard.login_btn': 'Log In / Register',
+  'dashboard.browse': 'Browse First',
 
   // -- 管理员后台 --
   'admin.title': 'Admin Dashboard',
@@ -893,6 +913,8 @@ const zhCN: TranslationDict = {
   'sidebar.login': '登录',
   'sidebar.language': '语言',
   'sidebar.publish_comp': '发布比赛',
+  'sidebar.map': '地图',
+  'sidebar.dashboard': '我的看板',
 
   // Publish Competition
   'comp.publish.title': '📢 发布比赛',
@@ -986,6 +1008,24 @@ const zhCN: TranslationDict = {
   'pref.skip': '跳过',
   'pref.done': '开始探索',
   'pref.adjust': '调整偏好',
+
+  // -- 地图 / 看板 --
+  'map.title': '比赛地图',
+  'map.subtitle': '按地区浏览比赛（港岛 / 九龙 / 新界 / 线上）',
+  'map.all_active': '全部活跃比赛',
+  'map.in_region': '{region} 的比赛',
+  'map.empty': '该地区暂无比赛',
+  'dashboard.title': '我的比赛看板',
+  'dashboard.saved': '已收藏',
+  'dashboard.closing': '即将截止',
+  'dashboard.reminders': '已设提醒',
+  'dashboard.closing_soon': '7天内截止',
+  'dashboard.all_saved': '全部收藏',
+  'dashboard.today': '今天截止',
+  'dashboard.login_prompt': '追踪你的比赛',
+  'dashboard.login_desc': '登录后一键查看收藏、报名截止和提醒。',
+  'dashboard.login_btn': '登录 / 注册',
+  'dashboard.browse': '先看看比赛',
 
   // -- 管理员后台 --
   'admin.title': '管理后台',
@@ -1479,6 +1519,24 @@ const zhHK: TranslationDict = {
   'detail.calendar_done': '日曆檔案已下載！',
   'detail.share_to': '分享到',
   'detail.share_more': '更多',
+  'sidebar.map': '地圖',
+  'sidebar.dashboard': '我的看板',
+  'map.title': '比賽地圖',
+  'map.subtitle': '按地區瀏覽比賽（港島 / 九龍 / 新界 / 線上）',
+  'map.all_active': '全部活躍比賽',
+  'map.in_region': '{region} 嘅比賽',
+  'map.empty': '該地區暫無比賽',
+  'dashboard.title': '我嘅比賽看板',
+  'dashboard.saved': '已收藏',
+  'dashboard.closing': '即將截止',
+  'dashboard.reminders': '已設提醒',
+  'dashboard.closing_soon': '7日內截止',
+  'dashboard.all_saved': '全部收藏',
+  'dashboard.today': '今日截止',
+  'dashboard.login_prompt': '追蹤你嘅比賽',
+  'dashboard.login_desc': '登入後一鍵查看收藏、報名截止同提醒。',
+  'dashboard.login_btn': '登入 / 註冊',
+  'dashboard.browse': '睇下比賽先',
 
   // -- 管理員後台 --
   'admin.title': '管理後台',

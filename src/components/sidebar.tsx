@@ -28,6 +28,8 @@ import {
   Moon,
   Bell,
   PlusCircle,
+  Map,
+  LayoutDashboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -111,6 +113,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   { key: 'sidebar.recruit', href: '/recruit', icon: Users, colorClass: 'text-amber-500' },
   { key: 'sidebar.chat', href: '/chat', icon: MessageCircle, colorClass: 'text-violet-500' },
+  { key: 'sidebar.map', href: '/map', icon: Map, colorClass: 'text-teal-500' },
+  { key: 'sidebar.dashboard', href: '/dashboard', icon: LayoutDashboard, colorClass: 'text-indigo-500' },
   { key: 'sidebar.publish_comp', href: '/competition/rules', icon: PlusCircle, colorClass: 'text-sky-500' },
 ]
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import {
@@ -50,15 +51,28 @@ export function PreferenceOnboarding() {
   const toggle = <T,>(arr: T[], v: T): T[] =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]
 
+  // 登录用户同步到 profiles（跨设备 + 审核通过时按偏好推送）
+  const syncToProfile = async (prefs: UserPreferences) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) return
+    try {
+      await supabase.from('profiles').update({ preferences: prefs }).eq('user_id', session.user.id)
+    } catch {
+      /* best-effort */
+    }
+  }
+
   const confirm = () => {
     const prefs: UserPreferences = { types, locations }
     savePreferences(prefs)
+    syncToProfile(prefs)
     setOpen(false)
     window.dispatchEvent(new CustomEvent('hk-prefs-changed'))
   }
 
   const skip = () => {
     savePreferences({ types: [], locations: [] })
+    syncToProfile({ types: [], locations: [] })
     setOpen(false)
     window.dispatchEvent(new CustomEvent('hk-prefs-changed'))
   }
