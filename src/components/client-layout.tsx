@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers'
 import { Sidebar, SidebarProvider, SidebarInset } from '@/components/sidebar'
 import { PageViewTracker } from '@/components/page-view-tracker'
 import { AnnouncementBanner } from '@/components/announcement-banner'
+import { PreferenceOnboarding } from '@/components/preference-onboarding'
 import { useLocale } from '@/i18n/LanguageContext'
 import Link from 'next/link'
 
@@ -49,6 +50,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               <main className="flex-1">
                 <PageViewTracker />
                 <AnnouncementBanner />
+                <PreferenceOnboarding />
                 {children}
               </main>
               <FooterWithLocale />

@@ -8,7 +8,7 @@ import type { Competition } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Heart, Bell, Calendar, MapPin, Clock } from 'lucide-react'
+import { Heart, Bell, Calendar, MapPin, Clock, Flame } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -52,10 +52,11 @@ export function CompetitionCard({ competition }: Props) {
       })
     : null
 
-  const isUrgent =
-    competition.registration_deadline &&
-    new Date(competition.registration_deadline).getTime() - Date.now() <
-      7 * 24 * 60 * 60 * 1000
+  // 剩余天数（用于倒计时显示，14天内显示）
+  const deadline = competition.registration_deadline ? new Date(competition.registration_deadline) : null
+  const daysLeft = deadline
+    ? Math.ceil((deadline.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null
 
   const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -129,9 +130,26 @@ export function CompetitionCard({ competition }: Props) {
                 <Badge variant="outline" className="shrink-0">
                   {t(locale, `type.${competition.type}`)}
                 </Badge>
-                {isUrgent && (
-                  <Badge variant="destructive" className="shrink-0 animate-pulse">
-                    {t(locale, 'card.urgent')}
+                {daysLeft !== null && daysLeft <= 14 && (
+                  <Badge
+                    variant={daysLeft <= 7 ? 'destructive' : 'outline'}
+                    className={`shrink-0 ${
+                      daysLeft <= 7
+                        ? 'animate-pulse'
+                        : 'text-amber-600 dark:text-amber-400 border-amber-500/40'
+                    }`}
+                  >
+                    {daysLeft <= 0
+                      ? t(locale, 'card.closed')
+                      : daysLeft === 1
+                      ? t(locale, 'card.tomorrow')
+                      : t(locale, 'card.days_left', { days: daysLeft })}
+                  </Badge>
+                )}
+                {(competition.view_count ?? 0) > 0 && (
+                  <Badge variant="secondary" className="shrink-0 gap-1">
+                    <Flame className="h-3 w-3 text-orange-500" />
+                    {competition.view_count}
                   </Badge>
                 )}
               </div>

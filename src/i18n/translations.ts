@@ -67,6 +67,9 @@ const en: TranslationDict = {
   'card.free': 'Free',
   'card.paid': 'Paid',
   'card.prize': 'Prize Money',
+  'card.days_left': '{days}d left',
+  'card.tomorrow': 'Closes tomorrow',
+  'card.closed': 'Closed',
 
   // Detail
   'detail.back': 'Back',
@@ -103,6 +106,8 @@ const en: TranslationDict = {
   'detail.share_done': 'Link copied!',
   'detail.views': '{count} views',
   'detail.published': 'Posted {time}',
+  'detail.add_calendar': 'Add to Calendar',
+  'detail.calendar_done': 'Calendar file downloaded!',
 
   // Comments
   'comments.title': 'Comments',
@@ -470,6 +475,15 @@ const en: TranslationDict = {
   'home.student_toggle.off': '🎓 Student Only',
   'home.student_toggle.on': '🎓 Showing Student Competitions',
 
+  // -- 偏好选择 --
+  'pref.title': 'Welcome to HK Compass',
+  'pref.subtitle': 'Pick your interests and we will surface the competitions you care about first.',
+  'pref.types_label': 'Interested in (multi-select)',
+  'pref.locations_label': 'Preferred location (multi-select)',
+  'pref.skip': 'Skip',
+  'pref.done': 'Start Exploring',
+  'pref.adjust': 'Adjust Preferences',
+
   // -- 管理员后台 --
   'admin.title': 'Admin Dashboard',
   'admin.dashboard': 'Dashboard',
@@ -569,6 +583,9 @@ const zhCN: TranslationDict = {
   'card.free': '免费',
   'card.paid': '付费',
   'card.prize': '奖金',
+  'card.days_left': '剩 {days} 天',
+  'card.tomorrow': '明天截止',
+  'card.closed': '已截止',
 
   'detail.back': '返回',
   'detail.not_found': '比赛不存在或已下架',
@@ -604,6 +621,8 @@ const zhCN: TranslationDict = {
   'detail.share_done': '链接已复制！',
   'detail.views': '{count} 次浏览',
   'detail.published': '{time}发布',
+  'detail.add_calendar': '添加到日历',
+  'detail.calendar_done': '日历文件已下载！',
 
   'comments.title': '评论',
   'comments.placeholder': '写下你的想法...',
@@ -954,6 +973,15 @@ const zhCN: TranslationDict = {
   'home.student_toggle': '🎓 学生专属',
   'home.student_toggle.off': '🎓 学生专属',
   'home.student_toggle.on': '🎓 正在显示学生比赛',
+
+  // -- 偏好选择 --
+  'pref.title': '欢迎来到 HK Compass',
+  'pref.subtitle': '选一下你感兴趣的类型和地点，我们会优先推荐给你',
+  'pref.types_label': '感兴趣的类型（可多选）',
+  'pref.locations_label': '偏好的地点（可多选）',
+  'pref.skip': '跳过',
+  'pref.done': '开始探索',
+  'pref.adjust': '调整偏好',
 
   // -- 管理员后台 --
   'admin.title': '管理后台',
@@ -1431,6 +1459,20 @@ const zhHK: TranslationDict = {
   'home.student_toggle': '🎓 學生專屬',
   'home.student_toggle.off': '🎓 學生專屬',
   'home.student_toggle.on': '🎓 正在顯示學生比賽',
+
+  // -- 偏好選擇 --
+  'pref.title': '歡迎嚟到 HK Compass',
+  'pref.subtitle': '揀下你感興趣嘅類型同地點，我哋會優先推薦畀你',
+  'pref.types_label': '感興趣嘅類型（可多選）',
+  'pref.locations_label': '偏好嘅地點（可多選）',
+  'pref.skip': '跳過',
+  'pref.done': '開始探索',
+  'pref.adjust': '調整偏好',
+  'card.days_left': '剩 {days} 日',
+  'card.tomorrow': '聽日截止',
+  'card.closed': '已截止',
+  'detail.add_calendar': '加入日曆',
+  'detail.calendar_done': '日曆檔案已下載！',
 
   // -- 管理員後台 --
   'admin.title': '管理後台',

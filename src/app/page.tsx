@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Competition, CompetitionFilters } from '@/lib/types'
+import { getPreferences, preferenceScore, type UserPreferences } from '@/lib/preferences'
 import { SearchBar } from '@/components/search-bar'
 import { FilterBar } from '@/components/filter-bar'
 import { CompetitionCard } from '@/components/competition-card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Compass, SearchX, PanelLeftOpen, PanelLeftClose, PlusCircle } from 'lucide-react'
+import { Compass, SearchX, PanelLeftOpen, PanelLeftClose, PlusCircle, SlidersHorizontal } from 'lucide-react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { useSidebar } from '@/components/sidebar'
@@ -30,9 +31,18 @@ export default function HomePage() {
     status: '全部',
   })
   const [page, setPage] = useState(0)
+  const [prefs, setPrefs] = useState<UserPreferences | null>(null)
+
+  // 读取偏好，并监听「调整偏好」后的更新事件
+  useEffect(() => {
+    setPrefs(getPreferences())
+    const handler = () => setPrefs(getPreferences())
+    window.addEventListener('hk-prefs-changed', handler)
+    return () => window.removeEventListener('hk-prefs-changed', handler)
+  }, [])
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['competitions', filters, page],
+    queryKey: ['competitions', filters],
     queryFn: async () => {
       let query = supabase
         .from('competitions')
@@ -96,8 +106,6 @@ export default function HomePage() {
         query = query.or(`registration_deadline.is.null,registration_deadline.gte.${now}`)
       }
 
-      query = query.range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1)
-
       const { data, error, count } = await query
       if (error) throw error
       return { competitions: data as Competition[], total: count ?? 0 }
@@ -116,10 +124,17 @@ export default function HomePage() {
 
   // 过滤掉仅限大陆院校的比赛（香港学生无法参加）
   const rawCompetitions = data?.competitions ?? []
-  const competitions = filters.status && filters.status !== '全部'
+  const filtered = filters.status && filters.status !== '全部'
     ? rawCompetitions
     : rawCompetitions.filter(c => !(c.description || '').includes('仅限中国内地院校学生参加'))
-  const total = data?.total ?? 0
+
+  // 按用户偏好排序：偏好匹配的排前面（类型命中 +2，地点命中 +1）。
+  // 同分保持原有排序（即将截止优先）；Array.sort 稳定，不会打乱同分顺序。
+  const sorted = [...filtered].sort(
+    (a, b) => preferenceScore(b, prefs) - preferenceScore(a, prefs)
+  )
+  const total = sorted.length
+  const competitions = sorted.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -152,6 +167,13 @@ export default function HomePage() {
             <PlusCircle className="h-4 w-4" />
             {t(locale, 'sidebar.publish_comp')}
           </Link>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('hk-prefs-open'))}
+            className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-muted-foreground/20 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {t(locale, 'pref.adjust')}
+          </button>
         </div>
       </div>
 

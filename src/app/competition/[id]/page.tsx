@@ -11,8 +11,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CompetitionCard } from '@/components/competition-card'
 import { CommentSection } from '@/components/comment-section'
+import { downloadCompetitionICS } from '@/lib/ics'
 import {
   Calendar,
+  CalendarPlus,
   MapPin,
   Clock,
   ExternalLink,
@@ -150,6 +152,12 @@ export default function CompetitionDetailPage() {
       document.body.removeChild(input)
       toast.success(t(locale, 'detail.share_done'))
     }
+  }
+
+  const handleAddToCalendar = () => {
+    if (!competition) return
+    downloadCompetitionICS(competition)
+    toast.success(t(locale, 'detail.calendar_done'))
   }
 
   // Loading
@@ -505,6 +513,16 @@ export default function CompetitionDetailPage() {
               >
                 <Share2 className="h-3.5 w-3.5" />
                 {t(locale, 'detail.share')}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full gap-2"
+                onClick={handleAddToCalendar}
+              >
+                <CalendarPlus className="h-3.5 w-3.5" />
+                {t(locale, 'detail.add_calendar')}
               </Button>
             </CardContent>
           </Card>
