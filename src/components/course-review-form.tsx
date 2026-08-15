@@ -11,7 +11,7 @@ import { Star } from 'lucide-react'
 import { toast } from 'sonner'
 
 /** 可点击的 5 星选择器 */
-function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((i) => (
@@ -32,7 +32,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 /** 1-5 量表选择器（难度/工作量） */
-function ScalePicker({
+export function ScalePicker({
   label,
   value,
   onChange,

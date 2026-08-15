@@ -44,7 +44,7 @@ export default function ReportsPage() {
 
   useEffect(() => { fetchReports() }, [fetchReports])
 
-  const updateStatus = async (reportId: string, status: string) => {
+  const updateStatus = async (reportId: string, status: string, type?: string) => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
     await fetch(`/api/admin/reports`, {
@@ -53,7 +53,7 @@ export default function ReportsPage() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: JSON.stringify({ id: reportId, status }),
+      body: JSON.stringify({ id: reportId, status, type }),
     })
     fetchReports()
   }
@@ -87,17 +87,34 @@ export default function ReportsPage() {
                     <Badge className={STATUS_COLORS[r.status] || ''}>
                       {r.status}
                     </Badge>
+                    {r.type === 'review' && (
+                      <Badge variant="outline" className="text-xs">
+                        {t(locale, 'admin.reviews')}
+                      </Badge>
+                    )}
                   </div>
+                  {r.type === 'review' && r.course?.course_name && (
+                    <p className="text-sm text-foreground mt-1">📚 {r.course.course_name}</p>
+                  )}
                   {r.detail && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.detail}</p>
                   )}
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
-                    <Link
-                      href={`/posts/${r.post_id}`}
-                      className="text-primary hover:underline font-mono"
-                    >
-                      #{r.post_id?.slice(0, 8)}
-                    </Link>
+                    {r.type === 'review' ? (
+                      <Link
+                        href={r.course?.university_slug ? `/campus/${r.course.university_slug}` : '/campus'}
+                        className="text-primary hover:underline font-mono"
+                      >
+                        #{r.review_id?.slice(0, 8)}
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/posts/${r.post_id}`}
+                        className="text-primary hover:underline font-mono"
+                      >
+                        #{r.post_id?.slice(0, 8)}
+                      </Link>
+                    )}
                     <span>{new Date(r.created_at).toLocaleString()}</span>
                     {r.reporter_email && <span>by {r.reporter_email}</span>}
                   </div>
@@ -107,13 +124,13 @@ export default function ReportsPage() {
                   {r.status === 'pending' && (
                     <>
                       <button
-                        onClick={() => updateStatus(r.id, 'resolved')}
+                        onClick={() => updateStatus(r.id, 'resolved', r.type)}
                         className="px-2.5 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 transition-colors"
                       >
                         {t(locale, 'admin.reports.resolve')}
                       </button>
                       <button
-                        onClick={() => updateStatus(r.id, 'dismissed')}
+                        onClick={() => updateStatus(r.id, 'dismissed', r.type)}
                         className="px-2.5 py-1 text-xs rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 transition-colors"
                       >
                         {t(locale, 'admin.reports.dismiss')}
@@ -122,7 +139,7 @@ export default function ReportsPage() {
                   )}
                   {r.status !== 'pending' && (
                     <span
-                      onClick={() => updateStatus(r.id, 'pending')}
+                      onClick={() => updateStatus(r.id, 'pending', r.type)}
                       className="px-2.5 py-1 text-xs rounded bg-muted text-muted-foreground hover:bg-accent cursor-pointer transition-colors"
                     >
                       {t(locale, 'admin.reports.reopen')}

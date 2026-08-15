@@ -337,6 +337,10 @@ export interface CourseReview {
   status?: 'published' | 'hidden'
   created_at: string
   updated_at: string
+  /** enriched：实名评价的作者显示名 */
+  author_name?: string | null
+  /** enriched：作者头像 */
+  avatar_url?: string | null
 }
 
 // ============================================

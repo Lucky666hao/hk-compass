@@ -29,6 +29,7 @@ export default function CampusSinglePage() {
   const [tab, setTab] = useState<Tab>('discuss')
   const [userId, setUserId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [recruitSearch, setRecruitSearch] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<Set<PostCategory>>(new Set())
 
   useEffect(() => {
@@ -59,15 +60,35 @@ export default function CampusSinglePage() {
           .limit(100),
         supabase
           .from('course_reviews')
-          .select('id, university_slug, course_code, course_name, professor_name, rating, difficulty, workload, comment, is_anonymous, created_at')
+          .select('*')
           .eq('university_slug', slug)
           .order('created_at', { ascending: false })
           .limit(100),
       ])
+
+      const reviews = (reviewRes.data as CourseReview[]) ?? []
+
+      // 批量查实名评价的作者显示名/头像
+      const namedUserIds = [...new Set(reviews.filter((r) => !r.is_anonymous).map((r) => r.user_id))]
+      let profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>()
+      if (namedUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', namedUserIds)
+        profileMap = new Map((profiles || []).map((p) => [p.user_id, p]))
+      }
+
+      const enrichedReviews = reviews.map((r) => {
+        if (r.is_anonymous) return { ...r, author_name: null, avatar_url: null }
+        const p = profileMap.get(r.user_id)
+        return { ...r, author_name: p?.display_name ?? null, avatar_url: p?.avatar_url ?? null }
+      })
+
       return {
         posts: (postsRes.data as Post[]) ?? [],
         recruits: (recruitRes.data as Recruitment[]) ?? [],
-        reviews: (reviewRes.data as CourseReview[]) ?? [],
+        reviews: enrichedReviews,
       }
     },
     enabled: !!slug,
@@ -141,6 +162,15 @@ export default function CampusSinglePage() {
     }
     return result
   }, [posts, searchQuery, selectedCategories])
+
+  const filteredRecruits = useMemo(() => {
+    if (!recruitSearch.trim()) return recruits
+    const q = recruitSearch.toLowerCase()
+    return recruits.filter(r =>
+      r.title.toLowerCase().includes(q) ||
+      (r.description ?? '').toLowerCase().includes(q)
+    )
+  }, [recruits, recruitSearch])
 
   const tabs: { key: Tab; label: string; icon: React.ElementType; count: number }[] = [
     { key: 'discuss', label: t(locale, 'campus.tab_discuss'), icon: MessageSquare, count: posts.length },
@@ -254,10 +284,27 @@ export default function CampusSinglePage() {
             <Plus className="h-4 w-4 mr-1.5" />
             {t(locale, 'recruit.new')}
           </Button>
+
+          {/* 搜索 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={recruitSearch}
+              onChange={(e) => setRecruitSearch(e.target.value)}
+              placeholder={locale === 'en' ? 'Search teammates...' : locale === 'zh-HK' ? '搜尋組隊...' : '搜索组队...'}
+              className="w-full pl-9 pr-8 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
           {recruits.length === 0 ? (
             <EmptyState icon={<Users className="h-12 w-12 opacity-30" />} text={t(locale, 'campus.empty_recruit')} />
+          ) : filteredRecruits.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              {locale === 'en' ? 'No matching listings' : locale === 'zh-HK' ? '無匹配組隊' : '无匹配组队'}
+            </div>
           ) : (
-            recruits.map((r) => <RecruitmentCard key={r.id} recruitment={r} />)
+            filteredRecruits.map((r) => <RecruitmentCard key={r.id} recruitment={r} />)
           )}
         </div>
       )}
@@ -272,7 +319,14 @@ export default function CampusSinglePage() {
           {reviews.length === 0 ? (
             <EmptyState icon={<Star className="h-12 w-12 opacity-30" />} text={t(locale, 'campus.empty_review')} />
           ) : (
-            reviews.map((r) => <CourseReviewCard key={r.id} review={r} />)
+            reviews.map((r) => (
+              <CourseReviewCard
+                key={r.id}
+                review={r}
+                currentUserId={userId}
+                onChanged={() => queryClient.invalidateQueries({ queryKey: ['campus-community', slug] })}
+              />
+            ))
           )}
         </div>
       )}
