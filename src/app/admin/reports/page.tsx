@@ -20,6 +20,9 @@ const REASON_LABELS: Record<string, string> = {
   harassment: 'Harassment',
   inappropriate: 'Inappropriate Content',
   violence: 'Violence',
+  wrong_info: 'Wrong information',
+  expired: 'Already expired',
+  duplicate: 'Duplicate listing',
   other: 'Other',
 }
 
@@ -92,9 +95,17 @@ export default function ReportsPage() {
                         {t(locale, 'admin.reviews')}
                       </Badge>
                     )}
+                    {r.type === 'competition' && (
+                      <Badge variant="outline" className="text-xs">
+                        {locale === 'en' ? 'Competition' : locale === 'zh-HK' ? '比賽' : '比赛'}
+                      </Badge>
+                    )}
                   </div>
                   {r.type === 'review' && r.course?.course_name && (
                     <p className="text-sm text-foreground mt-1">📚 {r.course.course_name}</p>
+                  )}
+                  {r.type === 'competition' && r.competition?.title && (
+                    <p className="text-sm text-foreground mt-1">🏆 {r.competition.title}</p>
                   )}
                   {r.detail && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.detail}</p>
@@ -106,6 +117,13 @@ export default function ReportsPage() {
                         className="text-primary hover:underline font-mono"
                       >
                         #{r.review_id?.slice(0, 8)}
+                      </Link>
+                    ) : r.type === 'competition' ? (
+                      <Link
+                        href={`/competition/${r.competition_id}`}
+                        className="text-primary hover:underline font-mono"
+                      >
+                        #{r.competition_id?.slice(0, 8)}
                       </Link>
                     ) : (
                       <Link

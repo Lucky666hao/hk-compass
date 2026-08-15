@@ -110,6 +110,7 @@ const en: TranslationDict = {
   'detail.calendar_done': 'Calendar file downloaded!',
   'detail.share_to': 'Share to',
   'detail.share_more': 'More',
+  'detail.report_issue': 'Report incorrect / expired info',
 
   // Comments
   'comments.title': 'Comments',
@@ -712,6 +713,7 @@ const zhCN: TranslationDict = {
   'detail.calendar_done': '日历文件已下载！',
   'detail.share_to': '分享到',
   'detail.share_more': '更多',
+  'detail.report_issue': '信息有误 / 已过期',
 
   'comments.title': '评论',
   'comments.placeholder': '写下你的想法...',
@@ -1650,6 +1652,7 @@ const zhHK: TranslationDict = {
   'detail.calendar_done': '日曆檔案已下載！',
   'detail.share_to': '分享到',
   'detail.share_more': '更多',
+  'detail.report_issue': '資料有誤 / 已過期',
   'sidebar.map': '地圖',
   'sidebar.dashboard': '我的看板',
   'map.title': '比賽地圖',

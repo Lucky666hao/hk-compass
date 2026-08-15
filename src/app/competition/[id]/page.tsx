@@ -31,6 +31,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
+  Flag,
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { zhHK, enUS } from 'date-fns/locale'
@@ -39,12 +40,21 @@ import { useState, useEffect } from 'react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 
+const REPORT_REASONS = [
+  { key: 'wrong_info', en: 'Wrong information', zh: '信息有误' },
+  { key: 'expired', en: 'Already expired', zh: '已过期' },
+  { key: 'duplicate', en: 'Duplicate listing', zh: '重复信息' },
+  { key: 'other', en: 'Other', zh: '其他' },
+]
+
 export default function CompetitionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { locale } = useLocale()
   const [saved, setSaved] = useState(false)
   const [reminded, setReminded] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
 
   const dateLocale = locale === 'en' ? enUS : zhHK
   const dateFormat = locale === 'en' ? 'MMM d, yyyy (EEE)' : 'yyyy年M月d日 (EEE)'
@@ -102,6 +112,7 @@ export default function CompetitionDetailPage() {
     const check = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setUserId(user.id)
       const [savedRes, remindedRes] = await Promise.all([
         supabase.from('saved_competitions').select('id').eq('user_id', user.id).eq('competition_id', id).maybeSingle(),
         supabase.from('reminders').select('id').eq('user_id', user.id).eq('competition_id', id).maybeSingle(),
@@ -111,6 +122,26 @@ export default function CompetitionDetailPage() {
     }
     check()
   }, [id])
+
+  // 纠错举报
+  const handleReport = async (reason: string) => {
+    setReportOpen(false)
+    if (!userId) {
+      toast.error(locale === 'en' ? 'Please log in first' : locale === 'zh-HK' ? '請先登入' : '请先登录')
+      return
+    }
+    const { error } = await supabase.from('competition_reports').insert({
+      competition_id: id,
+      reporter_id: userId,
+      reason,
+    })
+    if (error) {
+      if (error.code === '23505') toast.error(locale === 'en' ? 'Already reported' : locale === 'zh-HK' ? '已舉報過' : '已举报过')
+      else toast.error(locale === 'en' ? 'Report failed' : locale === 'zh-HK' ? '舉報失敗' : '举报失败')
+    } else {
+      toast.success(locale === 'en' ? 'Reported. Thank you.' : locale === 'zh-HK' ? '已舉報，謝謝。' : '已举报，谢谢。')
+    }
+  }
 
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -432,6 +463,30 @@ export default function CompetitionDetailPage() {
               <p className="text-xs text-muted-foreground">
                 {t(locale, 'detail.updated', { date: format(new Date(competition.updated_at), dateFormatShort, { locale: dateLocale }) })}
               </p>
+
+              {/* 纠错举报 */}
+              <div className="pt-2 border-t relative">
+                <button
+                  onClick={() => setReportOpen(!reportOpen)}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Flag className="h-3 w-3" />
+                  {t(locale, 'detail.report_issue')}
+                </button>
+                {reportOpen && (
+                  <div className="absolute left-0 bottom-full mb-1 z-10 bg-popover border rounded-lg shadow-lg p-1.5 w-44">
+                    {REPORT_REASONS.map((r) => (
+                      <button
+                        key={r.key}
+                        onClick={() => handleReport(r.key)}
+                        className="w-full text-left px-2.5 py-1.5 text-xs rounded hover:bg-muted transition-colors"
+                      >
+                        {locale === 'en' ? r.en : r.zh}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
