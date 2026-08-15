@@ -180,6 +180,12 @@ export default function PostDetailPage() {
             </div>
           </div>
 
+          {post.status === 'hidden' && (
+            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400">
+              {t(locale, 'posts.hidden_notice')}
+            </div>
+          )}
+
           <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
 
           <div className="text-sm text-muted-foreground mb-6">

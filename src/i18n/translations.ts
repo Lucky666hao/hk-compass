@@ -223,6 +223,7 @@ const en: TranslationDict = {
   'posts.publishing': 'Publishing...',
   'posts.delete_failed': 'Delete failed',
   'posts.not_found': 'Post not found',
+  'posts.hidden_notice': 'This post has been hidden by moderators',
   'posts.all_categories': 'All',
   // 分类标签
   'posts.cat.赛事讨论': 'Event Talk',
@@ -556,6 +557,17 @@ const en: TranslationDict = {
   'admin.reports.resolve': 'Resolve',
   'admin.reports.dismiss': 'Dismiss',
   'admin.reports.reopen': 'Reopen',
+  'admin.posts': 'Posts',
+  'admin.posts.count': 'posts',
+  'admin.posts.all': 'All',
+  'admin.posts.published': 'Published',
+  'admin.posts.hidden': 'Hidden',
+  'admin.posts.hide': 'Hide',
+  'admin.posts.unhide': 'Unhide',
+  'admin.posts.delete': 'Delete',
+  'admin.posts.delete_confirm': 'Delete this post? This cannot be undone.',
+  'admin.posts.hidden_badge': 'Hidden',
+  'admin.posts.empty': 'No posts yet',
 }
 
 // ---- Simplified Chinese ----
@@ -752,6 +764,7 @@ const zhCN: TranslationDict = {
   'posts.publishing': '发布中...',
   'posts.delete_failed': '删除失败',
   'posts.not_found': '找不到帖子',
+  'posts.hidden_notice': '该帖已被管理员屏蔽',
   'posts.all_categories': '全部',
   // 分类标签
   'posts.cat.赛事讨论': '🏆 赛事讨论',
@@ -1077,6 +1090,17 @@ const zhCN: TranslationDict = {
   'admin.reports.resolve': '处理',
   'admin.reports.dismiss': '忽略',
   'admin.reports.reopen': '重开',
+  'admin.posts': '帖子管理',
+  'admin.posts.count': '条帖子',
+  'admin.posts.all': '全部',
+  'admin.posts.published': '正常',
+  'admin.posts.hidden': '已屏蔽',
+  'admin.posts.hide': '屏蔽',
+  'admin.posts.unhide': '恢复',
+  'admin.posts.delete': '删除',
+  'admin.posts.delete_confirm': '确定删除这条帖子？此操作不可撤销。',
+  'admin.posts.hidden_badge': '已屏蔽',
+  'admin.posts.empty': '暂无帖子',
 }
 
 // ---- Traditional Chinese ----
@@ -1257,6 +1281,7 @@ const zhHK: TranslationDict = {
   'posts.publishing': '發布中...',
   'posts.delete_failed': '刪除失敗',
   'posts.not_found': '搵唔到帖子',
+  'posts.hidden_notice': '該帖已被管理員屏蔽',
   'posts.all_categories': '全部',
   // 分類標籤
   'posts.cat.賽事討論': '🏆 賽事討論',
@@ -1588,6 +1613,17 @@ const zhHK: TranslationDict = {
   'admin.reports.resolve': '處理',
   'admin.reports.dismiss': '忽略',
   'admin.reports.reopen': '重開',
+  'admin.posts': '帖子管理',
+  'admin.posts.count': '條帖子',
+  'admin.posts.all': '全部',
+  'admin.posts.published': '正常',
+  'admin.posts.hidden': '已屏蔽',
+  'admin.posts.hide': '屏蔽',
+  'admin.posts.unhide': '恢復',
+  'admin.posts.delete': '刪除',
+  'admin.posts.delete_confirm': '確定刪除呢條帖子？此操作不可撤銷。',
+  'admin.posts.hidden_badge': '已屏蔽',
+  'admin.posts.empty': '暫無帖子',
 }
 
 export const DICT: Record<Locale, TranslationDict> = { en, 'zh-CN': zhCN, 'zh-HK': zhHK }

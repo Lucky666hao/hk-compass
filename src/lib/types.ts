@@ -205,6 +205,7 @@ export interface Post {
   content: string
   category: PostCategory
   vote_score: number
+  status?: 'published' | 'hidden'  // 审核状态：published 正常 | hidden 已屏蔽
   created_at: string
   updated_at: string
   // 虚拟字段（JOIN）

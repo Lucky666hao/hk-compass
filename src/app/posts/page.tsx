@@ -36,6 +36,7 @@ export default function PostsPage() {
       let query = supabase
         .from('posts')
         .select('*')
+        .eq('status', 'published')
 
       // 多选分类筛选
       if (selectedCategories.size > 0) {
