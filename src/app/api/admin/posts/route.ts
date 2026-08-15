@@ -1,7 +1,7 @@
 /**
  * GET /api/admin/posts — 列出所有帖子（含已屏蔽），附作者邮箱/评论数/举报数
- * PATCH /api/admin/posts — 屏蔽/恢复帖子 { id, status: 'published' | 'hidden' }
- * DELETE /api/admin/posts — 删除帖子 { id }
+ * PATCH /api/admin/posts — 屏蔽/恢复帖子 { ids: string[], status: 'published' | 'hidden' }
+ * DELETE /api/admin/posts — 删除帖子 { ids: string[] }
  */
 import { NextResponse } from 'next/server'
 import { requireAdmin, getAdminClient } from '@/lib/admin-guard'
@@ -53,19 +53,40 @@ export async function PATCH(req: Request) {
   const auth = await requireAdmin(req)
   if (auth instanceof Response) return auth
 
-  const { id, status } = await req.json()
-  if (!id || !['published', 'hidden'].includes(status)) {
-    return NextResponse.json({ error: 'id and valid status are required' }, { status: 400 })
+  const { id, ids, status, reason } = await req.json()
+  const targetIds: string[] = ids ?? (id ? [id] : [])
+  if (targetIds.length === 0 || !['published', 'hidden'].includes(status)) {
+    return NextResponse.json({ error: 'ids and valid status are required' }, { status: 400 })
   }
 
   const supabase = getAdminClient()
   const { error } = await supabase
     .from('posts')
     .update({ status })
-    .eq('id', id)
+    .in('id', targetIds)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // 屏蔽时给发帖人发一条违规通知（管理员填的 reason 即违规原因）
+  if (status === 'hidden' && reason && String(reason).trim()) {
+    const { data: postsData } = await supabase
+      .from('posts')
+      .select('id, title, user_id')
+      .in('id', targetIds)
+
+    const reasonText = String(reason).trim()
+    for (const p of postsData || []) {
+      if (!p.user_id) continue
+      await supabase.from('notifications').insert({
+        user_id: p.user_id,
+        type: 'moderation',
+        message: `你的帖子「${(p.title || '').slice(0, 30)}」因违反社区规范已被屏蔽：${reasonText}`,
+        link: `/posts/${p.id}`,
+        related_post_id: p.id,
+      })
+    }
   }
 
   return NextResponse.json({ ok: true })
@@ -75,9 +96,10 @@ export async function DELETE(req: Request) {
   const auth = await requireAdmin(req)
   if (auth instanceof Response) return auth
 
-  const { id } = await req.json()
-  if (!id) {
-    return NextResponse.json({ error: 'id is required' }, { status: 400 })
+  const { id, ids } = await req.json()
+  const targetIds: string[] = ids ?? (id ? [id] : [])
+  if (targetIds.length === 0) {
+    return NextResponse.json({ error: 'ids is required' }, { status: 400 })
   }
 
   const supabase = getAdminClient()
@@ -85,7 +107,7 @@ export async function DELETE(req: Request) {
   const { error } = await supabase
     .from('posts')
     .delete()
-    .eq('id', id)
+    .in('id', targetIds)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -29,6 +29,7 @@ const typeIcons: Record<string, React.ElementType> = {
   reaction: Heart,
   report_resolved: Flag,
   competition_match: Trophy,
+  moderation: Flag,
 }
 
 export default function NotificationsPage() {
