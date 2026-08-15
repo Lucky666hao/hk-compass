@@ -116,6 +116,7 @@ export default function NewRecruitmentPage() {
     let imageUrls: string[] = []
     if (imageFiles.length > 0) {
       setUploading(true)
+      let failed = 0
       for (const file of imageFiles) {
         const path = `recruit/${session.user.id}/${Date.now()}_${file.name}`
         const { error: uploadErr } = await supabase.storage
@@ -123,12 +124,16 @@ export default function NewRecruitmentPage() {
           .upload(path, file, { upsert: true })
         if (uploadErr) {
           console.error('Upload error:', uploadErr)
+          failed++
           continue
         }
         const { data: urlData } = supabase.storage.from('post-images').getPublicUrl(path)
         if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl)
       }
       setUploading(false)
+      if (failed > 0) {
+        toast.error(locale === 'en' ? `${failed} image(s) failed to upload` : locale === 'zh-HK' ? `${failed} 張圖片上傳失敗` : `${failed} 张图片上传失败`)
+      }
     }
 
     const { error } = await supabase.from('recruitments').insert({
