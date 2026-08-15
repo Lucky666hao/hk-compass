@@ -309,6 +309,8 @@ export interface Recruitment {
   competition_title?: string | null
   /** joined field */
   author_email?: string | null
+  /** 组队配图URL列表 */
+  image_urls?: string[] | null
 }
 
 export const RECRUITMENT_STATUS_LABELS: Record<RecruitmentStatus, string> = {

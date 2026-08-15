@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { MessageCircle, Send, Crown, Lock, Trash2, EyeOff } from 'lucide-react'
@@ -29,6 +29,7 @@ interface CommentData {
   is_member?: boolean
   /** 匿名评论的显示名 */
   display_name?: string
+  avatar_url?: string | null
 }
 
 interface CommentSectionProps {
@@ -66,6 +67,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   const [loading, setLoading] = useState(true)
   const [newComment, setNewComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [myAvatar, setMyAvatar] = useState<string | null>(null)
 
   const { table, fk, anonymous } = tableInfo(targetType)
   const dateLocale = locale === 'en' ? enUS : zhHK
@@ -77,7 +79,11 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user && !anonymous) checkMembership(session.user.id)
+      if (session?.user) {
+        if (!anonymous) checkMembership(session.user.id)
+        supabase.from('profiles').select('avatar_url').eq('user_id', session.user.id).maybeSingle()
+          .then(({ data }) => setMyAvatar(data?.avatar_url ?? null))
+      }
     })
     loadComments()
   }, [targetType, targetId])
@@ -117,7 +123,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
         const userIds = [...new Set(data.map((c: any) => c.user_id))]
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, is_member, display_name')
+          .select('user_id, is_member, display_name, avatar_url')
           .in('user_id', userIds)
 
         const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]))
@@ -131,6 +137,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
             created_at: c.created_at,
             author_name: p?.display_name || c.user_id.slice(0, 6) + '...',
             is_member: p?.is_member ?? false,
+            avatar_url: p?.avatar_url ?? null,
           }
         })
         setComments(enriched)
@@ -235,6 +242,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
                 </div>
               ) : (
                 <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarImage src={myAvatar || undefined} alt={user.email || ''} />
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
                     {user.email?.slice(0, 2).toUpperCase() || 'U'}
                   </AvatarFallback>
@@ -325,6 +333,7 @@ export function CommentSection({ targetType, targetId }: CommentSectionProps) {
                   </div>
                 ) : (
                   <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={comment.avatar_url || undefined} alt={comment.author_name || ''} />
                     <AvatarFallback className="text-xs bg-muted">
                       {comment.author_name?.slice(0, 2).toUpperCase() || 'U'}
                     </AvatarFallback>

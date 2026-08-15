@@ -52,6 +52,21 @@ export function RecruitmentCard({ recruitment }: { recruitment: Recruitment }) {
                 {recruitment.description}
               </p>
 
+              {recruitment.image_urls && recruitment.image_urls.length > 0 && (
+                <div className="flex gap-1.5 mt-2">
+                  {recruitment.image_urls.slice(0, 3).map((url, i) => (
+                    <div key={i} className="w-16 h-16 rounded-lg overflow-hidden border bg-muted">
+                      <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  ))}
+                  {recruitment.image_urls.length > 3 && (
+                    <div className="w-16 h-16 rounded-lg border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                      +{recruitment.image_urls.length - 3}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {recruitment.competition_title && (
                 <div className="mt-2 text-xs text-primary/70">
                   🏆 {recruitment.competition_title}

@@ -6,6 +6,7 @@ import { zhHK } from 'date-fns/locale'
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import type { Post } from '@/lib/types'
 import { POST_CATEGORY_LABELS } from '@/lib/types'
 import { useLocale } from '@/i18n/LanguageContext'
@@ -30,6 +31,17 @@ export function PostCard({
   authorUniSlug,
 }: PostCardProps) {
   const { locale } = useLocale()
+  const [author, setAuthor] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null)
+
+  useEffect(() => {
+    if (!post.user_id) return
+    supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('user_id', post.user_id)
+      .maybeSingle()
+      .then(({ data }) => setAuthor(data ?? null))
+  }, [post.user_id])
 
   const dateLocale = locale === 'en' ? undefined : zhHK
   const dateFormat = locale === 'en' ? 'MMM d' : 'M月d日'
@@ -43,6 +55,19 @@ export function PostCard({
         <CardContent className="p-0">
           <Link href={`/posts/${post.id}`} className="block py-3 px-4">
             <div className="flex items-center gap-2 mb-1.5">
+              {author && (
+                <>
+                  <Avatar className="h-5 w-5 shrink-0">
+                    <AvatarImage src={author.avatar_url || undefined} alt={author.display_name || ''} />
+                    <AvatarFallback className="text-[10px] bg-muted">
+                      {(author.display_name || post.user_id).slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground truncate max-w-[100px] shrink-0">
+                    {author.display_name || 'User'}
+                  </span>
+                </>
+              )}
               <Badge variant="secondary" className="text-xs shrink-0">
                 {catLabel}
               </Badge>

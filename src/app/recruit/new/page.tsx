@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, Send, X, Search, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Send, X, Search, ChevronDown, Image } from 'lucide-react'
 import { toast } from 'sonner'
 import { HK_UNIVERSITIES, getUniBySlug } from '@/lib/university-data'
 import { getFaculties } from '@/lib/faculty-data'
@@ -48,6 +48,9 @@ export default function NewRecruitmentPage() {
   const [submitting, setSubmitting] = useState(false)
   const [universitySlug, setUniversitySlug] = useState<string>('')
   const [faculty, setFaculty] = useState('')
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
 
   // 读取 ?uni=slug 预填学校（从学生社区进入）
   useEffect(() => {
@@ -72,6 +75,25 @@ export default function NewRecruitmentPage() {
 
   const selectedComp = competitions.find((c) => c.id === competitionId)
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length + imageFiles.length > 4) {
+      toast.error(locale === 'en' ? 'Max 4 images' : locale === 'zh-HK' ? '最多4張圖' : '最多4张图')
+      return
+    }
+    setImageFiles(prev => [...prev, ...files])
+    files.forEach(f => {
+      const reader = new FileReader()
+      reader.onload = () => setImagePreviews(prev => [...prev, reader.result as string])
+      reader.readAsDataURL(f)
+    })
+  }
+
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async () => {
     if (!title.trim()) {
       toast.error(t(locale, 'recruit.no_title'))
@@ -90,6 +112,25 @@ export default function NewRecruitmentPage() {
       return
     }
 
+    // 上传图片
+    let imageUrls: string[] = []
+    if (imageFiles.length > 0) {
+      setUploading(true)
+      for (const file of imageFiles) {
+        const path = `recruit/${session.user.id}/${Date.now()}_${file.name}`
+        const { error: uploadErr } = await supabase.storage
+          .from('post-images')
+          .upload(path, file, { upsert: true })
+        if (uploadErr) {
+          console.error('Upload error:', uploadErr)
+          continue
+        }
+        const { data: urlData } = supabase.storage.from('post-images').getPublicUrl(path)
+        if (urlData?.publicUrl) imageUrls.push(urlData.publicUrl)
+      }
+      setUploading(false)
+    }
+
     const { error } = await supabase.from('recruitments').insert({
       title: title.trim(),
       description: description.trim(),
@@ -101,6 +142,7 @@ export default function NewRecruitmentPage() {
       user_id: session.user.id,
       university_slug: universitySlug || null,
       faculty: faculty.trim() || null,
+      image_urls: imageUrls.length > 0 ? imageUrls : null,
     })
 
     setSubmitting(false)
@@ -243,6 +285,36 @@ export default function NewRecruitmentPage() {
             </div>
           )}
 
+          {/* 图片上传 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              <Image className="h-4 w-4 inline mr-1" />
+              {locale === 'en' ? 'Images (optional, max 4)' : locale === 'zh-HK' ? '圖片（可選，最多4張）' : '图片（可选，最多4张）'}
+            </label>
+            {imagePreviews.length > 0 && (
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {imagePreviews.map((preview, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border">
+                    <img src={preview} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="absolute top-0.5 right-0.5 bg-black/60 rounded-full p-0.5 text-white hover:bg-black/80"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {imageFiles.length < 4 && (
+              <label className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-dashed cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors">
+                <Image className="h-4 w-4" />
+                {locale === 'en' ? 'Add image' : locale === 'zh-HK' ? '添加圖片' : '添加图片'}
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+              </label>
+            )}
+          </div>
+
           {/* 标题 */}
           <div>
             <Input
@@ -323,9 +395,10 @@ export default function NewRecruitmentPage() {
 
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => router.back()}>{cancelText}</Button>
-            <Button onClick={handleSubmit} disabled={submitting} className="bg-amber-500 hover:bg-amber-600">
+            <Button onClick={handleSubmit} disabled={submitting || uploading} className="bg-amber-500 hover:bg-amber-600">
               <Send className="h-4 w-4 mr-1.5" />
-              {submitting ? t(locale, 'recruit.publishing') as string : t(locale, 'recruit.publish') as string}
+              {uploading ? (locale === 'en' ? 'Uploading...' : '上传中...')
+                : submitting ? t(locale, 'recruit.publishing') as string : t(locale, 'recruit.publish') as string}
             </Button>
           </div>
         </CardContent>
