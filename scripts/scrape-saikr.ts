@@ -159,6 +159,7 @@ async function main() {
       status: '报名中',
       source: comp.source,
       source_url: comp.url,
+      review_status: 'pending',
     })
 
     if (error) { console.log(`  ❌ ${error.message}`); failed++ }

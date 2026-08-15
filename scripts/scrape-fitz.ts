@@ -173,6 +173,7 @@ async function main() {
       status: '报名中',
       source: 'Fitz',
       source_url: url,
+      review_status: 'pending',
     })
 
     if (error) {

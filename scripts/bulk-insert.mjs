@@ -100,6 +100,13 @@ async function main() {
   const errors = []
 
   for (const c of comps) {
+    // 数据真实性：缺官方来源链接的不许进库（二手聚合站/无出处 = 不可信）
+    if (!c.source_url) {
+      console.log(`  ⛔ 跳过（无 source_url，不可信）: ${c.title}`)
+      fail++
+      continue
+    }
+
     // 检查重复 (title + date_start)
     const { data: existing } = await supabase
       .from('competitions')
@@ -133,6 +140,7 @@ async function main() {
       eligibility: norm(c.eligibility, VALID_ELIGIBILITY, '个人报名'),
       status: '报名中',
       source: c.source || 'batch-search-3',
+      review_status: 'pending',
     }
 
     // 日期验证 — 自动检测并修复写反的日期
