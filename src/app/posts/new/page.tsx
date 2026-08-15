@@ -133,7 +133,7 @@ export default function NewPostPage() {
       toast.error(t(locale, 'posts.publish_error'))
     } else {
       toast.success(t(locale, 'posts.publish_success'))
-      router.push('/posts')
+      router.push(universitySlug ? `/campus/${universitySlug}` : '/posts')
     }
   }
 

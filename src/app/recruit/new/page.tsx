@@ -151,7 +151,7 @@ export default function NewRecruitmentPage() {
       toast.error(t(locale, 'recruit.publish_error'))
     } else {
       toast.success(t(locale, 'recruit.publish_success'))
-      router.push('/recruit')
+      router.push(universitySlug ? `/campus/${universitySlug}` : '/recruit')
     }
   }
 
