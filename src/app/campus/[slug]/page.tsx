@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { Post, Recruitment, Competition, CourseReview } from '@/lib/types'
+import type { Post, Recruitment, Competition, CourseReview, PostCategory } from '@/lib/types'
+import { POST_CATEGORIES, POST_CATEGORY_LABELS } from '@/lib/types'
 import { getUniBySlug, matchUniversity } from '@/lib/university-data'
 import { PostCard } from '@/components/post-card'
 import { RecruitmentCard } from '@/components/recruitment-card'
@@ -15,7 +16,8 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
-import { ArrowLeft, GraduationCap, MessageSquare, Users, Star, Trophy, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { ArrowLeft, GraduationCap, MessageSquare, Users, Star, Trophy, Plus, Search } from 'lucide-react'
 
 type Tab = 'discuss' | 'recruit' | 'review' | 'competition'
 
@@ -26,6 +28,8 @@ export default function CampusSinglePage() {
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('discuss')
   const [userId, setUserId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategories, setSelectedCategories] = useState<Set<PostCategory>>(new Set())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -114,6 +118,30 @@ export default function CampusSinglePage() {
   const recruits = community?.recruits ?? []
   const reviews = community?.reviews ?? []
 
+  const toggleCategory = (cat: PostCategory) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(cat)) next.delete(cat)
+      else next.add(cat)
+      return next
+    })
+  }
+
+  const filteredPosts = useMemo(() => {
+    let result = posts
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.content.toLowerCase().includes(q)
+      )
+    }
+    if (selectedCategories.size > 0) {
+      result = result.filter(p => selectedCategories.has(p.category as PostCategory))
+    }
+    return result
+  }, [posts, searchQuery, selectedCategories])
+
   const tabs: { key: Tab; label: string; icon: React.ElementType; count: number }[] = [
     { key: 'discuss', label: t(locale, 'campus.tab_discuss'), icon: MessageSquare, count: posts.length },
     { key: 'recruit', label: t(locale, 'campus.tab_recruit'), icon: Users, count: recruits.length },
@@ -176,10 +204,45 @@ export default function CampusSinglePage() {
             <Plus className="h-4 w-4 mr-1.5" />
             {t(locale, 'posts.new')}
           </Button>
+
+          {/* 搜索 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={locale === 'en' ? 'Search posts...' : locale === 'zh-HK' ? '搜尋帖子...' : '搜索帖子...'}
+              className="w-full pl-9 pr-8 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          {/* 分类筛选 */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 flex-nowrap">
+            {POST_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => toggleCategory(cat)}
+                className={cn(
+                  'px-3 py-1.5 text-xs rounded-full border whitespace-nowrap transition-all shrink-0',
+                  selectedCategories.has(cat)
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:border-foreground/30'
+                )}
+              >
+                {POST_CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+
           {posts.length === 0 ? (
             <EmptyState icon={<MessageSquare className="h-12 w-12 opacity-30" />} text={t(locale, 'campus.empty_discuss')} />
+          ) : filteredPosts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              {locale === 'en' ? 'No matching posts' : locale === 'zh-HK' ? '無匹配帖子' : '无匹配帖子'}
+            </div>
           ) : (
-            posts.map((post) => <PostCard key={post.id} post={post} userId={userId} authorUniSlug={slug} />)
+            filteredPosts.map((post) => <PostCard key={post.id} post={post} userId={userId} authorUniSlug={slug} />)
           )}
         </div>
       )}
