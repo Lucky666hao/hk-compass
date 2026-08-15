@@ -14,6 +14,9 @@ import { t } from '@/i18n/translations'
 import { ArrowLeft, Send, Image, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { HK_UNIVERSITIES, getUniBySlug } from '@/lib/university-data'
+import { getFaculties } from '@/lib/faculty-data'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function NewPostPage() {
   const router = useRouter()
@@ -28,6 +31,8 @@ export default function NewPostPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
+  const [universitySlug, setUniversitySlug] = useState<string>('')
+  const [faculty, setFaculty] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,6 +50,15 @@ export default function NewPostPage() {
           })
       }
     })
+  }, [])
+
+  // 读取 ?uni=slug 预填归属学校（从学生社区进入）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const uniParam = params.get('uni')
+    if (uniParam && getUniBySlug(uniParam)) {
+      setUniversitySlug(uniParam)
+    }
   }, [])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +123,8 @@ export default function NewPostPage() {
       category,
       user_id: session.user.id,
       image_urls: imageUrls.length > 0 ? imageUrls : null,
+      university_slug: universitySlug || null,
+      faculty: faculty.trim() || null,
     })
 
     setSubmitting(false)
@@ -165,6 +181,50 @@ export default function NewPostPage() {
               })}
             </div>
           </div>
+
+          {/* 归属学校（可选，从学生社区进入时自动带） */}
+          <div>
+            <label className="block text-sm font-medium mb-2">{t(locale, 'campus.post_uni')}</label>
+            <Select value={universitySlug || '_all'} onValueChange={(v) => setUniversitySlug(v && v !== '_all' ? v : '')}>
+              <SelectTrigger>
+                <SelectValue placeholder={t(locale, 'campus.post_uni_all')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">{t(locale, 'campus.post_uni_all')}</SelectItem>
+                {HK_UNIVERSITIES.map((u) => (
+                  <SelectItem key={u.slug} value={u.slug}>
+                    {u.logo} {locale === 'en' ? u.enName : u.shortName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 学院（选学校后显示） */}
+          {universitySlug && (
+            <div>
+              <label className="block text-sm font-medium mb-2">{t(locale, 'campus.faculty')}</label>
+              {getFaculties(universitySlug).length > 0 ? (
+                <Select value={faculty || '_any'} onValueChange={(v) => setFaculty(v && v !== '_any' ? v : '')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t(locale, 'campus.faculty_any')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_any">{t(locale, 'campus.faculty_any')}</SelectItem>
+                    {getFaculties(universitySlug).map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={faculty}
+                  onChange={(e) => setFaculty(e.target.value)}
+                  placeholder={t(locale, 'campus.faculty_placeholder')}
+                />
+              )}
+            </div>
+          )}
 
           {/* 图片上传 */}
           <div>

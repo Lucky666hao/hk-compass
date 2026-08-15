@@ -30,6 +30,7 @@ import {
   PlusCircle,
   Map,
   LayoutDashboard,
+  School,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -105,6 +106,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { key: 'sidebar.discover', href: '/', icon: Compass, colorClass: 'text-blue-500' },
   { key: 'sidebar.uni', href: '/uni', icon: GraduationCap, colorClass: 'text-rose-500' },
+  { key: 'sidebar.campus', href: '/campus', icon: School, colorClass: 'text-rose-500' },
   {
     key: 'sidebar.posts', href: '/posts', icon: MessageSquare, colorClass: 'text-emerald-500',
     children: [

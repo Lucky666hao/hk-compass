@@ -206,6 +206,8 @@ export interface Post {
   category: PostCategory
   vote_score: number
   status?: 'published' | 'hidden'  // 审核状态：published 正常 | hidden 已屏蔽
+  university_slug?: string | null  // 归属学校（小写 slug），null = 全港通用
+  faculty?: string | null          // 学院
   created_at: string
   updated_at: string
   // 虚拟字段（JOIN）
@@ -299,6 +301,8 @@ export interface Recruitment {
   requirements: string | null
   contact: string | null
   status: RecruitmentStatus
+  university_slug?: string | null  // 归属学校，null = 比赛组队（向后兼容）
+  faculty?: string | null          // 学院
   created_at: string
   updated_at: string
   /** joined field from recruitments+competitions join */
@@ -310,6 +314,27 @@ export interface Recruitment {
 export const RECRUITMENT_STATUS_LABELS: Record<RecruitmentStatus, string> = {
   open: '招募中',
   closed: '已截止',
+}
+
+// ============================================
+// 课程/老师评价（学生社区）
+// ============================================
+
+export interface CourseReview {
+  id: string
+  user_id: string
+  university_slug: string
+  course_code: string | null      // 如 COMP101
+  course_name: string             // 科目名
+  professor_name: string | null   // 老师名
+  rating: number                  // 1-5 总体评分
+  difficulty: number | null       // 1-5 难度
+  workload: number | null         // 1-5 工作量
+  comment: string | null          // 文字评价
+  is_anonymous: boolean
+  status?: 'published' | 'hidden'
+  created_at: string
+  updated_at: string
 }
 
 // ============================================

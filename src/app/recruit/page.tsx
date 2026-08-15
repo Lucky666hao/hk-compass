@@ -12,14 +12,19 @@ import { Users, Plus } from 'lucide-react'
 import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { useState } from 'react'
+import { HK_UNIVERSITIES } from '@/lib/university-data'
+import { getFaculties } from '@/lib/faculty-data'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function RecruitPage() {
   const router = useRouter()
   const { locale } = useLocale()
   const [statusFilter, setStatusFilter] = useState<string>('open')
+  const [uniFilter, setUniFilter] = useState<string>('')
+  const [facultyFilter, setFacultyFilter] = useState<string>('')
 
   const { data: recruitments, isLoading } = useQuery({
-    queryKey: ['recruitments', statusFilter],
+    queryKey: ['recruitments', statusFilter, uniFilter, facultyFilter],
     queryFn: async () => {
       let query = supabase
         .from('recruitments')
@@ -28,6 +33,12 @@ export default function RecruitPage() {
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter)
+      }
+      if (uniFilter) {
+        query = query.eq('university_slug', uniFilter)
+      }
+      if (facultyFilter) {
+        query = query.eq('faculty', facultyFilter)
       }
 
       const { data } = await query
@@ -70,6 +81,37 @@ export default function RecruitPage() {
             {f.label}
           </button>
         ))}
+      </div>
+
+      {/* 学校/学院筛选（学生组队） */}
+      <div className="flex gap-2 mb-4">
+        <Select value={uniFilter || '_all'} onValueChange={(v) => { setUniFilter(v && v !== '_all' ? v : ''); setFacultyFilter('') }}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder={t(locale, 'recruit.filter_uni')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_all">{t(locale, 'recruit.filter_uni_all')}</SelectItem>
+            {HK_UNIVERSITIES.map((u) => (
+              <SelectItem key={u.slug} value={u.slug}>
+                {u.logo} {locale === 'en' ? u.enName : u.shortName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {uniFilter && (
+          <Select value={facultyFilter || '_any'} onValueChange={(v) => setFacultyFilter(v && v !== '_any' ? v : '')}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder={t(locale, 'recruit.filter_faculty')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_any">{t(locale, 'recruit.filter_faculty_all')}</SelectItem>
+              {getFaculties(uniFilter).map((f) => (
+                <SelectItem key={f} value={f}>{f}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* 列表 */}

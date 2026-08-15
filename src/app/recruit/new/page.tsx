@@ -29,6 +29,8 @@ import { useLocale } from '@/i18n/LanguageContext'
 import { t } from '@/i18n/translations'
 import { ArrowLeft, Send, X, Search, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
+import { HK_UNIVERSITIES, getUniBySlug } from '@/lib/university-data'
+import { getFaculties } from '@/lib/faculty-data'
 
 export default function NewRecruitmentPage() {
   const router = useRouter()
@@ -44,6 +46,17 @@ export default function NewRecruitmentPage() {
   const [competitionSearchOpen, setCompetitionSearchOpen] = useState(false)
   const [competitions, setCompetitions] = useState<Competition[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [universitySlug, setUniversitySlug] = useState<string>('')
+  const [faculty, setFaculty] = useState('')
+
+  // 读取 ?uni=slug 预填学校（从学生社区进入）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const uniParam = params.get('uni')
+    if (uniParam && getUniBySlug(uniParam)) {
+      setUniversitySlug(uniParam)
+    }
+  }, [])
 
   // 加载所有比赛（用于搜索选择）
   useEffect(() => {
@@ -86,6 +99,8 @@ export default function NewRecruitmentPage() {
       contact: contact.trim() || null,
       competition_id: competitionId,
       user_id: session.user.id,
+      university_slug: universitySlug || null,
+      faculty: faculty.trim() || null,
     })
 
     setSubmitting(false)
@@ -183,6 +198,50 @@ export default function NewRecruitmentPage() {
               </Popover>
             )}
           </div>
+
+          {/* 归属学校（可选，不选=比赛组队） */}
+          <div>
+            <label className="block text-sm font-medium mb-2">{t(locale, 'campus.post_uni')}</label>
+            <Select value={universitySlug || '_all'} onValueChange={(v) => setUniversitySlug(v && v !== '_all' ? v : '')}>
+              <SelectTrigger>
+                <SelectValue placeholder={t(locale, 'campus.post_uni_all')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">{t(locale, 'campus.post_uni_all')}</SelectItem>
+                {HK_UNIVERSITIES.map((u) => (
+                  <SelectItem key={u.slug} value={u.slug}>
+                    {u.logo} {locale === 'en' ? u.enName : u.shortName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 学院（选学校后显示） */}
+          {universitySlug && (
+            <div>
+              <label className="block text-sm font-medium mb-2">{t(locale, 'campus.faculty')}</label>
+              {getFaculties(universitySlug).length > 0 ? (
+                <Select value={faculty || '_any'} onValueChange={(v) => setFaculty(v && v !== '_any' ? v : '')}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t(locale, 'campus.faculty_any')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_any">{t(locale, 'campus.faculty_any')}</SelectItem>
+                    {getFaculties(universitySlug).map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={faculty}
+                  onChange={(e) => setFaculty(e.target.value)}
+                  placeholder={t(locale, 'campus.faculty_placeholder')}
+                />
+              )}
+            </div>
+          )}
 
           {/* 标题 */}
           <div>
