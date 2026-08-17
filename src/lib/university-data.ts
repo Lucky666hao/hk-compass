@@ -246,7 +246,7 @@ export const HK_UNIVERSITIES: UniversityInfo[] = [
     enName: 'HKCT',
     color: 'from-blue-600 to-indigo-700',
     bgClass: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-    keywords: ['HKCT', '香港專業進修學校', '香港专业进修学校', '港專', '港专'],
+    keywords: ['HKCT', '香港專業進修學校', '香港专业进修学校'],
     logo: '📚',
   },
   {
@@ -273,7 +273,19 @@ export function matchUniversity(
   uni: UniversityInfo
 ): boolean {
   const text = (title + ' ' + (organizer || '')).toLowerCase()
-  return uni.keywords.some((kw) => text.includes(kw.toLowerCase()))
+  return uni.keywords.some((kw) => {
+    const k = kw.toLowerCase()
+    // 纯英文/数字关键词用词边界，避免 HKU 误匹配 HKUST 这类子串包含
+    if (/^[a-z0-9 .&()-]+$/.test(k)) {
+      return new RegExp(`\\b${escapeRegex(k)}\\b`).test(text)
+    }
+    // 中文关键词用子串匹配
+    return text.includes(k)
+  })
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** 获取比赛所属的所有大学列表 */
