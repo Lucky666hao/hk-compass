@@ -205,6 +205,7 @@ export default function AdminReviewPage() {
   const [submitterMap, setSubmitterMap] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'pending' | 'needs_changes' | 'rejected' | 'all'>('pending')
+  const [sourceFilter, setSourceFilter] = useState<'crawler' | 'community'>('crawler')
 
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
 
@@ -234,11 +235,35 @@ export default function AdminReviewPage() {
 
   useEffect(() => { load() }, [load])
 
-  const filtered = filter === 'all' ? items : items.filter((c) => c.review_status === filter)
+  const sourceItems = sourceFilter === 'community'
+    ? items.filter((c) => c.source === 'community')
+    : items.filter((c) => c.source !== 'community')
+  const filtered = filter === 'all' ? sourceItems : sourceItems.filter((c) => c.review_status === filter)
 
   return (
     <div className="space-y-4">
-      {/* 筛选 tab */}
+      {/* 来源分流：爬虫采集 vs 用户手动提交 */}
+      <div className="flex rounded-lg bg-muted p-1 gap-1 w-fit">
+        {([
+          { key: 'crawler', label: L('Crawler scraped', '爬蟲採集', '爬虫采集') },
+          { key: 'community', label: L('User submitted', '用戶提交', '用户提交') },
+        ] as const).map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setSourceFilter(s.key)}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              sourceFilter === s.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {s.label}
+            <span className="ml-1 opacity-60">
+              ({s.key === 'crawler' ? items.filter((c) => c.source !== 'community').length : items.filter((c) => c.source === 'community').length})
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* 状态筛选 tab */}
       <div className="flex items-center gap-1 flex-wrap">
         {([
           { key: 'pending', label: L('Under review', '審核中', '审核中') },
@@ -254,7 +279,7 @@ export default function AdminReviewPage() {
             }`}
           >
             {t.label}
-            {t.key !== 'all' && <span className="ml-1 opacity-60">({items.filter((c) => c.review_status === t.key).length})</span>}
+            {t.key !== 'all' && <span className="ml-1 opacity-60">({sourceItems.filter((c) => c.review_status === t.key).length})</span>}
           </button>
         ))}
       </div>
