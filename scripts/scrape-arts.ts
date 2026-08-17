@@ -173,6 +173,14 @@ async function main() {
     if (!data.is_hk_event) { skipped++; continue }
     if (!data.is_future_event) { skipped++; continue }
 
+    // 硬性日期兜底：防止 AI 误判 is_future_event，报名截止/比赛日必须在未来
+    const now = new Date()
+    const ds = data.date_start ? new Date(data.date_start) : null
+    const dl = data.registration_deadline ? new Date(data.registration_deadline) : null
+    if ((!dl || dl < now) && (!ds || ds < now)) {
+      console.log(`  ⏰ 已过期(日期兜底)`); skipped++; continue
+    }
+
     const { error } = await supabase.from('competitions').insert({
       title: data.title?.slice(0, 200) || 'Unknown',
       title_en: data.title_en?.slice(0, 200) || null,
