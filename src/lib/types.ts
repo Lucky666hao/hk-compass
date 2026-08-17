@@ -19,7 +19,7 @@ export type CompetitionStatus = '报名中' | '即将开始' | '进行中' | '�
 
 export type RemindBefore = '1小时前' | '1天前' | '3天前' | '1周前'
 
-export type AgeGroup = '儿童' | '青少年' | '成人/公开' | '不限'
+export type AgeGroup = '儿童' | '青少年' | '成人公开' | '不限'
 
 export type TeamSize = '个人赛' | '2-3人' | '4-6人' | '7人以上' | '不限'
 
@@ -168,7 +168,7 @@ export const STATUS_LABELS: Record<CompetitionStatus, string> = {
 export const AGE_LABELS: Record<AgeGroup, string> = {
   '儿童': '👶 儿童',
   '青少年': '🧑 青少年',
-  '成人/公开': '👤 成人/公开',
+  '成人公开': '👤 成人公开',
   '不限': '🌐 不限年龄',
 }
 
