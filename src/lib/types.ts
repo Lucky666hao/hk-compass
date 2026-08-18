@@ -448,3 +448,22 @@ export interface AnalyticsSummary {
   hourlyHeatmap: { hour: number; count: number }[]
   topPaths: { path: string; count: number }[]
 }
+
+// ============================================
+// 首页推荐位（轮播）
+// ============================================
+
+export interface FeaturedItem {
+  id: string
+  competition_id: string | null   // 关联比赛；null = 纯广告位
+  title: string | null            // 覆盖标题；为空用比赛标题
+  subtitle: string | null         // 副标题 / 广告语
+  image_url: string | null        // 横幅图片；为空用比赛海报或渐变兜底
+  link_url: string | null         // 自定义跳转；为空跳比赛详情
+  sort_order: number
+  active: boolean
+  created_at: string
+  // 虚拟字段（JOIN）
+  competition_title?: string | null
+  poster_url?: string | null
+}

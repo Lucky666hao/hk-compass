@@ -8,6 +8,7 @@ import { getPreferences, preferenceScore, type UserPreferences } from '@/lib/pre
 import { SearchBar } from '@/components/search-bar'
 import { FilterBar } from '@/components/filter-bar'
 import { CompetitionCard } from '@/components/competition-card'
+import { FeaturedCarousel } from '@/components/featured-carousel'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Compass, SearchX, PanelLeftOpen, PanelLeftClose, PlusCircle, SlidersHorizontal } from 'lucide-react'
 import { useLocale } from '@/i18n/LanguageContext'
@@ -138,6 +139,8 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
+      <FeaturedCarousel />
+
       {/* 侧栏展开/收起按钮 — 放在发现比赛上方 */}
       <button
         onClick={toggleSidebar}
