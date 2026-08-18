@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_featured_sort ON public.featured_items (sort_orde
 ALTER TABLE public.featured_items ENABLE ROW LEVEL SECURITY;
 
 -- 公开只读（仅生效的推荐位）
+DROP POLICY IF EXISTS "Public read active featured" ON public.featured_items;
 CREATE POLICY "Public read active featured" ON public.featured_items
   FOR SELECT USING (active = true);
 
