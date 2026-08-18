@@ -90,12 +90,17 @@ function ReviewCard({
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             {c.type} · {c.location} · {c.fee_type}
+            {c.source && c.source !== 'community' && (
+              <span className="text-muted-foreground/70"> · {L('Source', '來源', '来源')}: {c.source}</span>
+            )}
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {L('By', '提交者：', '提交者：')} {submitterName}
-            {' · '}
-            {c.submitted_at ? new Date(c.submitted_at).toLocaleString() : ''}
-          </p>
+          {c.submitted_by && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {L('By', '提交者：', '提交者：')} {submitterName}
+              {' · '}
+              {c.submitted_at ? new Date(c.submitted_at).toLocaleString() : ''}
+            </p>
+          )}
         </div>
         <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${s.cls}`}>
           <StatusIcon className="h-3.5 w-3.5" />
