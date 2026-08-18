@@ -7,7 +7,7 @@ import type { Competition } from '@/lib/types'
 import { AUTHORITY_TAGS, AUTHORITY_LABELS } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
-import { Clock, CheckCircle2, XCircle, AlertCircle, Inbox, Check, X, Loader2, ExternalLink } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, AlertCircle, Inbox, Check, X, Loader2, ExternalLink, CheckCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 function statusMeta(status: string | undefined, locale: 'en' | 'zh-CN' | 'zh-HK') {
@@ -211,6 +211,7 @@ export default function AdminReviewPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'pending' | 'needs_changes' | 'rejected' | 'all'>('pending')
   const [sourceFilter, setSourceFilter] = useState<'crawler' | 'community'>('crawler')
+  const [bulking, setBulking] = useState(false)
 
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
 
@@ -240,6 +241,30 @@ export default function AdminReviewPage() {
 
   useEffect(() => { load() }, [load])
 
+  const pendingCrawlerIds = items
+    .filter((c) => c.source !== 'community' && c.review_status === 'pending')
+    .map((c) => c.id)
+
+  const bulkApprove = async () => {
+    if (!window.confirm(L('Approve all pending crawler items?', '一鍵通過所有待審的爬蟲比賽？', '一键通过所有待审的爬虫比赛？'))) return
+    setBulking(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setBulking(false); return }
+    const res = await fetch('/api/admin/review/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ ids: pendingCrawlerIds, action: 'approve' }),
+    })
+    setBulking(false)
+    if (res.ok) {
+      toast.success(L('Done', '已完成', '已完成'))
+      load()
+    } else {
+      const j = await res.json().catch(() => ({}))
+      toast.error(j.error || L('Failed', '操作失敗', '操作失败'))
+    }
+  }
+
   const sourceItems = sourceFilter === 'community'
     ? items.filter((c) => c.source === 'community')
     : items.filter((c) => c.source !== 'community')
@@ -267,6 +292,20 @@ export default function AdminReviewPage() {
           </button>
         ))}
       </div>
+
+      {/* 一键通过（仅爬虫） */}
+      {sourceFilter === 'crawler' && pendingCrawlerIds.length > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={bulkApprove}
+            disabled={bulking}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+          >
+            {bulking ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
+            {L('Approve all pending', '一鍵通過全部待審', '一键通过全部待审')} ({pendingCrawlerIds.length})
+          </button>
+        </div>
+      )}
 
       {/* 状态筛选 tab */}
       <div className="flex items-center gap-1 flex-wrap">

@@ -10,6 +10,12 @@ import Link from 'next/link'
 
 type Filter = 'all' | 'open' | 'closed'
 
+const STALE_DAYS = 14
+function daysSince(iso?: string | null): number {
+  if (!iso) return Infinity
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+}
+
 export default function AdminRecruitmentsPage() {
   const { locale } = useLocale()
   const [items, setItems] = useState<any[]>([])
@@ -184,6 +190,11 @@ export default function AdminRecruitmentsPage() {
                       <Badge className={r.status === 'open' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}>
                         {r.status === 'open' ? L('Open', '招募中', '招募中') : L('Closed', '已截止', '已截止')}
                       </Badge>
+                      {daysSince(r.updated_at || r.created_at) >= STALE_DAYS && (
+                        <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300">
+                          {L('Stale', '久未更新', '久未更新')} · {daysSince(r.updated_at || r.created_at)}{L('d', '天', '天')}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.description}</p>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2 flex-wrap">
