@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useLocale } from '@/i18n/LanguageContext'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, EyeOff, Eye, Inbox } from 'lucide-react'
+import { Trash2, EyeOff, Eye, Inbox, X } from 'lucide-react'
 import Link from 'next/link'
 import { ANONYMOUS_CATEGORY_LABELS } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -69,6 +69,7 @@ function PostsTab() {
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
   const { items: posts, loading, refresh } = useAdminFetch<any>('/api/admin/anonymous')
   const [filter, setFilter] = useState<Filter>('all')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const setStatus = async (ids: string[], status: 'published' | 'hidden') => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -78,6 +79,7 @@ function PostsTab() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ ids, status }),
     })
+    setSelected(new Set())
     refresh()
   }
 
@@ -90,6 +92,7 @@ function PostsTab() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ ids }),
     })
+    setSelected(new Set())
     refresh()
   }
 
@@ -101,15 +104,41 @@ function PostsTab() {
 
   const filtered = filter === 'all' ? posts : posts.filter((p) => p.status === filter)
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id))
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(filtered.map((p) => p.id)))
+  }
+
   if (loading) return <LoadingSkeleton />
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">
-          {L('Total', '共', '共')} <span className="font-medium text-foreground">{posts.length}</span>{' '}
-          {L('anonymous posts', '條匿名帖', '条匿名帖')}
-        </span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              disabled={filtered.length === 0}
+              className="h-4 w-4 rounded border-input accent-primary"
+            />
+            {L('Select all', '全選', '全选')}
+          </label>
+          <span className="text-sm text-muted-foreground">
+            {L('Total', '共', '共')} <span className="font-medium text-foreground">{posts.length}</span>{' '}
+            {L('anonymous posts', '條匿名帖', '条匿名帖')}
+          </span>
+        </div>
         <div className="flex rounded-lg bg-muted p-1 gap-1">
           {filters.map((f) => (
             <button
@@ -126,6 +155,38 @@ function PostsTab() {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 flex-wrap">
+          <span className="text-sm font-medium">
+            {L('Selected', '已選', '已选')} {selected.size}
+          </span>
+          <button
+            onClick={() => setStatus([...selected], 'hidden')}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-300 transition-colors"
+          >
+            <EyeOff className="h-3.5 w-3.5" /> {L('Hide', '屏蔽', '屏蔽')}
+          </button>
+          <button
+            onClick={() => setStatus([...selected], 'published')}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" /> {L('Unhide', '恢復', '恢复')}
+          </button>
+          <button
+            onClick={() => deletePosts([...selected])}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> {L('Delete', '刪除', '删除')}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="ml-auto flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> {L('Clear', '取消', '取消选择')}
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <Empty text={L('No anonymous posts.', '暫無匿名帖。', '暂无匿名帖。')} />
       ) : (
@@ -133,6 +194,12 @@ function PostsTab() {
           <Card key={p.id} className={p.status === 'hidden' ? 'opacity-70' : ''}>
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={selected.has(p.id)}
+                  onChange={() => toggleSelect(p.id)}
+                  className="mt-1 h-4 w-4 rounded border-input accent-primary shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-semibold text-sm">{p.title}</span>
@@ -197,6 +264,7 @@ function CommentsTab() {
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
   const { items: comments, loading, refresh } = useAdminFetch<any>('/api/admin/anonymous-comments')
   const [filter, setFilter] = useState<Filter>('all')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const setStatus = async (ids: string[], status: 'published' | 'hidden') => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -206,6 +274,7 @@ function CommentsTab() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ ids, status }),
     })
+    setSelected(new Set())
     refresh()
   }
 
@@ -218,6 +287,7 @@ function CommentsTab() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ ids }),
     })
+    setSelected(new Set())
     refresh()
   }
 
@@ -229,15 +299,41 @@ function CommentsTab() {
 
   const filtered = filter === 'all' ? comments : comments.filter((c) => c.status === filter)
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const allSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(filtered.map((c) => c.id)))
+  }
+
   if (loading) return <LoadingSkeleton />
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <span className="text-sm text-muted-foreground">
-          {L('Total', '共', '共')} <span className="font-medium text-foreground">{comments.length}</span>{' '}
-          {L('comments', '條評論', '条评论')}
-        </span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              disabled={filtered.length === 0}
+              className="h-4 w-4 rounded border-input accent-primary"
+            />
+            {L('Select all', '全選', '全选')}
+          </label>
+          <span className="text-sm text-muted-foreground">
+            {L('Total', '共', '共')} <span className="font-medium text-foreground">{comments.length}</span>{' '}
+            {L('comments', '條評論', '条评论')}
+          </span>
+        </div>
         <div className="flex rounded-lg bg-muted p-1 gap-1">
           {filters.map((f) => (
             <button
@@ -254,6 +350,38 @@ function CommentsTab() {
         </div>
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 flex-wrap">
+          <span className="text-sm font-medium">
+            {L('Selected', '已選', '已选')} {selected.size}
+          </span>
+          <button
+            onClick={() => setStatus([...selected], 'hidden')}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-300 transition-colors"
+          >
+            <EyeOff className="h-3.5 w-3.5" /> {L('Hide', '屏蔽', '屏蔽')}
+          </button>
+          <button
+            onClick={() => setStatus([...selected], 'published')}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 transition-colors"
+          >
+            <Eye className="h-3.5 w-3.5" /> {L('Unhide', '恢復', '恢复')}
+          </button>
+          <button
+            onClick={() => deleteComments([...selected])}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> {L('Delete', '刪除', '删除')}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="ml-auto flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> {L('Clear', '取消', '取消选择')}
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <Empty text={L('No comments.', '暫無評論。', '暂无评论。')} />
       ) : (
@@ -261,6 +389,12 @@ function CommentsTab() {
           <Card key={c.id} className={c.status === 'hidden' ? 'opacity-70' : ''}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c.id)}
+                  onChange={() => toggleSelect(c.id)}
+                  className="mt-1 h-4 w-4 rounded border-input accent-primary shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm line-clamp-2">{c.content}</p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2 flex-wrap">

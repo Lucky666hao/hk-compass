@@ -7,7 +7,7 @@ import type { Competition } from '@/lib/types'
 import { AUTHORITY_TAGS, AUTHORITY_LABELS } from '@/lib/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Input } from '@/components/ui/input'
-import { Clock, CheckCircle2, XCircle, AlertCircle, Inbox, Check, X, Loader2, ExternalLink, CheckCheck } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, AlertCircle, Inbox, Check, X, Loader2, ExternalLink, CheckCheck, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 function statusMeta(status: string | undefined, locale: 'en' | 'zh-CN' | 'zh-HK') {
@@ -28,11 +28,15 @@ function ReviewCard({
   submitterName,
   locale,
   onReviewed,
+  selected,
+  onToggle,
 }: {
   c: Competition
   submitterName: string
   locale: 'en' | 'zh-CN' | 'zh-HK'
   onReviewed: () => void
+  selected: boolean
+  onToggle: () => void
 }) {
   const [action, setAction] = useState<'reject' | 'needs_changes' | null>(null)
   const [note, setNote] = useState('')
@@ -77,8 +81,14 @@ function ReviewCard({
   const StatusIcon = s.icon
 
   return (
-    <div className="p-4 rounded-xl border bg-background">
-      <div className="flex items-start justify-between gap-3">
+    <div className={`p-4 rounded-xl border bg-background ${selected ? 'ring-2 ring-primary/40' : ''}`}>
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          className="mt-1 h-4 w-4 rounded border-input accent-primary shrink-0"
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-sm truncate">{c.title}</h3>
@@ -212,6 +222,7 @@ export default function AdminReviewPage() {
   const [filter, setFilter] = useState<'pending' | 'needs_changes' | 'rejected' | 'all'>('pending')
   const [sourceFilter, setSourceFilter] = useState<'crawler' | 'community'>('crawler')
   const [bulking, setBulking] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const L = (en: string, hk: string, cn: string) => (locale === 'en' ? en : locale === 'zh-HK' ? hk : cn)
 
@@ -269,6 +280,46 @@ export default function AdminReviewPage() {
     ? items.filter((c) => c.source === 'community')
     : items.filter((c) => c.source !== 'community')
   const filtered = filter === 'all' ? sourceItems : sourceItems.filter((c) => c.review_status === filter)
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const allSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.id))
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(filtered.map((c) => c.id)))
+  }
+
+  const bulkAction = async (action: 'approve' | 'reject' | 'delete') => {
+    const ids = [...selected]
+    if (action === 'delete') {
+      if (!window.confirm(L('Delete selected competitions? This cannot be undone.', '確定刪除所選比賽？不可恢復。', '确定删除所选比赛？不可恢复。'))) return
+    } else if (action === 'reject') {
+      if (!window.confirm(L('Reject selected competitions?', '確定駁回所選比賽？', '确定驳回所选比赛？'))) return
+    }
+    setBulking(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setBulking(false); return }
+    const res = await fetch('/api/admin/review/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ ids, action }),
+    })
+    setBulking(false)
+    if (res.ok) {
+      toast.success(L('Done', '已完成', '已完成'))
+      setSelected(new Set())
+      load()
+    } else {
+      const j = await res.json().catch(() => ({}))
+      toast.error(j.error || L('Failed', '操作失敗', '操作失败'))
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -328,6 +379,55 @@ export default function AdminReviewPage() {
         ))}
       </div>
 
+      {/* 多选批量操作 */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={toggleAll}
+            disabled={filtered.length === 0}
+            className="h-4 w-4 rounded border-input accent-primary"
+          />
+          {L('Select all', '全選', '全选')} ({filtered.length})
+        </label>
+      </div>
+
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 flex-wrap">
+          <span className="text-sm font-medium">
+            {L('Selected', '已選', '已选')} {selected.size}
+          </span>
+          <button
+            onClick={() => bulkAction('approve')}
+            disabled={bulking}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-300 transition-colors disabled:opacity-50"
+          >
+            <Check className="h-3.5 w-3.5" /> {L('Approve', '通過', '通过')}
+          </button>
+          <button
+            onClick={() => bulkAction('reject')}
+            disabled={bulking}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 transition-colors disabled:opacity-50"
+          >
+            <X className="h-3.5 w-3.5" /> {L('Reject', '駁回', '驳回')}
+          </button>
+          <button
+            onClick={() => bulkAction('delete')}
+            disabled={bulking}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> {L('Delete', '刪除', '删除')}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="ml-auto flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> {L('Clear', '取消', '取消选择')}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
@@ -346,6 +446,8 @@ export default function AdminReviewPage() {
               submitterName={submitterMap[c.submitted_by || ''] || L('Unknown', '未知', '未知')}
               locale={locale}
               onReviewed={load}
+              selected={selected.has(c.id)}
+              onToggle={() => toggleSelect(c.id)}
             />
           ))}
         </div>
