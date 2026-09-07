@@ -60,20 +60,32 @@ function ReviewCard({
 
   const doAction = async (act: 'approve' | 'reject' | 'needs_changes', reason?: string) => {
     setBusy(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setBusy(false); return }
-    const res = await fetch('/api/admin/review', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ id: c.id, action: act, note: reason }),
-    })
-    setBusy(false)
-    if (res.ok) {
-      toast.success(L('Done', '已完成', '已完成'))
-      onReviewed()
-    } else {
-      const j = await res.json().catch(() => ({}))
-      toast.error(j.error || L('Failed', '操作失敗', '操作失败'))
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error(L('Session expired, please log in again', '登入已過期，請重新登入', '登录已过期，请重新登录'))
+        return
+      }
+      const res = await fetch('/api/admin/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ id: c.id, action: act, note: reason }),
+      })
+      if (res.ok) {
+        toast.success(L('Done', '已完成', '已完成'))
+        onReviewed()
+      } else {
+        const j = await res.json().catch(() => ({}))
+        if (res.status === 401) {
+          toast.error(L('Session expired, please log in again', '登入已過期，請重新登入', '登录已过期，请重新登录'))
+        } else {
+          toast.error(j.error || `${L('Failed', '操作失敗', '操作失败')} (${res.status})`)
+        }
+      }
+    } catch (e) {
+      toast.error(L('Network error, please retry', '網絡錯誤，請重試', '网络错误，请重试'))
+    } finally {
+      setBusy(false)
     }
   }
 
