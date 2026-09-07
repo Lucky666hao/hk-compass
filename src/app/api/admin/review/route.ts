@@ -49,12 +49,15 @@ export async function POST(req: Request) {
   }
 
   if (action === 'reject' || action === 'needs_changes') {
-    if (!note || !note.trim()) {
-      return NextResponse.json({ error: 'Reject / needs_changes requires a note' }, { status: 400 })
+    const noteText = (note || '').trim()
+    if (action === 'needs_changes' && !noteText) {
+      return NextResponse.json({ error: 'needs_changes requires a note' }, { status: 400 })
     }
+    // 驳回原因可留空，默认「不符合收录标准」（与批量驳回保持一致）
+    const finalNote = noteText || (action === 'reject' ? '不符合收录标准' : null)
     const { error } = await supabase
       .from('competitions')
-      .update({ review_status: action, review_note: note.trim(), reviewed_at: now, reviewed_by: userId })
+      .update({ review_status: action, review_note: finalNote, reviewed_at: now, reviewed_by: userId })
       .eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, review_status: action })

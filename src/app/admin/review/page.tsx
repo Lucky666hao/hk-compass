@@ -164,13 +164,17 @@ function ReviewCard({
           <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={L('Reason (required)', '填寫原因（必填）', '填写原因（必填）')}
+            placeholder={
+              action === 'needs_changes'
+                ? L('Reason (required)', '填寫原因（必填）', '填写原因（必填）')
+                : L('Reason (optional)', '原因（可留空，默認「不符合收錄標準」）', '原因（可留空，默认「不符合收录标准」）')
+            }
             autoFocus
           />
           <div className="flex gap-2">
             <button
               onClick={() => doAction(action, note)}
-              disabled={busy || !note.trim()}
+              disabled={busy || (action === 'needs_changes' && !note.trim())}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
