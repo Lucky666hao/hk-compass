@@ -354,7 +354,9 @@ export default function AdminReviewPage() {
           >
             {s.label}
             <span className="ml-1 opacity-60">
-              ({s.key === 'crawler' ? items.filter((c) => c.source !== 'community').length : items.filter((c) => c.source === 'community').length})
+              ({s.key === 'crawler'
+                ? items.filter((c) => c.source !== 'community' && c.review_status === 'pending').length
+                : items.filter((c) => c.source === 'community' && c.review_status === 'pending').length})
             </span>
           </button>
         ))}
