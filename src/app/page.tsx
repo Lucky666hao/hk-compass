@@ -74,16 +74,17 @@ export default function HomePage() {
       }
 
       const now = new Date().toISOString()
+      // 日期筛选基于「报名截止日」而非 date_start（date_start 是比赛日期，语义不同）
       if (filters.date_range === '本周') {
         const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        query = query.gte('date_start', now).lte('date_start', nextWeek)
+        query = query.gte('registration_deadline', now).lte('registration_deadline', nextWeek)
       } else if (filters.date_range === '本月') {
         const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        query = query.gte('date_start', now).lte('date_start', nextMonth)
+        query = query.gte('registration_deadline', now).lte('registration_deadline', nextMonth)
       } else if (filters.date_range === '下月') {
         const monthStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         const monthEnd = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-        query = query.gte('date_start', monthStart).lte('date_start', monthEnd)
+        query = query.gte('registration_deadline', monthStart).lte('registration_deadline', monthEnd)
       }
 
       if (filters.age_group && filters.age_group !== '全部') {

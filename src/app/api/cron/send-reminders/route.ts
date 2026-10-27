@@ -38,11 +38,10 @@ function shouldTriggerNow(deadline: string, remindBefore: string): boolean {
   const threshold = thresholds[remindBefore]
   if (!threshold) return false
 
-  // 在阈值 ±30分钟内触发（避免重复触发）
-  const windowStart = threshold - 30 * 60 * 1000
-  const windowEnd = threshold + 30 * 60 * 1000
-
-  return diff >= windowStart && diff <= windowEnd
+  // 剩余时间进入阈值内即触发（diff <= threshold）。
+  // 不用 ±30min 窗口：cron 每天只跑一次，窗口匹配会因时间点错位导致永久漏发；
+  // notified 标记已防重复触发。
+  return diff <= threshold
 }
 
 async function sendEmail(
