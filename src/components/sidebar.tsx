@@ -305,8 +305,8 @@ function SidebarInner({
           <Link
             href="/account/notifications"
             className={cn(
-              'w-full flex items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-              collapsed ? 'justify-center' : 'gap-2.5'
+              'w-full flex items-center rounded-md px-2 text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+              collapsed ? 'justify-center py-2' : 'gap-2.5 py-1.5'
             )}
           >
             <NotificationBell />
@@ -489,7 +489,7 @@ function LangSwitcher({
               'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors'
             )}
           >
-            <Globe className="h-5 w-5" />
+            <Globe className="h-4 w-4 shrink-0" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">{LOCALE_LABELS[locale]}</TooltipContent>
@@ -498,7 +498,7 @@ function LangSwitcher({
   }
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5">
+    <div className="flex items-center gap-2.5 px-2 py-1.5">
       <Globe className="h-4 w-4 text-sidebar-foreground/40 shrink-0" />
       <select
         value={locale}

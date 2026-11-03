@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,22 +19,21 @@ export function NotificationBell() {
     })
   }, [])
 
-  if (unread === 0) return null
-
   return (
-    <Link
-      href="/account/notifications"
-      className="relative inline-flex items-center justify-center"
+    <span
+      className="relative inline-flex items-center justify-center shrink-0"
       title="Notifications"
     >
-      <Bell className="h-5 w-5" />
-      <span className={cn(
-        'absolute -top-1 -right-1 flex items-center justify-center',
-        'min-w-[18px] h-[18px] px-1 rounded-full',
-        'bg-red-500 text-white text-[10px] font-bold'
-      )}>
-        {unread > 99 ? '99+' : unread}
-      </span>
-    </Link>
+      <Bell className="h-4 w-4" />
+      {unread > 0 && (
+        <span className={cn(
+          'absolute -top-1 -right-1 flex items-center justify-center',
+          'min-w-[18px] h-[18px] px-1 rounded-full',
+          'bg-red-500 text-white text-[10px] font-bold'
+        )}>
+          {unread > 99 ? '99+' : unread}
+        </span>
+      )}
+    </span>
   )
 }
