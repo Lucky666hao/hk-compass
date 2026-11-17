@@ -34,7 +34,11 @@ CREATE INDEX IF NOT EXISTS idx_course_reviews_uni ON public.course_reviews (univ
 
 -- RLS
 ALTER TABLE public.course_reviews ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read published reviews" ON public.course_reviews;
 CREATE POLICY "Public read published reviews" ON public.course_reviews FOR SELECT USING (status = 'published');
+DROP POLICY IF EXISTS "Authenticated insert own reviews" ON public.course_reviews;
 CREATE POLICY "Authenticated insert own reviews" ON public.course_reviews FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Author update own reviews" ON public.course_reviews;
 CREATE POLICY "Author update own reviews" ON public.course_reviews FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Author delete own reviews" ON public.course_reviews;
 CREATE POLICY "Author delete own reviews" ON public.course_reviews FOR DELETE TO authenticated USING (auth.uid() = user_id);

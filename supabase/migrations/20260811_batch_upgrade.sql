@@ -21,8 +21,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_i
 CREATE INDEX IF NOT EXISTS idx_notifications_unread ON public.notifications(user_id, is_read) WHERE is_read = false;
 
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "notifications_select" ON public.notifications;
 CREATE POLICY "notifications_select" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "notifications_update" ON public.notifications;
 CREATE POLICY "notifications_update" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "notifications_insert" ON public.notifications;
 CREATE POLICY "notifications_insert" ON public.notifications FOR INSERT WITH CHECK (true);
 
 -- 2. 举报表
@@ -39,5 +42,6 @@ CREATE INDEX IF NOT EXISTS idx_post_reports_post ON public.post_reports(post_id)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_post_reports_unique ON public.post_reports(reporter_id, post_id);
 
 ALTER TABLE public.post_reports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "post_reports_insert" ON public.post_reports;
 CREATE POLICY "post_reports_insert" ON public.post_reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
 -- Only admins can view/update reports (using service_role key, no public read)
