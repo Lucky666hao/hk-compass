@@ -18,6 +18,19 @@ import Link from 'next/link'
 
 const ITEMS_PER_PAGE = 20
 
+// 大学缩写别名：搜「科大」也能命中「科技大學」等全称（搜索时自动展开）
+const UNI_ALIASES: Record<string, string> = {
+  科大: '科技大學',
+  港大: '香港大學',
+  城大: '城市大學',
+  中大: '中文大學',
+  理工: '理工大學',
+  浸大: '浸會大學',
+  教大: '教育大學',
+  嶺大: '嶺南大學',
+  都大: '都會大學',
+}
+
 export default function HomePage() {
   const { locale } = useLocale()
   const { collapsed, toggle: toggleSidebar } = useSidebar()
@@ -56,9 +69,19 @@ export default function HomePage() {
         .order('date_start', { ascending: true })
 
       if (filters.keyword) {
-        query = query.or(
-          `title.ilike.%${filters.keyword}%,title_en.ilike.%${filters.keyword}%,description.ilike.%${filters.keyword}%`
-        )
+        // 展开缩写别名（如「科大」→「科技大學」），让缩写也能搜到全称
+        const keywords = [filters.keyword]
+        for (const [short, full] of Object.entries(UNI_ALIASES)) {
+          if (filters.keyword.includes(short)) {
+            keywords.push(filters.keyword.replaceAll(short, full))
+          }
+        }
+        const conditions = [...new Set(keywords)].flatMap((k) => [
+          `title.ilike.%${k}%`,
+          `title_en.ilike.%${k}%`,
+          `description.ilike.%${k}%`,
+        ])
+        query = query.or(conditions.join(','))
       }
 
       if (filters.type && filters.type !== '全部') {
