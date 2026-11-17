@@ -31,16 +31,16 @@ WHERE (title ILIKE '%HKUST%' OR title ILIKE '%港科大%' OR title ILIKE '%香�
   AND NOT ('HKUST' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- CityU
-UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'CityU')
+UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'CITYU')
 WHERE (title ILIKE '%CityU%' OR title ILIKE '%城大%' OR title ILIKE '%香港城市大學%' OR title ILIKE '%香港城市大学%'
        OR organizer ILIKE '%CityU%' OR organizer ILIKE '%城大%' OR organizer ILIKE '%香港城市大學%' OR organizer ILIKE '%香港城市大学%')
-  AND NOT ('CityU' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
+  AND NOT ('CITYU' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- PolyU
-UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'PolyU')
+UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'POLYU')
 WHERE (title ILIKE '%PolyU%' OR title ILIKE '%理大%' OR title ILIKE '%香港理工大學%' OR title ILIKE '%香港理工大学%'
        OR organizer ILIKE '%PolyU%' OR organizer ILIKE '%理大%' OR organizer ILIKE '%香港理工大學%' OR organizer ILIKE '%香港理工大学%')
-  AND NOT ('PolyU' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
+  AND NOT ('POLYU' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- HKBU
 UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'HKBU')
@@ -49,16 +49,16 @@ WHERE (title ILIKE '%HKBU%' OR title ILIKE '%浸大%' OR title ILIKE '%香港浸
   AND NOT ('HKBU' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- Lingnan
-UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'Lingnan')
+UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'LINGNAN')
 WHERE (title ILIKE '%Lingnan%' OR title ILIKE '%嶺南%' OR title ILIKE '%岭南大学%' OR title ILIKE '%嶺南大學%'
        OR organizer ILIKE '%Lingnan%' OR organizer ILIKE '%嶺南%' OR organizer ILIKE '%岭南大学%' OR organizer ILIKE '%嶺南大學%')
-  AND NOT ('Lingnan' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
+  AND NOT ('LINGNAN' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- EdUHK
-UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'EdUHK')
+UPDATE competitions SET target_universities = array_append(COALESCE(target_universities, ARRAY[]::TEXT[]), 'EDUHK')
 WHERE (title ILIKE '%EdUHK%' OR title ILIKE '%教大%' OR title ILIKE '%香港教育大學%' OR title ILIKE '%香港教育大学%'
        OR organizer ILIKE '%EdUHK%' OR organizer ILIKE '%教大%' OR organizer ILIKE '%香港教育大學%' OR organizer ILIKE '%香港教育大学%')
-  AND NOT ('EdUHK' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
+  AND NOT ('EDUHK' = ANY(COALESCE(target_universities, ARRAY[]::TEXT[])));
 
 -- 验证
 SELECT target_universities, COUNT(*) FROM competitions

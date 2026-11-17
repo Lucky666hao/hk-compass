@@ -15,11 +15,11 @@ const s = createClient(
 async function main() {
   const updates: { title_pattern: string; unis: string[] }[] = [
     { title_pattern: 'HSUHK Innovation', unis: ['HSUHK'] },
-    { title_pattern: '香港國際AIGC', unis: ['EdUHK', 'ChuHai'] },
-    { title_pattern: 'PolyU國際未來', unis: ['PolyU'] },
-    { title_pattern: '創意共享產品設計', unis: ['EdUHK'] },
+    { title_pattern: '香港國際AIGC', unis: ['EDUHK', 'CHUHAI'] },
+    { title_pattern: 'PolyU國際未來', unis: ['POLYU'] },
+    { title_pattern: '創意共享產品設計', unis: ['EDUHK'] },
     { title_pattern: '碳中和：我們的理想家園', unis: ['CUHK'] },
-    { title_pattern: 'Hong Kong Joint Collegiate Programming', unis: ['CityU', 'HKUST', 'PolyU'] },
+    { title_pattern: 'Hong Kong Joint Collegiate Programming', unis: ['CITYU', 'HKUST', 'POLYU'] },
   ]
 
   for (const u of updates) {
