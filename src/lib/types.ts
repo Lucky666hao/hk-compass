@@ -439,7 +439,9 @@ export interface PageView {
 
 export interface AnalyticsSummary {
   totalViews: number
+  uniqueVisitors: number
   todayViews: number
+  todayUniqueVisitors: number
   totalUsers: number
   totalCompetitions: number
   totalPosts: number
@@ -447,6 +449,10 @@ export interface AnalyticsSummary {
   dailyViews: { date: string; count: number }[]
   hourlyHeatmap: { hour: number; count: number }[]
   topPaths: { path: string; count: number }[]
+  deviceBreakdown: { device: 'mobile' | 'desktop' | 'other'; count: number }[]
+  sectionBreakdown: { section: string; count: number }[]
+  topCompetitions: { id: string; title: string; saves: number; reminders: number }[]
+  engagement: { posts: number; comments: number; reactions: number; recruitments: number; courseReviews: number }
 }
 
 // ============================================
