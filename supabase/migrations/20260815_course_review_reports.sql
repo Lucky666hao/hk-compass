@@ -18,5 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_course_review_reports_review ON public.course_rev
 CREATE INDEX IF NOT EXISTS idx_course_review_reports_status ON public.course_review_reports (status);
 
 ALTER TABLE public.course_review_reports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Authenticated insert own report" ON public.course_review_reports;
 CREATE POLICY "Authenticated insert own report" ON public.course_review_reports FOR INSERT TO authenticated WITH CHECK (auth.uid() = reporter_id);
+DROP POLICY IF EXISTS "Authenticated read own report" ON public.course_review_reports;
 CREATE POLICY "Authenticated read own report" ON public.course_review_reports FOR SELECT TO authenticated USING (auth.uid() = reporter_id);

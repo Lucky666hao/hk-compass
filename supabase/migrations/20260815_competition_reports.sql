@@ -19,5 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_competition_reports_comp ON public.competition_re
 CREATE INDEX IF NOT EXISTS idx_competition_reports_status ON public.competition_reports (status);
 
 ALTER TABLE public.competition_reports ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Authenticated insert own report" ON public.competition_reports;
 CREATE POLICY "Authenticated insert own report" ON public.competition_reports FOR INSERT TO authenticated WITH CHECK (auth.uid() = reporter_id);
+DROP POLICY IF EXISTS "Authenticated read own report" ON public.competition_reports;
 CREATE POLICY "Authenticated read own report" ON public.competition_reports FOR SELECT TO authenticated USING (auth.uid() = reporter_id);
