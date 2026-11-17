@@ -1,9 +1,24 @@
 /**
  * GET /api/admin/stats — 管理员分析数据
  * 返回：概览（流量+内容 KPI）、流量分析（趋势/设备/板块/路径）、内容分析（热门比赛/互动）
+ * 时间统计均按「香港时区 (Asia/Hong_Kong, UTC+8)」计算，避免 UTC 导致的「今日」错位。
  */
 import { NextResponse } from 'next/server'
 import { requireAdmin, getAdminClient } from '@/lib/admin-guard'
+
+const HK_OFFSET_MS = 8 * 60 * 60 * 1000 // UTC+8，香港无夏令时
+
+// ISO 时间戳 → 香港日期字符串（YYYY-MM-DD）
+function hkDateStr(iso: string): string {
+  return new Date(new Date(iso).getTime() + HK_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+// 香港「今日零点」对应的 UTC 时间戳（ISO）
+function hkTodayStartISO(): string {
+  const shifted = new Date(Date.now() + HK_OFFSET_MS)
+  const utcMidnight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate())
+  return new Date(utcMidnight - HK_OFFSET_MS).toISOString()
+}
 
 export async function GET(req: Request) {
   const auth = await requireAdmin(req)
@@ -16,7 +31,8 @@ export async function GET(req: Request) {
   const sinceDate = new Date()
   sinceDate.setDate(sinceDate.getDate() - days)
   const sinceISO = sinceDate.toISOString()
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = hkDateStr(new Date().toISOString())
+  const hkTodayStart = hkTodayStartISO()
 
   // ── 概览：流量 ──
   const { count: totalViews } = await supabase
@@ -33,13 +49,13 @@ export async function GET(req: Request) {
   const uniqueToday = new Set<string>()
   for (const r of sessRows || []) {
     uniqueAll.add(r.session_id)
-    if (r.timestamp && r.timestamp.slice(0, 10) === todayStr) uniqueToday.add(r.session_id)
+    if (r.timestamp && hkDateStr(r.timestamp) === todayStr) uniqueToday.add(r.session_id)
   }
 
   const { count: todayViews } = await supabase
     .from('page_views').select('*', { count: 'exact', head: true })
     .not('path', 'like', '/admin%')
-    .gte('timestamp', todayStr)
+    .gte('timestamp', hkTodayStart)
 
   // ── 概览：内容 ──
   const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
@@ -47,7 +63,7 @@ export async function GET(req: Request) {
   const { count: totalPosts } = await supabase.from('posts').select('*', { count: 'exact', head: true })
   const { count: totalReminders } = await supabase.from('reminders').select('*', { count: 'exact', head: true })
 
-  // ── 流量分析（窗口内聚合）──
+  // ── 流量分析（窗口内聚合，按香港时区）──
   const { data: pvRows } = await supabase
     .from('page_views').select('path, user_agent, session_id, timestamp')
     .not('path', 'like', '/admin%')
@@ -58,7 +74,7 @@ export async function GET(req: Request) {
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now)
     d.setDate(d.getDate() - i)
-    dayMap[d.toISOString().slice(0, 10)] = 0
+    dayMap[hkDateStr(d.toISOString())] = 0
   }
 
   const hourCounts = new Array(24).fill(0)
@@ -68,11 +84,11 @@ export async function GET(req: Request) {
 
   for (const r of pvRows || []) {
     const ts = r.timestamp || ''
-    const day = ts.slice(0, 10)
+    const day = hkDateStr(ts)
     if (day in dayMap) dayMap[day]++
 
-    const h = new Date(ts).getHours()
-    if (!Number.isNaN(h)) hourCounts[h]++
+    const hkHour = new Date(new Date(ts).getTime() + HK_OFFSET_MS).getUTCHours()
+    if (!Number.isNaN(hkHour)) hourCounts[hkHour]++
 
     const path = r.path || '/'
     pathCounts[path] = (pathCounts[path] || 0) + 1
